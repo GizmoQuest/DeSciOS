@@ -1,22 +1,21 @@
-# 🌐 Xadia
+# 🧬 DeSciOS
 
-> *A lightweight, browser-accessible desktop streaming environment — the first step toward an open-source alternative to [Google Stadia](https://stadia.google.com/gg/), which was shut down on January 18, 2023.*
+> *An open, browser-accessible scientific operating system — the foundation for decentralized, AI-powered research and collaboration.*
 
-![Xadia](./os.svg)
+![DeSciOS](./os.svg)
 
-
+---
 
 ## 🚀 Overview
 
-**Xadia** is a containerized, headless desktop environment designed for remote accessibility via web browsers. Built on XFCE, noVNC, and supervised with `supervisord`, it provides a fully interactive Linux GUI experience accessible anywhere — no physical monitor required.
+**DeSciOS** is a containerized, headless Linux desktop environment purpose-built for decentralized science. Accessible entirely through a browser, it combines lightweight desktop streaming with research productivity tools and AI-readiness.
 
-It’s ideal for:
+Originally inspired by the idea of a Stadia-like environment, **DeSciOS** evolves that vision toward enabling:
 
-- Remote access to graphical applications
-- Teaching or training environments
-- Lightweight game streaming
-- Cloud desktop experiments
-- The foundations of a decentralized Stadia-like system
+- Local-first scientific computing
+- AI-assisted research writing (LLM support coming soon)
+- Peer-to-peer publishing workflows (IPFS support planned)
+- Modular scientific desktop environments for students, researchers, and citizen scientists
 
 ---
 
@@ -24,15 +23,15 @@ It’s ideal for:
 
 > ⚠️ **Experimental Project — Expect Rough Edges**
 
-Xadia OS is in its earliest phase of development and is currently highly **experimental**. While it lays the groundwork for a future open-source streaming OS, this release should **not** be considered production-ready or feature-complete.
+DeSciOS is currently under active development and remains **experimental**. It provides a proof-of-concept platform for future decentralized science infrastructure. While usable today, it is **not yet production-ready**.
 
 You **might encounter**:
-- Unpolished UI experiences
-- Missing features (e.g., GPU acceleration, controller support)
-- Stability or compatibility issues
-- Limited automation or orchestration
+- Unpolished workflows
+- GPU acceleration limitations (browser-dependent)
+- Missing features like built-in LLMs or decentralized publishing
+- Manual setup requirements
 
-We welcome testers, tinkerers, and open-source contributors — but **please temper your expectations** and join with a spirit of exploration, not as end users expecting a plug-and-play cloud gaming platform (yet!).
+That said, it's ready for contributors, educators, and DeSci enthusiasts eager to shape open research infrastructure.
 
 ---
 
@@ -40,22 +39,24 @@ We welcome testers, tinkerers, and open-source contributors — but **please tem
 
 | Component        | Description                                                      |
 |------------------|------------------------------------------------------------------|
-| **XFCE4**         | Lightweight desktop environment with a customized panel layout   |
-| **TigerVNC**      | VNC server to expose the XFCE desktop over VNC                  |
-| **noVNC + Websockify** | Converts VNC to WebSocket, enabling access via any modern browser |
-| **JupyterLab**    | Optional dev interface, can be replaced with any graphical app  |
-| **Supervisor**    | Process manager to keep all components running                  |
-| **Dockerized**    | Fully containerized for portability and reproducibility         |
+| **XFCE4**         | Lightweight desktop environment with customized layout           |
+| **TigerVNC**      | VNC server to expose the XFCE desktop                            |
+| **noVNC + Websockify** | Enables browser-based access via WebSocket                     |
+| **JupyterLab**    | Optional development notebook environment                        |
+| **Supervisor**    | Process manager for keeping all services alive                  |
+| **Dockerized**    | Fully containerized for reproducibility and portability         |
+
+> ℹ️ **Note**: IPFS and Ollama integrations are planned for future releases.
 
 ---
 
 ## 🛠️ Features
 
-- 🌐 **Full desktop streaming from any browser**
-- ⚙️ **Supervisor-powered service orchestration**
-- 📁 **Persistent user profiles and logs**
-- 🧠 **Modular for integration with other backends like Sunshine + Moonlight**
-- 🧪 **Easy to extend with custom apps or launchers (e.g., Steam, VSCode, games)**
+- 🌐 **Full Linux desktop streaming from any modern browser**
+- 📁 **Persistent scientific workspace (home folder mountable)**
+- 🧠 **Future-ready for integrating LLMs (e.g., Ollama, WebLLM)**
+- 📡 **Designed with decentralized science publishing in mind (e.g., IPFS)**
+- 🔌 **Modular architecture to add VS Code, Gradio, or other tools**
 
 ---
 
@@ -63,11 +64,11 @@ We welcome testers, tinkerers, and open-source contributors — but **please tem
 
 | File | Description |
 |------|-------------|
-| `Dockerfile` | Builds the full container with all necessary components |
-| `startup.sh` | Entrypoint script to initialize environment and permissions |
-| `supervisord.conf` | Launches `vncserver`, `noVNC`, and `jupyterlab` |
-| `xfce4-panel.xml` | Custom XFCE panel configuration |
-| `os.svg` | Branding/logo for Xadia OS |
+| `Dockerfile` | Builds the full container with XFCE, noVNC, JupyterLab, etc. |
+| `startup.sh` | Entrypoint script for initializing the desktop environment |
+| `supervisord.conf` | Orchestrates services like `vncserver`, `noVNC`, and `jupyterlab` |
+| `xfce4-panel.xml` | Pre-configured XFCE panel layout |
+| `os.svg` | DeSciOS branding/logo image |
 
 ---
 
@@ -75,42 +76,39 @@ We welcome testers, tinkerers, and open-source contributors — but **please tem
 
 ```bash
 # Clone the repo
-git clone https://github.com/avimanyu786/xadia.git
-cd xadia
+git clone https://github.com/GizmoQuest/DeSciOS.git
+cd DeSciOS
 
 # Build the Docker image
-docker build -t xadia .
+docker build -t descios .
 
 # Run the container
-docker run -d -p 6080:6080 -p 8888:8888 -e JUPYTER_TOKEN=1234 --name xadia-desktop xadia
-```
+docker run -d -p 6080:6080 -p 8888:8888 -e JUPYTER_TOKEN=1234 --name desci-lab descios
+````
 
+Access via:
 
-Then visit:
-
-- 🌐 `http://localhost:6080` → for full XFCE desktop in browser (default login password for now  is 1234) 
-- 🧪 `http://localhost:8888` → for JupyterLab (optional)
+* 🌐 `http://localhost:6080` → Full Linux desktop in browser (default password: `1234`)
+* 🧪 `http://localhost:8888` → JupyterLab interface (optional)
 
 ---
 
-## 💡 Inspiration & Vision
+## 💡 Vision: A Decentralized Research Desktop
 
-While mature platforms like **Sunshine + Moonlight** already provide exceptional low-latency game streaming, **Xadia is not here to replace them — it is here to complement and expand them.**
+DeSciOS is designed for:
 
-Think of Xadia as a **unified, containerized platform** capable of hosting:
+* Students needing a portable research environment
+* Scientists working offline or from remote labs
+* Contributors to the DeSci India and global DeSci movement
+* Educators seeking open, reproducible science infrastructure
 
-- A full Linux desktop environment
-- A cloud-based development toolkit
-- A lightweight virtual desktop infrastructure (VDI) for students or remote teams
-- A pre-configured Sunshine game streaming server
-- Or all of the above — accessible directly via browser, from anywhere
+Future integrations will enable:
 
-In the future, Xadia can act as a **host** for Sunshine, enabling seamless switching between a general-purpose GUI (via XFCE + noVNC) and low-latency, GPU-accelerated game streaming.
+* ✅ Local LLMs with Ollama and WebLLM
+* ✅ IPFS-based publishing and archiving
+* ✅ Nano-based micropayments and research grant flows
 
-Rather than reinventing the wheel, Xadia aims to **build the vehicle around it** — one that is modular, portable, and open by design.
-
-> This is not just another streamer.  
-> It’s a framework for *experiments, education, gaming, and open source computing.*
+> **Build open science tools. Host your own lab. Publish without gatekeepers.**
 
 ---
 
@@ -118,6 +116,4 @@ Rather than reinventing the wheel, Xadia aims to **build the vehicle around it**
 
 This project is licensed under the **MIT License**.
 
-> Xadia is free software — built for the community, by the community and therefore of the community.
-
----
+> DeSciOS is free and open — built for the community, by the community.
