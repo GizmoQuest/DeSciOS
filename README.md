@@ -14,7 +14,7 @@ Originally inspired by the idea of a Stadia-like environment, **DeSciOS** evolve
 
 - Local-first scientific computing
 - AI-assisted research writing (LLM support coming soon)
-- Peer-to-peer publishing workflows (IPFS support planned)
+- Peer-to-peer publishing workflows (IPFS support included)
 - Modular scientific desktop environments for students, researchers, and citizen scientists
 
 ---
@@ -28,7 +28,7 @@ DeSciOS is currently under active development and remains **experimental**. It p
 You **might encounter**:
 - Unpolished workflows
 - GPU acceleration limitations (browser-dependent)
-- Missing features like built-in LLMs or decentralized publishing
+- Missing features like built-in LLMs
 - Manual setup requirements
 
 That said, it's ready for contributors, educators, and DeSci enthusiasts eager to shape open research infrastructure.
@@ -42,11 +42,22 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 | **XFCE4**         | Lightweight desktop environment with customized layout           |
 | **TigerVNC**      | VNC server to expose the XFCE desktop                            |
 | **noVNC + Websockify** | Enables browser-based access via WebSocket                     |
-| **JupyterLab**    | Optional development notebook environment                        |
+| **JupyterLab**    | Development notebook environment with BeakerX multi-language support |
+| **RStudio**       | Full-featured R development environment                          |
+| **Spyder**        | Scientific Python IDE                                            |
+| **UGENE**         | Bioinformatics suite                                             |
+| **ParaView**      | Scientific visualization tool                                    |
+| **GNU Octave**    | MATLAB-like numerical computing                                  |
+| **Fiji/ImageJ**   | Image processing and analysis                                    |
+| **QGIS**          | Geographic Information System                                    |
+| **Avogadro**      | Molecular modeling and visualization                             |
+| **IPFS Desktop**  | Decentralized file system interface                              |
+| **Syncthing**     | P2P file synchronization                                         |
+| **EtherCalc**     | Collaborative spreadsheet                                        |
+| **Remix IDE**     | Ethereum development environment                                 |
+| **Nault**         | Nano cryptocurrency wallet                                       |
 | **Supervisor**    | Process manager for keeping all services alive                  |
 | **Dockerized**    | Fully containerized for reproducibility and portability         |
-
-> ℹ️ **Note**: IPFS and Ollama integrations are planned for future releases.
 
 ---
 
@@ -54,9 +65,14 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 
 - 🌐 **Full Linux desktop streaming from any modern browser**
 - 📁 **Persistent scientific workspace (home folder mountable)**
-- 🧠 **Future-ready for integrating LLMs (e.g., Ollama, WebLLM)**
-- 📡 **Designed with decentralized science publishing in mind (e.g., IPFS)**
-- 🔌 **Modular architecture to add VS Code, Gradio, or other tools**
+- 🧬 **Comprehensive scientific software suite**
+- 📊 **Data analysis tools (R, Python, Octave)**
+- 🔬 **Bioinformatics and molecular modeling**
+- 🗺️ **Geospatial analysis with QGIS**
+- 🖼️ **Image processing with Fiji/ImageJ**
+- 📡 **Decentralized tools (IPFS, Syncthing)**
+- 💰 **Cryptocurrency integration (Nano wallet)**
+- 🔌 **Modular architecture for additional tools**
 
 ---
 
@@ -64,7 +80,7 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 
 | File | Description |
 |------|-------------|
-| `Dockerfile` | Builds the full container with XFCE, noVNC, JupyterLab, etc. |
+| `Dockerfile` | Builds the full container with XFCE, noVNC, scientific tools, etc. |
 | `startup.sh` | Entrypoint script for initializing the desktop environment |
 | `supervisord.conf` | Orchestrates services like `vncserver`, `noVNC`, and `jupyterlab` |
 | `xfce4-panel.xml` | Pre-configured XFCE panel layout |
@@ -79,17 +95,25 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 git clone https://github.com/GizmoQuest/DeSciOS.git
 cd DeSciOS
 
-# Build the Docker image
+# Build the Docker image (with custom password)
+docker buildx build --build-arg PASSWORD=your_secure_password -t descios .
+
+# Or build with default password (not recommended for production)
 docker build -t descios .
 
 # Run the container
-docker run -d -p 6080:6080 -p 8888:8888 -e JUPYTER_TOKEN=1234 --name desci-lab descios
-````
+docker run -d -p 6080:6080 --name desci-lab descios
+
+# If you have an NVIDIA GPU (Optional)
+docker run -d --gpus all -p 6080:6080 --name desci-lab descios
+```
 
 Access via:
 
-* 🌐 `http://localhost:6080` → Full Linux desktop in browser (default password: `1234`)
+* 🌐 `http://localhost:6080/vnc.html` → Full Linux desktop in browser (use the password you set during build)
 * 🧪 `http://localhost:8888` → JupyterLab interface (optional)
+
+> **Security Note**: For production use, always set a custom password during build using `--build-arg PASSWORD=your_secure_password`. The default password is for development purposes only.
 
 ---
 
@@ -105,7 +129,7 @@ DeSciOS is designed for:
 Future integrations will enable:
 
 * ✅ Local LLMs with Ollama and WebLLM
-* ✅ IPFS-based publishing and archiving
+* ✅ Enhanced IPFS-based publishing and archiving
 * ✅ Nano-based micropayments and research grant flows
 
 > **Build open science tools. Host your own lab. Publish without gatekeepers.**
