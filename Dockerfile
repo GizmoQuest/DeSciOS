@@ -2,7 +2,7 @@ FROM python:3.10-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV USER=jupyter
-ENV PASSWORD=1234
+ARG PASSWORD=1234
 
 # Basic system setup
 RUN apt update && apt install -y \
@@ -88,10 +88,9 @@ RUN pip install --no-cache-dir beakerx && \
 RUN echo -e '[Desktop Entry]\nName=Remix IDE\nExec=firefox https://remix.ethereum.org\nType=Application\nCategories=Development;' \
     > /usr/share/applications/remix-ide.desktop
 
-# Install Nault (Nano wallet) as an AppImage
-RUN wget https://github.com/Nault/Nault/releases/download/v1.15.0/nault-1.15.0-linux.AppImage && \
-    chmod +x nault-1.15.0-linux.AppImage && \
-    mv nault-1.15.0-linux.AppImage /usr/local/bin/nault
+# Nault (Nano wallet via Browser)
+RUN echo -e '[Desktop Entry]\nName=Nault\nExec=firefox https://nault.cc\nType=Application\nCategories=Finance;' \
+    > /usr/share/applications/nault.desktop
 
 # Switch to jupyter user
 USER $USER
@@ -106,7 +105,7 @@ RUN mkdir -p /home/$USER/.config/xfce4/xfconf/xfce-perchannel-xml && \
 RUN mkdir -p /home/$USER/.vnc && \
     echo -e '#!/bin/bash\nxrdb $HOME/.Xresources\nstartxfce4 &' > /home/$USER/.vnc/xstartup && \
     chmod +x /home/$USER/.vnc/xstartup && \
-    echo "1234" | vncpasswd -f > /home/$USER/.vnc/passwd && \
+    echo "$PASSWORD" | vncpasswd -f > /home/$USER/.vnc/passwd && \
     chmod 600 /home/$USER/.vnc/passwd && \
     touch /home/$USER/.Xresources && \
     chown -R $USER:$USER /home/$USER/.vnc /home/$USER/.Xresources /home/$USER/.config
@@ -123,8 +122,8 @@ COPY os.svg /usr/share/desktop-base/active-theme/wallpaper/contents/images/1920x
 # Set clean default XFCE panel layout (no power manager plugin)
 COPY xfce4-panel.xml /etc/xdg/xfce4/panel/default.xml
 
-# Expose ports for Jupyter and noVNC
-EXPOSE 8888 6080
+# Expose ports for noVNC
+EXPOSE 6080
 
 # Start services
 CMD ["/startup.sh"]
