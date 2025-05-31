@@ -25,8 +25,8 @@ RUN pip install --no-cache-dir jupyterlab
 # Install R for Debian bookworm
 RUN apt update -qq && \
     apt install --no-install-recommends -y software-properties-common dirmngr ca-certificates gnupg wget && \
-    echo "deb https://cloud.r-project.org/bin/linux/debian bookworm-cran40/" > /etc/apt/sources.list.d/cran.list && \
-    wget -qO- https://cloud.r-project.org/bin/linux/debian/bookworm-cran40/Release.key | gpg --dearmor > /usr/share/keyrings/cran-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/cran-archive-keyring.gpg] https://cloud.r-project.org/bin/linux/debian bookworm-cran40/" > /etc/apt/sources.list.d/cran.list && \
+    wget -qO- https://cloud.r-project.org/bin/linux/debian/marutter_pubkey.asc | gpg --dearmor > /usr/share/keyrings/cran-archive-keyring.gpg && \
     apt update -qq && \
     apt install --no-install-recommends -y r-base
 
