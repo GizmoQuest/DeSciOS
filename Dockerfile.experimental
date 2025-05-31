@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir jupyterlab
 RUN apt update && apt install -y gdebi-core && \
     wget https://download1.rstudio.org/electron/jammy/amd64/rstudio-2025.05.0-496-amd64.deb && \
     gdebi -n rstudio-2025.05.0-496-amd64.deb && \
-    rm rstudio-2023.06.2-561-amd64.deb
+    rm rstudio-2025.05.0-496-amd64.deb
 
 # Install Spyder (Scientific Python IDE)
 RUN pip install --no-cache-dir spyder
