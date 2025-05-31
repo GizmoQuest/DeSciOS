@@ -24,9 +24,11 @@ RUN pip install --no-cache-dir jupyterlab
 
 # Install R for Debian bookworm
 RUN apt update -qq && \
-    apt install --no-install-recommends -y software-properties-common dirmngr ca-certificates gnupg wget && \
-    wget -qO /usr/share/keyrings/cran-archive-keyring.gpg https://cloud.r-project.org/bin/linux/debian/cran_apt_key.asc && \
-    echo "deb [signed-by=/usr/share/keyrings/cran-archive-keyring.gpg] https://cloud.r-project.org/bin/linux/debian bookworm-cran40/" > /etc/apt/sources.list.d/cran.list && \
+    apt install --no-install-recommends -y dirmngr ca-certificates gnupg wget && \
+    gpg --keyserver keyserver.ubuntu.com --recv-key 95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7 && \
+    gpg --armor --export 95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7 | \
+    tee /etc/apt/trusted.gpg.d/cran_debian_key.asc && \
+    echo "deb http://cloud.r-project.org/bin/linux/debian bookworm-cran40/" > /etc/apt/sources.list.d/cran.list && \
     apt update -qq && \
     apt install --no-install-recommends -y r-base
 
@@ -53,11 +55,11 @@ RUN apt update && apt install -y paraview
 # Install GNU Octave (Matlab-like)
 RUN apt update && apt install -y octave
 
-# Install Fiji (ImageJ)
-RUN apt update && apt install -y openjdk-11-jre && \
-    wget https://downloads.imagej.net/fiji/latest/fiji-linux64.zip && \
-    unzip fiji-linux64.zip -d /opt && \
-    rm fiji-linux64.zip && \
+# Install Fiji (ImageJ) with bundled JDK
+RUN apt update && apt install -y unzip wget && \
+    wget https://downloads.imagej.net/fiji/latest/fiji-latest-linux64-jdk.zip && \
+    unzip fiji-latest-linux64-jdk.zip -d /opt && \
+    rm fiji-latest-linux64-jdk.zip && \
     ln -s /opt/Fiji.app/ImageJ-linux64 /usr/local/bin/fiji
 
 # Install QGIS
