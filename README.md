@@ -104,14 +104,13 @@ docker build -t descios .
 # Run the container
 docker run -d -p 6080:6080 --name desci-lab descios
 
-# If you have an NVIDIA GPU (Optional)
+# If you have NVIDIA GPU(s) (Optional)
 docker run -d --gpus all -p 6080:6080 --name desci-lab descios
 ```
 
 Access via:
 
 * 🌐 `http://localhost:6080/vnc.html` → Full Linux desktop in browser (use the password you set during build)
-* 🧪 `http://localhost:8888` → JupyterLab interface (optional)
 
 > **Security Note**: For production use, always set a custom password during build using `--build-arg PASSWORD=your_secure_password`. The default password is for development purposes only.
 
