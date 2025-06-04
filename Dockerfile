@@ -14,6 +14,15 @@ RUN apt update && apt install -y \
     libgl1-mesa-glx libglib2.0-0 \
     libsm6 libxrender1 libxext6 \
     firefox-esr \
+    libglvnd0 \
+    libgl1 \
+    libglx0 \
+    libegl1 \
+    mesa-utils \
+    ocl-icd-libopencl1 \
+    opencl-headers \
+    clinfo \
+    freeglut3-dev \
     && apt clean
 
 # Create user and set password
@@ -91,6 +100,20 @@ RUN echo -e '[Desktop Entry]\nName=Remix IDE\nExec=firefox https://remix.ethereu
 # Nault (Nano wallet via Browser)
 RUN echo -e '[Desktop Entry]\nName=Nault\nExec=firefox https://nault.cc\nType=Application\nCategories=Finance;' \
     > /usr/share/applications/nault.desktop
+
+# Clone and install CellModeller
+WORKDIR /opt
+RUN git clone https://github.com/HaseloffLab/CellModeller.git && \
+    cd /opt/CellModeller && pip install -e . && \
+    mkdir /opt/data && \
+    chown -R $USER:$USER /opt/data
+
+# OpenCL configuration
+RUN mkdir -p /etc/OpenCL/vendors && \
+    echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
+RUN ln -s /usr/lib/x86_64-linux-gnu/libOpenCL.so.1 /usr/lib/libOpenCL.so
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
 
 # Switch to jupyter user
 USER $USER

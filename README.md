@@ -40,6 +40,7 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 | Component        | Description                                                      |
 |------------------|------------------------------------------------------------------|
 | **XFCE4**         | Lightweight desktop environment with customized layout           |
+| **OpenCL**        | Critical for accelerated computing in diverse scientific tools   |
 | **TigerVNC**      | VNC server to expose the XFCE desktop                            |
 | **noVNC + Websockify** | Enables browser-based access via WebSocket                     |
 | **JupyterLab**    | Development notebook environment with BeakerX multi-language support |
@@ -47,6 +48,7 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 | **Spyder**        | Scientific Python IDE                                            |
 | **UGENE**         | Bioinformatics suite                                             |
 | **ParaView**      | Scientific visualization tool                                    |
+| **CellModeller**  | Multicellular modelling framework                                |
 | **GNU Octave**    | MATLAB-like numerical computing                                  |
 | **Fiji/ImageJ**   | Image processing and analysis                                    |
 | **QGIS**          | Geographic Information System                                    |
@@ -67,7 +69,7 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 - 📁 **Persistent scientific workspace (home folder mountable)**
 - 🧬 **Comprehensive scientific software suite**
 - 📊 **Data analysis tools (R, Python, Octave)**
-- 🔬 **Bioinformatics and molecular modeling**
+- 🔬 **Bioinformatics and cellular/molecular modeling**
 - 🗺️ **Geospatial analysis with QGIS**
 - 🖼️ **Image processing with Fiji/ImageJ**
 - 📡 **Decentralized tools (IPFS, Syncthing)**
