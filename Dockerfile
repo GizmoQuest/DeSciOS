@@ -2,7 +2,7 @@ FROM python:3.10-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV USER=jupyter
-ARG PASSWORD=1234
+ARG PASSWORD=vncpassword
 
 # Basic system setup
 RUN apt update && apt install -y \
@@ -112,8 +112,8 @@ RUN git clone https://github.com/HaseloffLab/CellModeller.git && \
 RUN mkdir -p /etc/OpenCL/vendors && \
     echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 RUN ln -s /usr/lib/x86_64-linux-gnu/libOpenCL.so.1 /usr/lib/libOpenCL.so
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
 
 # Switch to jupyter user
 USER $USER
