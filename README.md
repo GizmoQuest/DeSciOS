@@ -10,6 +10,8 @@
 
 **DeSciOS** is a containerized, headless Linux desktop environment purpose-built for decentralized science. Accessible entirely through a browser, it combines lightweight desktop streaming with research productivity tools and AI-readiness.
 
+*Key goal: Decentralize open source scientific software that remains trapped in centralized silos.*
+
 Originally inspired by the idea of a Stadia-like environment, **DeSciOS** evolves that vision toward enabling:
 
 - Local-first scientific computing
