@@ -116,7 +116,7 @@ Access via:
 
 * 🌐 `http://localhost:6080/vnc.html` → Full Linux desktop in browser (use the password you set during build)
 
-> **Security Note**: For production use, always set a custom password during build using `--build-arg PASSWORD=your_secure_password`. The default password is for development purposes only.
+> **Security Note**: For production use, always set a custom password during build using `--build-arg PASSWORD=your_secure_password`. The default password `vncpassword` is for development purposes only.
 
 ---
 
