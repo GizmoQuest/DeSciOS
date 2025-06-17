@@ -322,12 +322,11 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def web_search_and_summarize(self, query):
         try:
-            search_url = f"https://duckduckgo.com/html/?q={requests.utils.quote(query)}"
+            search_url = f"https://search.brave.com/search?q={requests.utils.quote(query)}"
             r = requests.get(search_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
             soup = BeautifulSoup(r.text, "html.parser")
             links = soup.find_all('a', href=True)
-            # Filter out links that are not real results
-            result_links = [a for a in links if a['href'].startswith('http') and 'duckduckgo.com' not in a['href']]
+            result_links = [a for a in links if a['href'].startswith('http') and 'brave.com' not in a['href']]
             if not result_links:
                 return "No web results found."
             first_url = result_links[0]['href']
