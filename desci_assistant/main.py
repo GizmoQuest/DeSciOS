@@ -13,6 +13,7 @@ from gi.repository import Gtk, GLib, Notify, Gdk
 import threading
 from bs4 import BeautifulSoup
 import re
+import brotli
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -324,7 +325,11 @@ class DeSciOSChatWidget(Gtk.Window):
         try:
             search_url = f"https://search.brave.com/search?q={requests.utils.quote(query)}"
             r = requests.get(search_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-            soup = BeautifulSoup(r.text, "html.parser")
+            if r.headers.get('Content-Encoding') == 'br':
+                content = brotli.decompress(r.content)
+                soup = BeautifulSoup(content, "html.parser")
+            else:
+                soup = BeautifulSoup(r.text, "html.parser")
             links = soup.find_all('a', href=True)
             result_links = [a for a in links if a['href'].startswith('http') and 'brave.com' not in a['href']]
             if not result_links:
