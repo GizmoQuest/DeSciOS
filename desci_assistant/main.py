@@ -52,7 +52,6 @@ window, textview, entry, button, headerbar {
     border-radius: 16px 16px 4px 16px;
     padding: 8px 14px;
     margin: 6px 0 6px 60px;
-    max-width: 75%;
     align-self: flex-end;
 }
 .bubble-assistant {
@@ -61,7 +60,6 @@ window, textview, entry, button, headerbar {
     border-radius: 16px 16px 16px 4px;
     padding: 8px 14px;
     margin: 6px 60px 6px 0;
-    max-width: 75%;
     align-self: flex-start;
 }
 #inputbox {
