@@ -235,18 +235,20 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def markdown_to_pango(self, text):
         import re
+        # Remove any HTML tags that may have leaked in
+        text = re.sub(r'<[^>]+>', '', text)
         # Code blocks (```...```)
         def code_block_repl(match):
             code = match.group(2)
             code = GLib.markup_escape_text(code)
             return f'<span font_family="monospace">{code}</span>'
         text = re.sub(r'```(\w+)?\n([\s\S]+?)```', code_block_repl, text)
-        # Inline code (`code`)
-        text = re.sub(r'`([^`]+)`', lambda m: f'<span font_family="monospace">{GLib.markup_escape_text(m.group(1))}</span>', text)
         # Headings
         text = re.sub(r'^### (.+)$', r'<span size="x-large" weight="bold">\1</span>', text, flags=re.MULTILINE)
         text = re.sub(r'^## (.+)$', r'<span size="xx-large" weight="bold">\1</span>', text, flags=re.MULTILINE)
         text = re.sub(r'^# (.+)$', r'<span size="20000" weight="bold">\1</span>', text, flags=re.MULTILINE)
+        # Inline code (`code`)
+        text = re.sub(r'`([^`]+)`', lambda m: f'<span font_family="monospace">{GLib.markup_escape_text(m.group(1))}</span>', text)
         # Bold: **text** or __text__
         text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
         text = re.sub(r'__(.+?)__', r'<b>\1</b>', text)
@@ -273,7 +275,7 @@ class DeSciOSChatWidget(Gtk.Window):
         text = '\n'.join(new_lines)
         # Escape any remaining markup
         text = GLib.markup_escape_text(text)
-        # Unescape our tags
+        # Unescape our tags (only the ones we generated)
         text = text.replace('&lt;b&gt;', '<b>').replace('&lt;/b&gt;', '</b>')
         text = text.replace('&lt;i&gt;', '<i>').replace('&lt;/i&gt;', '</i>')
         text = text.replace('&lt;a href=&quot;', '<a href="').replace('&quot;&gt;', '">').replace('&lt;/a&gt;', '</a>')
