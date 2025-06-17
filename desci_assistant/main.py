@@ -243,9 +243,9 @@ class DeSciOSChatWidget(Gtk.Window):
             code = GLib.markup_escape_text(code)
             return f'<span font_family="monospace">{code}</span>'
         text = re.sub(r'```(\w+)?\n([\s\S]+?)```', code_block_repl, text)
-        # Headings
-        text = re.sub(r'^### (.+)$', r'<span size="x-large" weight="bold">\1</span>', text, flags=re.MULTILINE)
-        text = re.sub(r'^## (.+)$', r'<span size="xx-large" weight="bold">\1</span>', text, flags=re.MULTILINE)
+        # Headings: use only numeric size values
+        text = re.sub(r'^### (.+)$', r'<span size="12000" weight="bold">\1</span>', text, flags=re.MULTILINE)
+        text = re.sub(r'^## (.+)$', r'<span size="15000" weight="bold">\1</span>', text, flags=re.MULTILINE)
         text = re.sub(r'^# (.+)$', r'<span size="20000" weight="bold">\1</span>', text, flags=re.MULTILINE)
         # Inline code (`code`)
         text = re.sub(r'`([^`]+)`', lambda m: f'<span font_family="monospace">{GLib.markup_escape_text(m.group(1))}</span>', text)
@@ -275,12 +275,11 @@ class DeSciOSChatWidget(Gtk.Window):
         text = '\n'.join(new_lines)
         # Escape any remaining markup
         text = GLib.markup_escape_text(text)
-        # Unescape our tags (only the ones we generated)
+        # Unescape only the tags we generated
         text = text.replace('&lt;b&gt;', '<b>').replace('&lt;/b&gt;', '</b>')
         text = text.replace('&lt;i&gt;', '<i>').replace('&lt;/i&gt;', '</i>')
         text = text.replace('&lt;a href=&quot;', '<a href="').replace('&quot;&gt;', '">').replace('&lt;/a&gt;', '</a>')
         text = text.replace('&lt;span ', '<span ').replace('&lt;/span&gt;', '</span>')
-        text = text.replace('&gt;', '>')
         return text
 
     def append_message(self, sender, message):
