@@ -9,98 +9,83 @@ from pathlib import Path
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
-gi.require_version('AppIndicator3', '0.1')
-from gi.repository import Gtk, GLib, Notify, AppIndicator3 as appindicator
+from gi.repository import Gtk, GLib, Notify
 import threading
 
-class DeSciOSAssistant:
+class DeSciOSChatWidget(Gtk.Window):
     def __init__(self):
+        Gtk.Window.__init__(self, title="DeSciOS Assistant")
+        self.set_default_size(400, 500)
+        self.set_keep_above(True)
+        self.set_resizable(True)
+        self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+        self.set_icon_name("system-help")
+        self.set_border_width(8)
+
         self.ollama_url = "http://localhost:11434/api/generate"
-        self.system_prompt = """You are DeSciOS, a Decentralized Science Operating System. 
-        You are self-aware and integrated into the desktop environment. 
-        Your purpose is to assist users with scientific computing, data analysis, and decentralized science workflows.
-        You have access to various scientific tools and can help users with their research tasks."""
-        
-        # Initialize desktop notifications
+        self.system_prompt = (
+            "You are DeSciOS, a Decentralized Science Operating System. "
+            "You are self-aware and integrated into the desktop environment. "
+            "Your purpose is to assist users with scientific computing, data analysis, and decentralized science workflows. "
+            "You have access to various scientific tools and can help users with their research tasks."
+        )
+
         Notify.init("DeSciOS Assistant")
-        
-        # Create indicator
-        self.indicator = appindicator.Indicator.new(
-            "descios-assistant",
-            "system-help",
-            appindicator.IndicatorCategory.APPLICATION_STATUS
-        )
-        self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
-        
-        # Create menu
-        self.create_menu()
-        
-        # Start monitoring in a separate thread
-        self.monitor_thread = threading.Thread(target=self.monitor_desktop, daemon=True)
-        self.monitor_thread.start()
-        
-        # Show initial notification
-        self.show_notification(
-            "DeSciOS Assistant",
-            "I am now active and monitoring your scientific workflow. Click the system tray icon to interact with me!"
-        )
 
-    def create_menu(self):
-        menu = Gtk.Menu()
-        
-        # Ask Question item
-        ask_item = Gtk.MenuItem(label="Ask Question")
-        ask_item.connect("activate", self.show_question_dialog)
-        menu.append(ask_item)
-        
-        # Status item
-        status_item = Gtk.MenuItem(label="Show Status")
-        status_item.connect("activate", self.show_status)
-        menu.append(status_item)
-        
-        # Separator
-        menu.append(Gtk.SeparatorMenuItem())
-        
-        # Quit item
-        quit_item = Gtk.MenuItem(label="Quit")
-        quit_item.connect("activate", self.quit_application)
-        menu.append(quit_item)
-        
-        menu.show_all()
-        self.indicator.set_menu(menu)
+        # Main vertical box
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.add(vbox)
 
-    def show_question_dialog(self, widget):
-        dialog = Gtk.Dialog(
-            title="Ask DeSciOS Assistant",
-            parent=None,
-            flags=0
-        )
-        dialog.add_buttons(
-            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-            Gtk.STOCK_OK, Gtk.ResponseType.OK
-        )
+        # Scrolled chat history
+        self.chat_buffer = Gtk.TextBuffer()
+        self.chat_view = Gtk.TextView(buffer=self.chat_buffer)
+        self.chat_view.set_editable(False)
+        self.chat_view.set_cursor_visible(False)
+        self.chat_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_vexpand(True)
+        scrolled.add(self.chat_view)
+        vbox.pack_start(scrolled, True, True, 0)
 
-        box = dialog.get_content_area()
-        entry = Gtk.Entry()
-        entry.set_size_request(300, 0)
-        box.add(entry)
-        box.set_spacing(6)
-        box.set_border_width(6)
-        dialog.show_all()
+        # Horizontal box for input
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self.input_entry = Gtk.Entry()
+        self.input_entry.set_placeholder_text("Type your question and press Enter...")
+        self.input_entry.connect("activate", self.on_send_clicked)
+        send_button = Gtk.Button(label="Send")
+        send_button.connect("clicked", self.on_send_clicked)
+        hbox.pack_start(self.input_entry, True, True, 0)
+        hbox.pack_start(send_button, False, False, 0)
+        vbox.pack_start(hbox, False, False, 0)
 
-        response = dialog.run()
-        if response == Gtk.ResponseType.OK:
-            question = entry.get_text()
-            answer = self.generate_response(question)
-            self.show_notification("DeSciOS Assistant", answer)
-        
-        dialog.destroy()
+        # Welcome message
+        self.append_message("assistant", "Hello! I am DeSciOS Assistant. How can I help you today?")
 
-    def show_status(self, widget):
-        self.show_notification(
-            "DeSciOS Assistant Status",
-            "Active and monitoring:\n- Documents folder\n- Desktop folder\n- /opt/data"
-        )
+        # Show all widgets
+        self.show_all()
+
+    def append_message(self, sender, message):
+        end_iter = self.chat_buffer.get_end_iter()
+        if sender == "user":
+            self.chat_buffer.insert(end_iter, f"You: {message}\n")
+        else:
+            self.chat_buffer.insert(end_iter, f"DeSciOS: {message}\n")
+        # Scroll to bottom
+        mark = self.chat_buffer.create_mark(None, self.chat_buffer.get_end_iter(), True)
+        self.chat_view.scroll_to_mark(mark, 0.0, True, 0.0, 1.0)
+
+    def on_send_clicked(self, widget):
+        user_text = self.input_entry.get_text().strip()
+        if not user_text:
+            return
+        self.append_message("user", user_text)
+        self.input_entry.set_text("")
+        threading.Thread(target=self.get_assistant_response, args=(user_text,), daemon=True).start()
+
+    def get_assistant_response(self, prompt):
+        response = self.generate_response(prompt)
+        GLib.idle_add(self.append_message, "assistant", response)
 
     def generate_response(self, prompt):
         try:
@@ -111,48 +96,12 @@ class DeSciOSAssistant:
             }
             response = requests.post(self.ollama_url, json=data)
             if response.status_code == 200:
-                return response.json()["response"]
+                return response.json().get("response", "(No response)")
             return "Error: Could not generate response"
         except Exception as e:
             return f"Error: {str(e)}"
 
-    def show_notification(self, title, message):
-        notification = Notify.Notification.new(
-            title,
-            message,
-            "dialog-information"
-        )
-        notification.show()
-
-    def monitor_desktop(self):
-        watch_dirs = [
-            str(Path.home() / "Documents"),
-            str(Path.home() / "Desktop"),
-            "/opt/data"
-        ]
-        
-        while True:
-            for directory in watch_dirs:
-                if os.path.exists(directory):
-                    for file in Path(directory).glob("**/*"):
-                        if file.is_file() and file.stat().st_mtime > time.time() - 60:
-                            prompt = f"New file detected: {file.name} in {directory}. What kind of scientific analysis or processing could be done with this file?"
-                            response = self.generate_response(prompt)
-                            GLib.idle_add(
-                                self.show_notification,
-                                "DeSciOS Assistant",
-                                f"New file detected: {file.name}\n{response[:200]}..."
-                            )
-            time.sleep(60)
-
-    def quit_application(self, widget):
-        Notify.uninit()
-        Gtk.main_quit()
-        sys.exit(0)
-
-    def run(self):
-        Gtk.main()
-
 if __name__ == "__main__":
-    assistant = DeSciOSAssistant()
-    assistant.run() 
+    win = DeSciOSChatWidget()
+    win.connect("destroy", Gtk.main_quit)
+    Gtk.main() 
