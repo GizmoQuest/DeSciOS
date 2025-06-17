@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=DeSciOS Assistant
+Comment=AI-powered scientific computing assistant
+Exec=python3 /opt/desci_assistant/main.py
+Icon=system-help
+Terminal=false
+Type=Application
+Categories=Science;Education;Development;
+StartupNotify=true 
