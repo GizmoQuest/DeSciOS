@@ -326,10 +326,8 @@ class DeSciOSChatWidget(Gtk.Window):
             r = requests.get(search_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
             soup = BeautifulSoup(r.text, "html.parser")
             links = soup.find_all('a', href=True)
-            result_links = [a for a in links if '/l/?kh=' in a['href'] or 'duckduckgo.com/l/?' in a['href']]
-            if not result_links:
-                # fallback: any link that looks like a result
-                result_links = [a for a in links if a['href'].startswith('http')]
+            # Filter out links that are not real results
+            result_links = [a for a in links if a['href'].startswith('http') and 'duckduckgo.com' not in a['href']]
             if not result_links:
                 return "No web results found."
             first_url = result_links[0]['href']
