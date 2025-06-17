@@ -210,9 +210,15 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def load_theme(self):
         css = DARK_CSS if self.current_theme == 'dark' else LIGHT_CSS
+        screen = Gdk.Screen.get_default()
+        # Remove previous provider if present
+        Gtk.StyleContext.remove_provider_for_screen(
+            screen, self.style_provider
+        )
+        self.style_provider = Gtk.CssProvider()
         self.style_provider.load_from_data(css)
         Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
+            screen,
             self.style_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
@@ -227,7 +233,19 @@ class DeSciOSChatWidget(Gtk.Window):
             self.begin_move_drag(event.button, int(event.x_root), int(event.y_root), event.time)
 
     def markdown_to_pango(self, text):
-        # Convert Markdown to Pango markup
+        import re
+        # Code blocks (```)
+        def code_block_repl(match):
+            code = match.group(2)
+            code = GLib.markup_escape_text(code)
+            return f'<span font_family="monospace" background="#222" foreground="#f8f8f2">{code}</span>'
+        text = re.sub(r'```(\w+)?\n([\s\S]+?)```', code_block_repl, text)
+        # Headings
+        text = re.sub(r'^### (.+)$', r'<span size="x-large" weight="bold">\1</span>', text, flags=re.MULTILINE)
+        text = re.sub(r'^## (.+)$', r'<span size="xx-large" weight="bold">\1</span>', text, flags=re.MULTILINE)
+        text = re.sub(r'^# (.+)$', r'<span size="20000" weight="bold">\1</span>', text, flags=re.MULTILINE)
+        # Inline code (`code`)
+        text = re.sub(r'`([^`]+)`', lambda m: f'<span font_family="monospace" background="#222" foreground="#f8f8f2">{GLib.markup_escape_text(m.group(1))}</span>', text)
         # Bold: **text** or __text__
         text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
         text = re.sub(r'__(.+?)__', r'<b>\1</b>', text)
@@ -258,6 +276,8 @@ class DeSciOSChatWidget(Gtk.Window):
         text = text.replace('&lt;b&gt;', '<b>').replace('&lt;/b&gt;', '</b>')
         text = text.replace('&lt;i&gt;', '<i>').replace('&lt;/i&gt;', '</i>')
         text = text.replace('&lt;a href=&quot;', '<a href="').replace('&quot;&gt;', '">').replace('&lt;/a&gt;', '</a>')
+        text = text.replace('&lt;span ', '<span ').replace('&lt;/span&gt;', '</span>')
+        text = text.replace('&gt;', '>')
         return text
 
     def append_message(self, sender, message):
