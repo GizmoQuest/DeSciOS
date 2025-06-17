@@ -322,18 +322,24 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def web_search_and_summarize(self, query):
         try:
-            search_url = f"https://duckduckgo.com/html/?q={requests.utils.quote(query)}"
+            search_url = f"https://lite.duckduckgo.com/lite/?q={requests.utils.quote(query)}"
             r = requests.get(search_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
             soup = BeautifulSoup(r.text, "html.parser")
-            links = soup.find_all('a', class_='result__a', href=True)
-            if not links:
+            links = soup.find_all('a', href=True)
+            # Find the first result that is not an ad or navigation
+            first_url = None
+            for a in links:
+                href = a['href']
+                if href.startswith('http'):
+                    first_url = href
+                    break
+            if not first_url:
                 return "No web results found."
-            first_url = links[0]['href']
             page = requests.get(first_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
             page_soup = BeautifulSoup(page.text, "html.parser")
             texts = page_soup.stripped_strings
             content = ' '.join(list(texts)[:1000])[:2000]
-            summary_prompt = f"Summarize the following web page for a scientist:\n\n{content}"
+            summary_prompt = f"Summarize the following web page for a scientist:\\n\\n{content}"
             return self.generate_response(summary_prompt)
         except Exception as e:
             return f"Error during web search: {str(e)}"
