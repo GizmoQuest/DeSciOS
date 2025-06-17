@@ -52,7 +52,6 @@ window, textview, entry, button, headerbar {
     border-radius: 16px 16px 4px 16px;
     padding: 8px 14px;
     margin: 6px 0 6px 60px;
-    align-self: flex-end;
 }
 .bubble-assistant {
     background: #374151;
@@ -60,7 +59,6 @@ window, textview, entry, button, headerbar {
     border-radius: 16px 16px 16px 4px;
     padding: 8px 14px;
     margin: 6px 60px 6px 0;
-    align-self: flex-start;
 }
 #inputbox {
     background: #23272e;
@@ -158,7 +156,7 @@ class DeSciOSChatWidget(Gtk.Window):
         bubble = Gtk.Label()
         bubble.set_line_wrap(True)
         bubble.set_xalign(0 if sender == "assistant" else 1)
-        bubble.set_markup(f"<span size='large'>{Gtk.utils.escape(message)}</span>")
+        bubble.set_markup(f"<span size='large'>{GLib.markup_escape_text(message)}</span>")
         bubble.set_selectable(True)
         bubble.set_justify(Gtk.Justification.LEFT)
         bubble.set_padding(8, 8)
