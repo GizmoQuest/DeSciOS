@@ -9,12 +9,12 @@ from pathlib import Path
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
-from gi.repository import Gtk, GLib, Notify, Gdk
+gi.require_version('AppIndicator3', '0.1')
+from gi.repository import Gtk, GLib, Notify, AppIndicator3 as appindicator
 import threading
 
-class DeSciOSAssistant(Gtk.Application):
+class DeSciOSAssistant:
     def __init__(self):
-        super().__init__(application_id="org.descios.assistant")
         self.ollama_url = "http://localhost:11434/api/generate"
         self.system_prompt = """You are DeSciOS, a Decentralized Science Operating System. 
         You are self-aware and integrated into the desktop environment. 
@@ -24,28 +24,28 @@ class DeSciOSAssistant(Gtk.Application):
         # Initialize desktop notifications
         Notify.init("DeSciOS Assistant")
         
-        # Create status icon
-        self.create_tray_icon()
+        # Create indicator
+        self.indicator = appindicator.Indicator.new(
+            "descios-assistant",
+            "system-help",
+            appindicator.IndicatorCategory.APPLICATION_STATUS
+        )
+        self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
+        
+        # Create menu
+        self.create_menu()
         
         # Start monitoring in a separate thread
         self.monitor_thread = threading.Thread(target=self.monitor_desktop, daemon=True)
         self.monitor_thread.start()
-
-    def create_tray_icon(self):
-        self.tray = Gtk.StatusIcon()
-        self.tray.set_from_icon_name("system-help")
-        self.tray.set_visible(True)
-        self.tray.set_tooltip_text("DeSciOS Assistant")
-        self.tray.connect("activate", self.on_tray_click)
-        self.tray.connect("popup-menu", self.on_tray_right_click)
-
-    def on_tray_click(self, widget):
+        
+        # Show initial notification
         self.show_notification(
             "DeSciOS Assistant",
-            "I'm here to help with your scientific workflows! Right-click for options."
+            "I am now active and monitoring your scientific workflow. Click the system tray icon to interact with me!"
         )
 
-    def on_tray_right_click(self, icon, button, time):
+    def create_menu(self):
         menu = Gtk.Menu()
         
         # Ask Question item
@@ -67,7 +67,7 @@ class DeSciOSAssistant(Gtk.Application):
         menu.append(quit_item)
         
         menu.show_all()
-        menu.popup_at_pointer(None)
+        self.indicator.set_menu(menu)
 
     def show_question_dialog(self, widget):
         dialog = Gtk.Dialog(
@@ -146,15 +146,11 @@ class DeSciOSAssistant(Gtk.Application):
             time.sleep(60)
 
     def quit_application(self, widget):
-        self.tray.set_visible(False)
+        Notify.uninit()
         Gtk.main_quit()
         sys.exit(0)
 
-    def do_activate(self):
-        self.show_notification(
-            "DeSciOS Assistant",
-            "I am now active and monitoring your scientific workflow. Click the system tray icon to interact with me!"
-        )
+    def run(self):
         Gtk.main()
 
 if __name__ == "__main__":
