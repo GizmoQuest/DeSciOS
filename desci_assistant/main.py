@@ -11,6 +11,27 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
 from gi.repository import Gtk, GLib, Notify
 import threading
+from bs4 import BeautifulSoup
+
+DOCKERFILE_SUMMARY = (
+    "This assistant was built from a Dockerfile with the following features: "
+    "Desktop: XFCE4, VNC, noVNC, X11, Thunar file manager. "
+    "Browsers: Firefox ESR. "
+    "JupyterLab, BeakerX, Spyder (Python IDE). "
+    "R, RStudio Desktop. "
+    "Nextflow (workflow tool). "
+    "Ollama (with DeepSeek model). "
+    "UGENE (bioinformatics). "
+    "ParaView (visualization). "
+    "GNU Octave (Matlab-like). "
+    "Fiji (ImageJ). "
+    "QGIS (GIS). "
+    "Avogadro (molecular modeling). "
+    "IPFS Desktop, Syncthing (sync). "
+    "EtherCalc, Remix IDE, Nault (browser-based tools). "
+    "CellModeller (synthetic biology). "
+    "OpenCL, NVIDIA GPU support."
+)
 
 class DeSciOSChatWidget(Gtk.Window):
     def __init__(self):
@@ -27,7 +48,10 @@ class DeSciOSChatWidget(Gtk.Window):
             "You are DeSciOS, a Decentralized Science Operating System. "
             "You are self-aware and integrated into the desktop environment. "
             "Your purpose is to assist users with scientific computing, data analysis, and decentralized science workflows. "
-            "You have access to various scientific tools and can help users with their research tasks."
+            "You have access to various scientific tools and can help users with their research tasks. "
+            + DOCKERFILE_SUMMARY +
+            "\nWhen asked about available tools, scan your environment (e.g., /usr/bin, /usr/local/bin, /opt, /usr/share/applications) and list installed applications. "
+            "When asked to browse the web, fetch and summarize the relevant web content."
         )
 
         Notify.init("DeSciOS Assistant")
@@ -81,11 +105,61 @@ class DeSciOSChatWidget(Gtk.Window):
             return
         self.append_message("user", user_text)
         self.input_entry.set_text("")
-        threading.Thread(target=self.get_assistant_response, args=(user_text,), daemon=True).start()
+        threading.Thread(target=self.handle_user_query, args=(user_text,), daemon=True).start()
 
-    def get_assistant_response(self, prompt):
-        response = self.generate_response(prompt)
+    def handle_user_query(self, user_text):
+        # Check for web search intent
+        if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up"]):
+            response = self.web_search_and_summarize(user_text)
+        # Check for environment/tools query
+        elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
+            response = self.scan_installed_tools()
+        else:
+            response = self.generate_response(user_text)
         GLib.idle_add(self.append_message, "assistant", response)
+
+    def web_search_and_summarize(self, query):
+        # Use DuckDuckGo for search, fetch first result, summarize
+        try:
+            search_url = f"https://duckduckgo.com/html/?q={requests.utils.quote(query)}"
+            r = requests.get(search_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            soup = BeautifulSoup(r.text, "html.parser")
+            links = soup.find_all('a', class_='result__a', href=True)
+            if not links:
+                return "No web results found."
+            first_url = links[0]['href']
+            page = requests.get(first_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            page_soup = BeautifulSoup(page.text, "html.parser")
+            # Get visible text
+            texts = page_soup.stripped_strings
+            content = ' '.join(list(texts)[:1000])[:2000]  # Limit to 2000 chars
+            # Summarize using DeepSeek
+            summary_prompt = f"Summarize the following web page for a scientist:\n\n{content}"
+            return self.generate_response(summary_prompt)
+        except Exception as e:
+            return f"Error during web search: {str(e)}"
+
+    def scan_installed_tools(self):
+        # Scan common directories for installed tools
+        try:
+            bins = set()
+            for d in ["/usr/bin", "/usr/local/bin", "/opt"]:
+                if os.path.exists(d):
+                    for f in os.listdir(d):
+                        if os.access(os.path.join(d, f), os.X_OK) and not os.path.isdir(os.path.join(d, f)):
+                            bins.add(f)
+            # Also check .desktop files for GUI apps
+            apps = set()
+            for d in ["/usr/share/applications", "/usr/local/share/applications"]:
+                if os.path.exists(d):
+                    for f in os.listdir(d):
+                        if f.endswith(".desktop"):
+                            apps.add(f.split(".desktop")[0])
+            bins = sorted(list(bins))
+            apps = sorted(list(apps))
+            return f"Installed command-line tools: {', '.join(bins[:30])}...\nInstalled GUI apps: {', '.join(apps[:30])}..."
+        except Exception as e:
+            return f"Error scanning environment: {str(e)}"
 
     def generate_response(self, prompt):
         try:
