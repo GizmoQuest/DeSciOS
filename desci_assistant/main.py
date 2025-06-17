@@ -35,43 +35,106 @@ DOCKERFILE_SUMMARY = (
 
 DARK_CSS = b'''
 window, textview, entry, button, headerbar {
-    background: #23272e;
+    background: #181c24;
     color: #e6e6e6;
     font-family: "Segoe UI", "Liberation Sans", "Arial", sans-serif;
-    font-size: 13px;
+    font-size: 15px;
 }
 #headerbar {
-    background: #23272e;
-    border-radius: 12px 12px 0 0;
-    padding: 8px 16px;
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+    border-radius: 16px 16px 0 0;
+    padding: 14px 28px;
     border-bottom: 1px solid #444;
+    color: #fff;
 }
 .bubble-user {
     background: #3b82f6;
     color: #fff;
-    border-radius: 16px 16px 4px 16px;
-    padding: 8px 14px;
-    margin: 6px 0 6px 60px;
+    border-radius: 18px 18px 6px 18px;
+    padding: 12px 18px;
+    margin: 10px 0 10px 80px;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.08);
 }
 .bubble-assistant {
-    background: #374151;
+    background: #23272e;
     color: #e6e6e6;
-    border-radius: 16px 16px 16px 4px;
-    padding: 8px 14px;
-    margin: 6px 60px 6px 0;
+    border-radius: 18px 18px 18px 6px;
+    padding: 12px 18px;
+    margin: 10px 80px 10px 0;
+    box-shadow: 0 2px 8px rgba(55,65,81,0.08);
 }
 #inputbox {
     background: #23272e;
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 16px 16px;
     border-top: 1px solid #444;
-    padding: 10px 8px 8px 8px;
+    padding: 14px 12px 12px 12px;
+}
+#togglemode {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    margin-left: 8px;
+}
+window {
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+'''
+
+LIGHT_CSS = b'''
+window, textview, entry, button, headerbar {
+    background: #f7f7fa;
+    color: #23272e;
+    font-family: "Segoe UI", "Liberation Sans", "Arial", sans-serif;
+    font-size: 15px;
+}
+#headerbar {
+    background: linear-gradient(90deg, #a1c4fd 0%, #c2e9fb 100%);
+    border-radius: 16px 16px 0 0;
+    padding: 14px 28px;
+    border-bottom: 1px solid #bbb;
+    color: #23272e;
+}
+.bubble-user {
+    background: #3b82f6;
+    color: #fff;
+    border-radius: 18px 18px 6px 18px;
+    padding: 12px 18px;
+    margin: 10px 0 10px 80px;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+}
+.bubble-assistant {
+    background: #e6e6e6;
+    color: #23272e;
+    border-radius: 18px 18px 18px 6px;
+    padding: 12px 18px;
+    margin: 10px 80px 10px 0;
+    box-shadow: 0 2px 8px rgba(55,65,81,0.08);
+}
+#inputbox {
+    background: #f7f7fa;
+    border-radius: 0 0 16px 16px;
+    border-top: 1px solid #bbb;
+    padding: 14px 12px 12px 12px;
+}
+#togglemode {
+    background: transparent;
+    border: none;
+    color: #23272e;
+    font-size: 16px;
+    margin-left: 8px;
+}
+window {
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
 }
 '''
 
 class DeSciOSChatWidget(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="DeSciOS Assistant")
-        self.set_default_size(420, 600)
+        self.set_default_size(440, 640)
         self.set_keep_above(True)
         self.set_resizable(True)
         self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
@@ -79,20 +142,13 @@ class DeSciOSChatWidget(Gtk.Window):
         self.set_icon_name("system-help")
         self.set_app_paintable(True)
         self.set_visual(self.get_screen().get_rgba_visual())
-        self.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.14, 0.15, 0.18, 0.98))
         self.set_decorated(False)
         self.set_opacity(0.98)
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.connect("button-press-event", self.on_window_button_press)
-
-        # CSS styling
-        style_provider = Gtk.CssProvider()
-        style_provider.load_from_data(DARK_CSS)
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            style_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
+        self.current_theme = 'dark'
+        self.style_provider = Gtk.CssProvider()
+        self.load_theme()
 
         self.ollama_url = "http://localhost:11434/api/generate"
         self.system_prompt = (
@@ -116,8 +172,11 @@ class DeSciOSChatWidget(Gtk.Window):
         header.set_show_close_button(True)
         header.set_title("DeSciOS Assistant")
         header.set_name("headerbar")
-        icon = Gtk.Image.new_from_icon_name("system-help", Gtk.IconSize.DIALOG)
-        header.pack_start(icon)
+        # Light/dark mode toggle button
+        self.toggle_button = Gtk.Button(label="🌙" if self.current_theme == 'dark' else "☀️")
+        self.toggle_button.set_name("togglemode")
+        self.toggle_button.connect("clicked", self.toggle_theme)
+        header.pack_end(self.toggle_button)
         main_vbox.pack_start(header, False, False, 0)
 
         # Chat area (scrollable)
@@ -134,6 +193,8 @@ class DeSciOSChatWidget(Gtk.Window):
         input_box.set_name("inputbox")
         self.input_entry = Gtk.Entry()
         self.input_entry.set_placeholder_text("Type your question and press Enter...")
+        self.input_entry.set_size_request(0, 36)
+        self.input_entry.set_hexpand(True)
         self.input_entry.connect("activate", self.on_send_clicked)
         send_button = Gtk.Button(label="Send")
         send_button.connect("clicked", self.on_send_clicked)
@@ -145,6 +206,20 @@ class DeSciOSChatWidget(Gtk.Window):
         self.append_message("assistant", "Hello! I am DeSciOS Assistant. How can I help you today?")
 
         self.show_all()
+
+    def load_theme(self):
+        css = DARK_CSS if self.current_theme == 'dark' else LIGHT_CSS
+        self.style_provider.load_from_data(css)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            self.style_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+    def toggle_theme(self, widget):
+        self.current_theme = 'light' if self.current_theme == 'dark' else 'dark'
+        self.toggle_button.set_label("🌙" if self.current_theme == 'dark' else "☀️")
+        self.load_theme()
 
     def on_window_button_press(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
