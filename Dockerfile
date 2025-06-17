@@ -21,15 +21,30 @@ RUN apt update && apt install -y \
     mesa-utils \
     ocl-icd-libopencl1 \
     opencl-headers \
-    clinfo \
+    clinfo lshw \
     freeglut3-dev \
+    python3-gi \
+    python3-gi-cairo \
+    gir1.2-gtk-3.0 \
+    gir1.2-notify-0.7 \
+    x11vnc \
+    xvfb \
     && apt clean
+
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+# Install Nextflow
+RUN curl -s https://get.nextflow.io | bash
+
+# Pull the deepseek-r1:8b model
+RUN ollama serve & sleep 5 && ollama pull deepseek-r1:8b
 
 # Create user and set password
 RUN useradd -ms /bin/bash $USER && echo "$USER:$PASSWORD" | chpasswd && adduser $USER sudo
 
-# Install JupyterLab
-RUN pip install --no-cache-dir jupyterlab
+# Install JupyterLab and Ollama library
+RUN pip install --no-cache-dir jupyterlab ollama
 
 # Install R for Debian bookworm
 RUN apt update -qq && \
@@ -107,6 +122,15 @@ RUN git clone https://github.com/HaseloffLab/CellModeller.git && \
     cd /opt/CellModeller && pip install -e . && \
     mkdir /opt/data && \
     chown -R $USER:$USER /opt/data
+
+# Install DeSci Assistant
+WORKDIR /opt
+COPY desci_assistant /opt/desci_assistant
+RUN cd /opt/desci_assistant && \
+    pip install -r requirements.txt && \
+    chmod +x main.py && \
+    cp desci-assistant.desktop /usr/share/applications/ && \
+    chown -R $USER:$USER /opt/desci_assistant
 
 # OpenCL configuration
 RUN mkdir -p /etc/OpenCL/vendors && \
