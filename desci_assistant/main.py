@@ -280,6 +280,9 @@ class DeSciOSChatWidget(Gtk.Window):
         text = text.replace('&lt;i&gt;', '<i>').replace('&lt;/i&gt;', '</i>')
         text = text.replace('&lt;a href=&quot;', '<a href="').replace('&quot;&gt;', '">').replace('&lt;/a&gt;', '</a>')
         text = text.replace('&lt;span ', '<span ').replace('&lt;/span&gt;', '</span>')
+        text = text.replace('&quot;', '"')
+        # Strict: only allow <span font_family="monospace"> and <span size="[0-9]+" ...> tags
+        text = re.sub(r'<span(?! (font_family="monospace"|size="[0-9]+"))(.*?)>', '', text)
         return text
 
     def append_message(self, sender, message):
