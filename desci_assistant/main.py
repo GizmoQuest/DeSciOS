@@ -235,18 +235,18 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def markdown_to_pango(self, text):
         import re
-        # Code blocks (```)
+        # Code blocks (```...```)
         def code_block_repl(match):
             code = match.group(2)
             code = GLib.markup_escape_text(code)
-            return f'<span font_family="monospace" background="#222" foreground="#f8f8f2">{code}</span>'
+            return f'<span font_family="monospace">{code}</span>'
         text = re.sub(r'```(\w+)?\n([\s\S]+?)```', code_block_repl, text)
+        # Inline code (`code`)
+        text = re.sub(r'`([^`]+)`', lambda m: f'<span font_family="monospace">{GLib.markup_escape_text(m.group(1))}</span>', text)
         # Headings
         text = re.sub(r'^### (.+)$', r'<span size="x-large" weight="bold">\1</span>', text, flags=re.MULTILINE)
         text = re.sub(r'^## (.+)$', r'<span size="xx-large" weight="bold">\1</span>', text, flags=re.MULTILINE)
         text = re.sub(r'^# (.+)$', r'<span size="20000" weight="bold">\1</span>', text, flags=re.MULTILINE)
-        # Inline code (`code`)
-        text = re.sub(r'`([^`]+)`', lambda m: f'<span font_family="monospace" background="#222" foreground="#f8f8f2">{GLib.markup_escape_text(m.group(1))}</span>', text)
         # Bold: **text** or __text__
         text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
         text = re.sub(r'__(.+?)__', r'<b>\1</b>', text)
