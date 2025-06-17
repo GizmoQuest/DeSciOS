@@ -92,6 +92,7 @@ class DeSciOSChatWidget(Gtk.Window):
             data = {
                 "model": "deepseek-r1:8b",
                 "prompt": f"{self.system_prompt}\n\nUser: {prompt}\nAssistant:",
+                "think": False,
                 "stream": False
             }
             response = requests.post(self.ollama_url, json=data)
