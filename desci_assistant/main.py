@@ -325,8 +325,9 @@ class DeSciOSChatWidget(Gtk.Window):
         try:
             search_url = f"https://search.brave.com/search?q={requests.utils.quote(query)}"
             r = requests.get(search_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            content = r.content
             if r.headers.get('Content-Encoding') == 'br':
-                content = brotli.decompress(r.content)
+                content = brotli.decompress(content)
                 soup = BeautifulSoup(content, "html.parser")
             else:
                 soup = BeautifulSoup(r.text, "html.parser")
@@ -336,10 +337,15 @@ class DeSciOSChatWidget(Gtk.Window):
                 return "No web results found."
             first_url = result_links[0]['href']
             page = requests.get(first_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-            page_soup = BeautifulSoup(page.text, "html.parser")
+            page_content = page.content
+            if page.headers.get('Content-Encoding') == 'br':
+                page_content = brotli.decompress(page_content)
+                page_soup = BeautifulSoup(page_content, "html.parser")
+            else:
+                page_soup = BeautifulSoup(page.text, "html.parser")
             texts = page_soup.stripped_strings
             content = ' '.join(list(texts)[:1000])[:2000]
-            summary_prompt = f"Summarize the following web page for a scientist:\n\n{content}"
+            summary_prompt = f"Summarize the following web page for a scientist:\\n\\n{content}"
             return self.generate_response(summary_prompt)
         except Exception as e:
             return f"Error during web search: {str(e)}"
