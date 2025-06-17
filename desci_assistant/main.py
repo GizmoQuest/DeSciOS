@@ -12,6 +12,7 @@ gi.require_version('Notify', '0.7')
 from gi.repository import Gtk, GLib, Notify, Gdk
 import threading
 from bs4 import BeautifulSoup
+import re
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -173,7 +174,7 @@ class DeSciOSChatWidget(Gtk.Window):
         header.set_title("DeSciOS Assistant")
         header.set_name("headerbar")
         # Light/dark mode toggle button
-        self.toggle_button = Gtk.Button(label="🌙" if self.current_theme == 'dark' else "☀️")
+        self.toggle_button = Gtk.Button(label="☾" if self.current_theme == 'dark' else "☀")
         self.toggle_button.set_name("togglemode")
         self.toggle_button.connect("clicked", self.toggle_theme)
         header.pack_end(self.toggle_button)
@@ -218,12 +219,46 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def toggle_theme(self, widget):
         self.current_theme = 'light' if self.current_theme == 'dark' else 'dark'
-        self.toggle_button.set_label("🌙" if self.current_theme == 'dark' else "☀️")
+        self.toggle_button.set_label("☾" if self.current_theme == 'dark' else "☀")
         self.load_theme()
 
     def on_window_button_press(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
             self.begin_move_drag(event.button, int(event.x_root), int(event.y_root), event.time)
+
+    def markdown_to_pango(self, text):
+        # Convert Markdown to Pango markup
+        # Bold: **text** or __text__
+        text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+        text = re.sub(r'__(.+?)__', r'<b>\1</b>', text)
+        # Italic: *text* or _text_
+        text = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<i>\1</i>', text)
+        text = re.sub(r'(?<!_)_(?!_)(.+?)(?<!_)_(?!_)', r'<i>\1</i>', text)
+        # Links: [text](url)
+        text = re.sub(r'\[(.+?)\]\((https?://[^\s]+)\)', r'<a href="\2">\1</a>', text)
+        # Numbered lists: 1. item
+        lines = text.split('\n')
+        new_lines = []
+        in_list = False
+        for line in lines:
+            if re.match(r'^\s*\d+\. ', line):
+                in_list = True
+                new_lines.append('    ' + re.sub(r'^\s*(\d+\.) ', r'<b>\1</b> ', line))
+            elif re.match(r'^\s*[-\*] ', line):
+                in_list = True
+                new_lines.append('    • ' + line.lstrip('-* ').strip())
+            else:
+                if in_list and line.strip() == '':
+                    in_list = False
+                new_lines.append(line)
+        text = '\n'.join(new_lines)
+        # Escape any remaining markup
+        text = GLib.markup_escape_text(text)
+        # Unescape our tags
+        text = text.replace('&lt;b&gt;', '<b>').replace('&lt;/b&gt;', '</b>')
+        text = text.replace('&lt;i&gt;', '<i>').replace('&lt;/i&gt;', '</i>')
+        text = text.replace('&lt;a href=&quot;', '<a href="').replace('&quot;&gt;', '">').replace('&lt;/a&gt;', '</a>')
+        return text
 
     def append_message(self, sender, message):
         row = Gtk.ListBoxRow()
@@ -231,7 +266,8 @@ class DeSciOSChatWidget(Gtk.Window):
         bubble = Gtk.Label()
         bubble.set_line_wrap(True)
         bubble.set_xalign(0 if sender == "assistant" else 1)
-        bubble.set_markup(f"<span size='large'>{GLib.markup_escape_text(message)}</span>")
+        markup = self.markdown_to_pango(message)
+        bubble.set_markup(f"<span size='large'>{markup}</span>")
         bubble.set_selectable(True)
         bubble.set_justify(Gtk.Justification.LEFT)
         bubble.set_padding(8, 8)
