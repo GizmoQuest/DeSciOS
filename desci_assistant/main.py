@@ -320,29 +320,45 @@ class DeSciOSChatWidget(Gtk.Window):
             response = self.generate_response(user_text)
         GLib.idle_add(self.append_message, "assistant", response)
 
-    def web_search_and_summarize(self, query):
-        try:
-            search_url = f"https://lite.duckduckgo.com/lite/?q={requests.utils.quote(query)}"
-            r = requests.get(search_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-            soup = BeautifulSoup(r.text, "html.parser")
-            links = soup.find_all('a', href=True)
-            # Find the first result that is not an ad or navigation
-            first_url = None
-            for a in links:
-                href = a['href']
-                if href.startswith('http'):
-                    first_url = href
-                    break
-            if not first_url:
-                return "No web results found."
-            page = requests.get(first_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-            page_soup = BeautifulSoup(page.text, "html.parser")
-            texts = page_soup.stripped_strings
-            content = ' '.join(list(texts)[:1000])[:2000]
-            summary_prompt = f"Summarize the following web page for a scientist:\\n\\n{content}"
-            return self.generate_response(summary_prompt)
-        except Exception as e:
-            return f"Error during web search: {str(e)}"
+def web_search_and_summarize(self, query):
+    try:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        search_url = f"https://lite.duckduckgo.com/lite/?q={requests.utils.quote(query)}"
+        r = requests.get(search_url, timeout=10, headers=headers)
+
+        if not r.ok or 'html' not in r.headers.get('Content-Type', ''):
+            return "Web search failed: invalid response from DuckDuckGo."
+
+        soup = BeautifulSoup(r.text, "html.parser")
+        results = soup.select("a.result-link")
+
+        if not results:
+            # Fallback: try any <a> with http link
+            results = [a for a in soup.find_all("a", href=True) if a['href'].startswith("http")]
+
+        if not results:
+            return "No valid links found in web search results."
+
+        first_url = results[0]['href']
+        page = requests.get(first_url, timeout=10, headers=headers)
+
+        if not page.ok:
+            return f"Failed to fetch content from {first_url}"
+
+        page_soup = BeautifulSoup(page.text, "html.parser")
+        text_elements = list(page_soup.stripped_strings)
+        content = ' '.join(text_elements[:500])[:2000]  # limit size
+
+        summary_prompt = f"Summarize the following web page for a scientist:\n\n{content}"
+        return self.generate_response(summary_prompt)
+
+    except requests.exceptions.SSLError:
+        return "SSL Error: Make sure your container has `ca-certificates` installed."
+    except requests.exceptions.Timeout:
+        return "Request timed out. Internet might be blocked or slow."
+    except Exception as e:
+        return f"Unexpected error: {str(e)}"
+
 
     def scan_installed_tools(self):
         try:
