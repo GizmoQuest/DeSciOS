@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
 
 import os
-import sys
-import json
-import time
 import requests
-from pathlib import Path
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
 from gi.repository import Gtk, GLib, Notify, Gdk, WebKit2
 import threading
 from bs4 import BeautifulSoup
-import re
-import brotli
 import markdown
 
 DOCKERFILE_SUMMARY = (
