@@ -245,9 +245,52 @@ class DeSciOSChatWidget(Gtk.Window):
         webview = WebKit2.WebView()
         webview.set_size_request(400, 80)  # Adjust as needed
         html = markdown.markdown(safe_decode(message))
-        # Optionally, add some CSS for dark/light mode
-        style = '''<style>body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size: 15px; margin: 0; padding: 0; background: %s; color: %s; } pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2px 6px; }</style>''' % (('#181c24' if self.current_theme == 'dark' else '#f7f7fa'), ('#e6e6e6' if self.current_theme == 'dark' else '#23272e'))
-        html = f"<html><head>{style}</head><body>{html}</body></html>"
+        bubble_class = "bubble-user" if sender == "user" else "bubble-assistant"
+        style = '''<style>
+body {
+  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
+  font-size: 15px;
+  margin: 0;
+  padding: 0;
+  background: #181c24;
+  color: #e6e6e6;
+}
+.bubble {
+  margin: 12px 24px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+  max-width: 90%;
+  word-break: break-word;
+}
+.bubble-user {
+  background: #3b82f6;
+  color: #fff;
+  margin-left: auto;
+}
+.bubble-assistant {
+  background: #23272e;
+  color: #e6e6e6;
+  margin-right: auto;
+}
+h1, h2, h3 {
+  margin: 10px 0 6px 0;
+  font-weight: bold;
+}
+pre, code {
+  background: #23272e;
+  color: #e6e6e6;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-family: 'Fira Mono', 'Consolas', monospace;
+}
+</style>'''
+        html = f"""
+<html>
+<head>{style}</head>
+<body><div class='bubble {bubble_class}'>{html}</div></body>
+</html>
+"""
         webview.load_html(html, "file:///")
         hbox.pack_end(webview, True, True, 0) if sender == "user" else hbox.pack_start(webview, True, True, 0)
         row.add(hbox)
