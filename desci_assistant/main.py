@@ -14,7 +14,6 @@ import threading
 from bs4 import BeautifulSoup
 import re
 import brotli
-import ollama
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -371,13 +370,16 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def generate_response(self, prompt):
         try:
-            response = ollama.generate(
-                model='deepseek-r1:8b',
-                prompt=f"{self.system_prompt}\n\nUser: {prompt}\nAssistant:",
-                think=False,
-                stream=False
-            )
-            return response.get('response', '(No response)')
+            data = {
+                "model": "deepseek-r1:8b",
+                "prompt": f"{self.system_prompt}\n\nUser: {prompt}\nAssistant:",
+                "think": False,
+                "stream": False
+            }
+            response = requests.post(self.ollama_url, json=data)
+            if response.status_code == 200:
+                return response.json().get("response", "(No response)")
+            return "Error: Could not generate response"
         except Exception as e:
             return f"Error: {str(e)}"
 
