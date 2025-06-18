@@ -138,6 +138,7 @@ class DeSciOSChatWidget(Gtk.Window):
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         webview = WebKit2.WebView()
+        webview.set_size_request(-1, 60)  # -1 for width means auto, 60px min height
         # DEBUG: Print the HTML to be loaded and use minimal HTML
         html = f"<html><body><p>{safe_decode(message)}</p></body></html>"
         print("HTML being loaded into WebView:")
