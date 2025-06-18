@@ -36,104 +36,6 @@ DOCKERFILE_SUMMARY = (
     "OpenCL, NVIDIA GPU support."
 )
 
-DARK_CSS = b'''
-window, textview, entry, button, headerbar {
-    background: #181c24;
-    color: #e6e6e6;
-    font-family: "Segoe UI", "Liberation Sans", "Arial", sans-serif;
-    font-size: 15px;
-}
-#headerbar {
-    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
-    border-radius: 16px 16px 0 0;
-    padding: 14px 28px;
-    border-bottom: 1px solid #444;
-    color: #fff;
-}
-.bubble-user {
-    background: #3b82f6;
-    color: #fff;
-    border-radius: 18px 18px 6px 18px;
-    padding: 12px 18px;
-    margin: 10px 0 10px 80px;
-    box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-}
-.bubble-assistant {
-    background: #23272e;
-    color: #e6e6e6;
-    border-radius: 18px 18px 18px 6px;
-    padding: 12px 18px;
-    margin: 10px 80px 10px 0;
-    box-shadow: 0 2px 8px rgba(55,65,81,0.08);
-}
-#inputbox {
-    background: #23272e;
-    border-radius: 0 0 16px 16px;
-    border-top: 1px solid #444;
-    padding: 14px 12px 12px 12px;
-}
-#togglemode {
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 16px;
-    margin-left: 8px;
-}
-window {
-    border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-}
-'''
-
-LIGHT_CSS = b'''
-window, textview, entry, button, headerbar {
-    background: #f7f7fa;
-    color: #23272e;
-    font-family: "Segoe UI", "Liberation Sans", "Arial", sans-serif;
-    font-size: 15px;
-}
-#headerbar {
-    background: linear-gradient(90deg, #a1c4fd 0%, #c2e9fb 100%);
-    border-radius: 16px 16px 0 0;
-    padding: 14px 28px;
-    border-bottom: 1px solid #bbb;
-    color: #23272e;
-}
-.bubble-user {
-    background: #3b82f6;
-    color: #fff;
-    border-radius: 18px 18px 6px 18px;
-    padding: 12px 18px;
-    margin: 10px 0 10px 80px;
-    box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-}
-.bubble-assistant {
-    background: #e6e6e6;
-    color: #23272e;
-    border-radius: 18px 18px 18px 6px;
-    padding: 12px 18px;
-    margin: 10px 80px 10px 0;
-    box-shadow: 0 2px 8px rgba(55,65,81,0.08);
-}
-#inputbox {
-    background: #f7f7fa;
-    border-radius: 0 0 16px 16px;
-    border-top: 1px solid #bbb;
-    padding: 14px 12px 12px 12px;
-}
-#togglemode {
-    background: transparent;
-    border: none;
-    color: #23272e;
-    font-size: 16px;
-    margin-left: 8px;
-}
-window {
-    border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-}
-'''
-
 def safe_decode(text):
     if isinstance(text, bytes):
         return text.decode('utf-8', errors='replace')
@@ -155,8 +57,6 @@ class DeSciOSChatWidget(Gtk.Window):
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.connect("button-press-event", self.on_window_button_press)
         self.current_theme = 'dark'
-        self.style_provider = Gtk.CssProvider()
-        self.load_theme()
 
         self.ollama_url = "http://localhost:11434/api/generate"
         self.system_prompt = (
@@ -193,6 +93,7 @@ class DeSciOSChatWidget(Gtk.Window):
         chat_scroll = Gtk.ScrolledWindow()
         chat_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         chat_scroll.set_vexpand(True)
+        chat_scroll.set_hexpand(True)
         chat_scroll.add(self.chat_listbox)
         main_vbox.pack_start(chat_scroll, True, True, 0)
 
@@ -215,25 +116,9 @@ class DeSciOSChatWidget(Gtk.Window):
 
         self.show_all()
 
-    def load_theme(self):
-        css = DARK_CSS if self.current_theme == 'dark' else LIGHT_CSS
-        screen = Gdk.Screen.get_default()
-        # Remove previous provider if present
-        Gtk.StyleContext.remove_provider_for_screen(
-            screen, self.style_provider
-        )
-        self.style_provider = Gtk.CssProvider()
-        self.style_provider.load_from_data(css)
-        Gtk.StyleContext.add_provider_for_screen(
-            screen,
-            self.style_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
-
     def toggle_theme(self, widget):
         self.current_theme = 'light' if self.current_theme == 'dark' else 'dark'
         self.toggle_button.set_label("☾" if self.current_theme == 'dark' else "☀")
-        self.load_theme()
 
     def on_window_button_press(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
@@ -243,7 +128,6 @@ class DeSciOSChatWidget(Gtk.Window):
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         webview = WebKit2.WebView()
-        webview.set_size_request(400, 80)  # Adjust as needed
         html = markdown.markdown(safe_decode(message))
         bubble_class = "bubble-user" if sender == "user" else "bubble-assistant"
         style = '''<style>
@@ -262,6 +146,7 @@ body {
   box-shadow: 0 2px 8px rgba(59,130,246,0.08);
   max-width: 90%;
   word-break: break-word;
+  display: inline-block;
 }
 .bubble-user {
   background: #3b82f6;
@@ -292,6 +177,8 @@ pre, code {
 </html>
 """
         webview.load_html(html, "file:///")
+        webview.set_hexpand(True)
+        webview.set_vexpand(False)
         hbox.pack_end(webview, True, True, 0) if sender == "user" else hbox.pack_start(webview, True, True, 0)
         row.add(hbox)
         self.chat_listbox.add(row)
