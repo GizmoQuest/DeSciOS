@@ -9,11 +9,12 @@ from pathlib import Path
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
-from gi.repository import Gtk, GLib, Notify, Gdk
+from gi.repository import Gtk, GLib, Notify, Gdk, WebKit2
 import threading
 from bs4 import BeautifulSoup
 import re
 import brotli
+import markdown
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -238,89 +239,17 @@ class DeSciOSChatWidget(Gtk.Window):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
             self.begin_move_drag(event.button, int(event.x_root), int(event.y_root), event.time)
 
-    def markdown_to_pango(self, text):
-        import re
-        text = safe_decode(text)
-        # First escape the entire text to handle any special characters
-        text = GLib.markup_escape_text(text)
-        # Remove unsupported HTML tags (e.g., <font>)
-        text = re.sub(r'&lt;/?font[^&]*&gt;', '', text)
-        # Helper function to safely wrap content in a span with attributes
-        def safe_span(content, **attrs):
-            # Limit size attribute to a reasonable value
-            if 'size' in attrs:
-                try:
-                    size = int(attrs['size'])
-                    if size > 20000:
-                        attrs['size'] = '20000'
-                except Exception:
-                    attrs['size'] = '12000'
-            attrs_str = ' '.join(f"{k}='{v}'" for k, v in attrs.items())
-            return f'<span {attrs_str}>{content}</span>'
-        # Code blocks (```...```)
-        def code_block_repl(match):
-            code = match.group(2) or match.group(3) or ''
-            return safe_span(code, font_family='monospace')
-        text = re.sub(r'&lt;code&gt;(.+?)&lt;/code&gt;|```(\w+)?\n([\s\S]+?)```',
-                    lambda m: code_block_repl(m), text)
-        # Inline code (`code`)
-        text = re.sub(r'`([^`]+)`',
-                    lambda m: safe_span(m.group(1), font_family='monospace'), text)
-        # Headings
-        text = re.sub(r'^### (.+)$',
-                    lambda m: safe_span(m.group(1), size='12000', weight='bold'),
-                    text, flags=re.MULTILINE)
-        text = re.sub(r'^## (.+)$',
-                    lambda m: safe_span(m.group(1), size='15000', weight='bold'),
-                    text, flags=re.MULTILINE)
-        text = re.sub(r'^# (.+)$',
-                    lambda m: safe_span(m.group(1), size='20000', weight='bold'),
-                    text, flags=re.MULTILINE)
-        # Bold and Italic
-        text = re.sub(r'\*\*(.+?)\*\*|__(.+?)__', r'<b>\1\2</b>', text)
-        text = re.sub(r'\*(.+?)\*|_(.+?)_', r'<i>\1\2</i>', text)
-        # Links
-        text = re.sub(r'\[(.+?)\]\((https?://[^\s]+)\)',
-                    lambda m: f"<a href='{m.group(2)}'>{m.group(1)}</a>", text)
-        # Lists
-        lines = text.split('\n')
-        new_lines = []
-        in_list = False
-        for line in lines:
-            if re.match(r'^\s*\d+\. ', line):
-                in_list = True
-                new_lines.append('    ' + re.sub(r'^\s*(\d+\.) ',
-                            lambda m: safe_span(m.group(1), weight='bold') + ' ',
-                            line))
-            elif re.match(r'^\s*[-\*] ', line):
-                in_list = True
-                new_lines.append('    • ' + line.lstrip('-* ').strip())
-            else:
-                if in_list and line.strip() == '':
-                    in_list = False
-                new_lines.append(line)
-        return '\n'.join(new_lines)
-
     def append_message(self, sender, message):
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        bubble = Gtk.Label()
-        bubble.set_line_wrap(True)
-        bubble.set_xalign(0 if sender == "assistant" else 1)
-        try:
-            markup = self.markdown_to_pango(message)
-            bubble.set_markup(f"<span size='large'>{markup}</span>")
-        except Exception as e:
-            bubble.set_text(f"[Markup error: {e}]\n" + safe_decode(message))
-        bubble.set_selectable(True)
-        bubble.set_justify(Gtk.Justification.LEFT)
-        bubble.set_padding(8, 8)
-        bubble.set_margin_top(2)
-        bubble.set_margin_bottom(2)
-        bubble.set_margin_start(8)
-        bubble.set_margin_end(8)
-        bubble.set_name(f"bubble-{sender}")
-        hbox.pack_end(bubble, True, True, 0) if sender == "user" else hbox.pack_start(bubble, True, True, 0)
+        webview = WebKit2.WebView()
+        webview.set_size_request(400, 80)  # Adjust as needed
+        html = markdown.markdown(safe_decode(message))
+        # Optionally, add some CSS for dark/light mode
+        style = '''<style>body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size: 15px; margin: 0; padding: 0; background: %s; color: %s; } pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2px 6px; }</style>''' % (('#181c24' if self.current_theme == 'dark' else '#f7f7fa'), ('#e6e6e6' if self.current_theme == 'dark' else '#23272e'))
+        html = f"<html><head>{style}</head><body>{html}</body></html>"
+        webview.load_html(html, "file:///")
+        hbox.pack_end(webview, True, True, 0) if sender == "user" else hbox.pack_start(webview, True, True, 0)
         row.add(hbox)
         self.chat_listbox.add(row)
         self.chat_listbox.show_all()
