@@ -58,7 +58,6 @@ class DeSciOSChatWidget(Gtk.Window):
         self.connect("button-press-event", self.on_window_button_press)
         self.current_theme = 'light'
         self.messages = []  # Store (sender, message) tuples for re-rendering
-
         self.ollama_url = "http://localhost:11434/api/generate"
         self.system_prompt = (
             "You are DeSciOS, a Decentralized Science Operating System. "
@@ -69,6 +68,7 @@ class DeSciOSChatWidget(Gtk.Window):
             "\nWhen asked about available tools, scan your environment (e.g., /usr/bin, /usr/local/bin, /opt, /usr/share/applications) and list installed applications. "
             "When asked to browse the web, fetch and summarize the relevant web content."
         )
+        self.conversation_history = []  # Store conversation for context
 
         Notify.init("DeSciOS Assistant")
 
@@ -271,13 +271,25 @@ pre, code {
         threading.Thread(target=self.handle_user_query, args=(user_text,), daemon=True).start()
 
     def handle_user_query(self, user_text):
+        self.conversation_history.append({"role": "user", "content": user_text})
         if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up"]):
             response = self.web_search_and_summarize(user_text)
         elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
             response = self.scan_installed_tools()
         else:
-            response = self.generate_response(user_text)
+            response = self.generate_response()
+        self.conversation_history.append({"role": "assistant", "content": response})
         GLib.idle_add(self.append_message, "assistant", response)
+
+    def build_prompt(self):
+        prompt = self.system_prompt + "\n\n"
+        for msg in self.conversation_history:
+            if msg["role"] == "user":
+                prompt += f"User: {msg['content']}\n"
+            else:
+                prompt += f"Assistant: {msg['content']}\n"
+        prompt += "Assistant:"
+        return prompt
 
     def web_search_and_summarize(self, query):
         try:
@@ -322,11 +334,11 @@ pre, code {
         except Exception as e:
             return f"Error scanning environment: {str(e)}"
 
-    def generate_response(self, prompt):
+    def generate_response(self):
         try:
             data = {
                 "model": "deepseek-r1:8b",
-                "prompt": f"{self.system_prompt}\n\nUser: {prompt}\nAssistant:",
+                "prompt": self.build_prompt(),
                 "think": False,
                 "stream": False
             }
