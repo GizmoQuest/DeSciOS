@@ -24,18 +24,23 @@ RUN apt update && apt install -y \
     clinfo lshw \
     freeglut3-dev \
     python3-gi \
-    python3-gi-cairo \
     gir1.2-gtk-3.0 \
     gir1.2-notify-0.7 \
     x11vnc \
     xvfb \
+    gir1.2-webkit2-4.0 \
+    cmake \
+    pkg-config \
+    build-essential \
+    libgtk-3-dev \
+    libwebkit2gtk-4.0-dev \
+    libnotify-dev \
+    libglib2.0-dev \
+    libgtk-3-dev \
     && apt clean
 
 # Install Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh
-
-# Install Nextflow
-RUN curl -s https://get.nextflow.io | bash
 
 # Pull the deepseek-r1:8b model
 RUN ollama serve & sleep 5 && ollama pull deepseek-r1:8b
@@ -43,8 +48,14 @@ RUN ollama serve & sleep 5 && ollama pull deepseek-r1:8b
 # Create user and set password
 RUN useradd -ms /bin/bash $USER && echo "$USER:$PASSWORD" | chpasswd && adduser $USER sudo
 
-# Install JupyterLab and Ollama library
-RUN pip install --no-cache-dir jupyterlab ollama
+# Install JupyterLab and other global Python tools with default pip
+RUN pip install --no-cache-dir jupyterlab
+
+# Install pip for system Python
+RUN apt update && apt install -y python3-pip
+
+# Install DeSci Assistant dependencies with system Python pip (with override)
+RUN /usr/bin/python3 -m pip install --no-cache-dir --break-system-packages markdown beautifulsoup4 requests
 
 # Install R for Debian bookworm
 RUN apt update -qq && \
@@ -85,6 +96,9 @@ RUN apt update && apt install -y unzip wget && \
     unzip fiji-latest-linux64-jdk.zip -d /opt && \
     rm fiji-latest-linux64-jdk.zip && \
     ln -s /opt/Fiji.app/ImageJ-linux64 /usr/local/bin/fiji
+
+# Install Nextflow
+RUN curl -s https://get.nextflow.io | bash
 
 # Install QGIS
 RUN apt update && apt install -y qgis qgis-plugin-grass
@@ -127,7 +141,7 @@ RUN git clone https://github.com/HaseloffLab/CellModeller.git && \
 WORKDIR /opt
 COPY desci_assistant /opt/desci_assistant
 RUN cd /opt/desci_assistant && \
-    pip install -r requirements.txt && \
+    /usr/bin/python3 -m pip install --break-system-packages -r requirements.txt && \
     chmod +x main.py && \
     cp desci-assistant.desktop /usr/share/applications/ && \
     chown -R $USER:$USER /opt/desci_assistant
