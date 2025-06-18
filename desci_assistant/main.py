@@ -138,96 +138,10 @@ class DeSciOSChatWidget(Gtk.Window):
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         webview = WebKit2.WebView()
-        html = markdown.markdown(safe_decode(message))
-        bubble_class = "bubble-user" if sender == "user" else "bubble-assistant"
-        if self.current_theme == 'dark':
-            style = '''<style>
-body {
-  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
-  font-size: 15px;
-  margin: 0;
-  padding: 0;
-  background: #181c24;
-  color: #e6e6e6;
-}
-.bubble {
-  margin: 12px 24px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-  max-width: 90%;
-  word-break: break-word;
-  display: inline-block;
-}
-.bubble-user {
-  background: #3b82f6;
-  color: #fff;
-  margin-left: auto;
-}
-.bubble-assistant {
-  background: #23272e;
-  color: #e6e6e6;
-  margin-right: auto;
-}
-h1, h2, h3 {
-  margin: 10px 0 6px 0;
-  font-weight: bold;
-}
-pre, code {
-  background: #23272e;
-  color: #e6e6e6;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-}
-</style>'''
-        else:
-            style = '''<style>
-body {
-  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
-  font-size: 15px;
-  margin: 0;
-  padding: 0;
-  background: #f7f7fa;
-  color: #23272e;
-}
-.bubble {
-  margin: 12px 24px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-  max-width: 90%;
-  word-break: break-word;
-  display: inline-block;
-}
-.bubble-user {
-  background: #3b82f6;
-  color: #fff;
-  margin-left: auto;
-}
-.bubble-assistant {
-  background: #e6e6e6;
-  color: #23272e;
-  margin-right: auto;
-}
-h1, h2, h3 {
-  margin: 10px 0 6px 0;
-  font-weight: bold;
-}
-pre, code {
-  background: #e6e6e6;
-  color: #23272e;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-}
-</style>'''
-        html = f"""
-<html>
-<head>{style}</head>
-<body><div class='bubble {bubble_class}'>{html}</div></body>
-</html>
-"""
+        # DEBUG: Print the HTML to be loaded and use minimal HTML
+        html = f"<html><body><p>{safe_decode(message)}</p></body></html>"
+        print("HTML being loaded into WebView:")
+        print(html)
         webview.load_html(html, "file:///")
         webview.set_hexpand(True)
         webview.set_vexpand(False)
