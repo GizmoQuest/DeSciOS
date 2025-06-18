@@ -129,103 +129,18 @@ class DeSciOSChatWidget(Gtk.Window):
             self.begin_move_drag(event.button, int(event.x_root), int(event.y_root), event.time)
 
     def append_message(self, sender, message):
+        print(f"append_message called with sender={sender}, message={message}")
         self.messages.append((sender, message))
         self._append_message_no_store(sender, message)
 
     def _append_message_no_store(self, sender, message):
+        print(f"_append_message_no_store called with sender={sender}, message={message}")
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         webview = WebKit2.WebView()
-        html = markdown.markdown(safe_decode(message))
-        bubble_class = "bubble-user" if sender == "user" else "bubble-assistant"
-        if self.current_theme == 'dark':
-            style = '''<style>
-body {
-  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
-  font-size: 15px;
-  margin: 0;
-  padding: 0;
-  background: #181c24;
-  color: #e6e6e6;
-}
-.bubble {
-  margin: 12px 24px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-  max-width: 90%;
-  word-break: break-word;
-  display: inline-block;
-}
-.bubble-user {
-  background: #3b82f6;
-  color: #fff;
-  margin-left: auto;
-}
-.bubble-assistant {
-  background: #23272e;
-  color: #e6e6e6;
-  margin-right: auto;
-}
-h1, h2, h3 {
-  margin: 10px 0 6px 0;
-  font-weight: bold;
-}
-pre, code {
-  background: #23272e;
-  color: #e6e6e6;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-}
-</style>'''
-        else:
-            style = '''<style>
-body {
-  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
-  font-size: 15px;
-  margin: 0;
-  padding: 0;
-  background: #f7f7fa;
-  color: #23272e;
-}
-.bubble {
-  margin: 12px 24px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-  max-width: 90%;
-  word-break: break-word;
-  display: inline-block;
-}
-.bubble-user {
-  background: #3b82f6;
-  color: #fff;
-  margin-left: auto;
-}
-.bubble-assistant {
-  background: #e6e6e6;
-  color: #23272e;
-  margin-right: auto;
-}
-h1, h2, h3 {
-  margin: 10px 0 6px 0;
-  font-weight: bold;
-}
-pre, code {
-  background: #e6e6e6;
-  color: #23272e;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-}
-</style>'''
-        html = f"""
-<html>
-<head>{style}</head>
-<body><div class='bubble {bubble_class}'>{html}</div></body>
-</html>
-"""
+        # DEBUG: Set a minimum height and simple HTML to test rendering
+        webview.set_size_request(-1, 60)  # -1 for width means auto, 60px min height
+        html = "<html><body><h1>Hello World</h1></body></html>"
         webview.load_html(html, "file:///")
         webview.set_hexpand(True)
         webview.set_vexpand(False)
