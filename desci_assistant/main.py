@@ -206,8 +206,9 @@ class DeSciOSChatWidget(Gtk.Window):
     def handle_user_query(self, text):
         try:
             response = self.agent.run(text)
-            # Ensure response is converted to string
-            response_text = str(response) if response is not None else "No response received"
+            # Extract just the content from the RunResponse object
+            response_text = response.content if hasattr(response, 'content') else str(response)
+            response_text = response_text if response_text is not None else "No response received"
         except Exception as e:
             response_text = f"Error invoking agent: {e}"
         GLib.idle_add(self.append_message, "assistant", response_text)
