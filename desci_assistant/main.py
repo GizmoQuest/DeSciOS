@@ -235,34 +235,56 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def markdown_to_pango(self, text):
         import re
+        
+        # First escape the entire text to handle any special characters
+        text = GLib.markup_escape_text(text)
+        
+        # Helper function to safely wrap content in a span with attributes
+        def safe_span(content, **attrs):
+            attrs_str = ' '.join(f'{k}=\'{v}\'' for k, v in attrs.items())
+            return f'<span {attrs_str}>{content}</span>'
+            
         # Code blocks (```...```)
         def code_block_repl(match):
             code = match.group(2)
-            code = GLib.markup_escape_text(code)
-            return f'<span font_family=\'monospace\'>{code}</span>'
-        text = re.sub(r'```(\w+)?\n([\s\S]+?)```', code_block_repl, text)
+            return safe_span(code, font_family='monospace')
+            
+        text = re.sub(r'&lt;code&gt;(.+?)&lt;/code&gt;|```(\w+)?\n([\s\S]+?)```', 
+                     lambda m: code_block_repl(m), text)
+        
         # Inline code (`code`)
-        text = re.sub(r'`([^`]+)`', lambda m: f'<span font_family=\'monospace\'>{GLib.markup_escape_text(m.group(1))}</span>', text)
+        text = re.sub(r'`([^`]+)`', 
+                     lambda m: safe_span(m.group(1), font_family='monospace'), text)
+        
         # Headings
-        text = re.sub(r'^### (.+)$', r'<span size=\'x-large\' weight=\'bold\'>\1</span>', text, flags=re.MULTILINE)
-        text = re.sub(r'^## (.+)$', r'<span size=\'xx-large\' weight=\'bold\'>\1</span>', text, flags=re.MULTILINE)
-        text = re.sub(r'^# (.+)$', r'<span size=\'20000\' weight=\'bold\'>\1</span>', text, flags=re.MULTILINE)
-        # Bold: **text** or __text__
-        text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
-        text = re.sub(r'__(.+?)__', r'<b>\1</b>', text)
-        # Italic: *text* or _text_
-        text = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<i>\1</i>', text)
-        text = re.sub(r'(?<!_)_(?!_)(.+?)(?<!_)_(?!_)', r'<i>\1</i>', text)
-        # Links: [text](url)
-        text = re.sub(r'\[(.+?)\]\((https?://[^\s]+)\)', lambda m: f'<a href=\'{GLib.markup_escape_text(m.group(2))}\'>{m.group(1)}</a>', text)
-        # Numbered lists: 1. item
+        text = re.sub(r'^### (.+)$', 
+                     lambda m: safe_span(m.group(1), size='x-large', weight='bold'),
+                     text, flags=re.MULTILINE)
+        text = re.sub(r'^## (.+)$', 
+                     lambda m: safe_span(m.group(1), size='xx-large', weight='bold'),
+                     text, flags=re.MULTILINE)
+        text = re.sub(r'^# (.+)$', 
+                     lambda m: safe_span(m.group(1), size='20000', weight='bold'),
+                     text, flags=re.MULTILINE)
+        
+        # Bold and Italic
+        text = re.sub(r'\*\*(.+?)\*\*|__(.+?)__', r'<b>\1\2</b>', text)
+        text = re.sub(r'\*(.+?)\*|_(.+?)_', r'<i>\1\2</i>', text)
+        
+        # Links
+        text = re.sub(r'\[(.+?)\]\((https?://[^\s]+)\)', 
+                     lambda m: f'<a href=\'{m.group(2)}\'>{m.group(1)}</a>', text)
+        
+        # Lists
         lines = text.split('\n')
         new_lines = []
         in_list = False
         for line in lines:
             if re.match(r'^\s*\d+\. ', line):
                 in_list = True
-                new_lines.append('    ' + re.sub(r'^\s*(\d+\.) ', r'<b>\1</b> ', line))
+                new_lines.append('    ' + re.sub(r'^\s*(\d+\.) ',
+                               lambda m: safe_span(m.group(1), weight='bold') + ' ',
+                               line))
             elif re.match(r'^\s*[-\*] ', line):
                 in_list = True
                 new_lines.append('    • ' + line.lstrip('-* ').strip())
@@ -270,16 +292,8 @@ class DeSciOSChatWidget(Gtk.Window):
                 if in_list and line.strip() == '':
                     in_list = False
                 new_lines.append(line)
-        text = '\n'.join(new_lines)
-        # Escape any remaining markup
-        text = GLib.markup_escape_text(text)
-        # Unescape our tags
-        text = text.replace('&lt;b&gt;', '<b>').replace('&lt;/b&gt;', '</b>')
-        text = text.replace('&lt;i&gt;', '<i>').replace('&lt;/i&gt;', '</i>')
-        text = text.replace('&lt;a href=&quot;', '<a href=\'').replace('&quot;&gt;', '\'>').replace('&lt;/a&gt;', '</a>')
-        text = text.replace('&lt;span ', '<span ').replace('&lt;/span&gt;', '</span>')
-        text = text.replace('&gt;', '>')
-        return text
+        
+        return '\n'.join(new_lines)
 
     def append_message(self, sender, message):
         row = Gtk.ListBoxRow()
