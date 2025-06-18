@@ -133,6 +133,11 @@ window {
 }
 '''
 
+def safe_decode(text):
+    if isinstance(text, bytes):
+        return text.decode('utf-8', errors='replace')
+    return str(text)
+
 class DeSciOSChatWidget(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="DeSciOS Assistant")
@@ -235,46 +240,48 @@ class DeSciOSChatWidget(Gtk.Window):
 
     def markdown_to_pango(self, text):
         import re
-        
+        text = safe_decode(text)
         # First escape the entire text to handle any special characters
         text = GLib.markup_escape_text(text)
-        
+        # Remove unsupported HTML tags (e.g., <font>)
+        text = re.sub(r'&lt;/?font[^&]*&gt;', '', text)
         # Helper function to safely wrap content in a span with attributes
         def safe_span(content, **attrs):
-            attrs_str = ' '.join(f'{k}=\'{v}\'' for k, v in attrs.items())
+            # Limit size attribute to a reasonable value
+            if 'size' in attrs:
+                try:
+                    size = int(attrs['size'])
+                    if size > 20000:
+                        attrs['size'] = '20000'
+                except Exception:
+                    attrs['size'] = '12000'
+            attrs_str = ' '.join(f"{k}='{v}'" for k, v in attrs.items())
             return f'<span {attrs_str}>{content}</span>'
-            
         # Code blocks (```...```)
         def code_block_repl(match):
-            code = match.group(2)
+            code = match.group(2) or match.group(3) or ''
             return safe_span(code, font_family='monospace')
-            
-        text = re.sub(r'&lt;code&gt;(.+?)&lt;/code&gt;|```(\w+)?\n([\s\S]+?)```', 
+        text = re.sub(r'&lt;code&gt;(.+?)&lt;/code&gt;|```(\w+)?\n([\s\S]+?)```',
                     lambda m: code_block_repl(m), text)
-        
         # Inline code (`code`)
-        text = re.sub(r'`([^`]+)`', 
+        text = re.sub(r'`([^`]+)`',
                     lambda m: safe_span(m.group(1), font_family='monospace'), text)
-        
         # Headings
-        text = re.sub(r'^### (.+)$', 
+        text = re.sub(r'^### (.+)$',
                     lambda m: safe_span(m.group(1), size='12000', weight='bold'),
                     text, flags=re.MULTILINE)
-        text = re.sub(r'^## (.+)$', 
+        text = re.sub(r'^## (.+)$',
                     lambda m: safe_span(m.group(1), size='15000', weight='bold'),
                     text, flags=re.MULTILINE)
-        text = re.sub(r'^# (.+)$', 
+        text = re.sub(r'^# (.+)$',
                     lambda m: safe_span(m.group(1), size='20000', weight='bold'),
                     text, flags=re.MULTILINE)
-        
         # Bold and Italic
         text = re.sub(r'\*\*(.+?)\*\*|__(.+?)__', r'<b>\1\2</b>', text)
         text = re.sub(r'\*(.+?)\*|_(.+?)_', r'<i>\1\2</i>', text)
-        
         # Links
-        text = re.sub(r'\[(.+?)\]\((https?://[^\s]+)\)', 
-                    lambda m: f'<a href=\'{m.group(2)}\'>{m.group(1)}</a>', text)
-        
+        text = re.sub(r'\[(.+?)\]\((https?://[^\s]+)\)',
+                    lambda m: f"<a href='{m.group(2)}'>{m.group(1)}</a>", text)
         # Lists
         lines = text.split('\n')
         new_lines = []
@@ -292,7 +299,6 @@ class DeSciOSChatWidget(Gtk.Window):
                 if in_list and line.strip() == '':
                     in_list = False
                 new_lines.append(line)
-        
         return '\n'.join(new_lines)
 
     def append_message(self, sender, message):
@@ -301,8 +307,11 @@ class DeSciOSChatWidget(Gtk.Window):
         bubble = Gtk.Label()
         bubble.set_line_wrap(True)
         bubble.set_xalign(0 if sender == "assistant" else 1)
-        markup = self.markdown_to_pango(message)
-        bubble.set_markup(f"<span size='large'>{markup}</span>")
+        try:
+            markup = self.markdown_to_pango(message)
+            bubble.set_markup(f"<span size='large'>{markup}</span>")
+        except Exception as e:
+            bubble.set_text(f"[Markup error: {e}]\n" + safe_decode(message))
         bubble.set_selectable(True)
         bubble.set_justify(Gtk.Justification.LEFT)
         bubble.set_padding(8, 8)
