@@ -56,7 +56,7 @@ class DeSciOSChatWidget(Gtk.Window):
         self.set_opacity(0.98)
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.connect("button-press-event", self.on_window_button_press)
-        self.current_theme = 'dark'
+        self.current_theme = 'light'
         self.messages = []  # Store (sender, message) tuples for re-rendering
 
         self.ollama_url = "http://localhost:11434/api/generate"
