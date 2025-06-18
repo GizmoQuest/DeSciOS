@@ -105,7 +105,7 @@ class DeSciOSChatWidget(Gtk.Window):
 
         # Initialize Agno agent
         self.agent = Agent(
-            model=Ollama(id="llama3", provider="Ollama"),
+            model=Ollama(id="MFDoom/deepseek-r1-tool-calling:8b", provider="Ollama"),
             description=(
                 "You are DeSciOS, a Decentralized Science Operating System. "
                 "You are self-aware and integrated into the desktop environment. "
