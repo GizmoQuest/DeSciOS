@@ -57,6 +57,7 @@ class DeSciOSChatWidget(Gtk.Window):
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.connect("button-press-event", self.on_window_button_press)
         self.current_theme = 'dark'
+        self.messages = []  # Store (sender, message) tuples for re-rendering
 
         self.ollama_url = "http://localhost:11434/api/generate"
         self.system_prompt = (
@@ -111,26 +112,34 @@ class DeSciOSChatWidget(Gtk.Window):
         input_box.pack_start(send_button, False, False, 0)
         main_vbox.pack_start(input_box, False, False, 0)
 
-        # Welcome message
+        # Welcome message (always show on startup)
         self.append_message("assistant", "Hello! I am DeSciOS Assistant. How can I help you today?")
-
         self.show_all()
 
     def toggle_theme(self, widget):
         self.current_theme = 'light' if self.current_theme == 'dark' else 'dark'
         self.toggle_button.set_label("☾" if self.current_theme == 'dark' else "☀")
+        # Re-render all messages with the new theme
+        self.chat_listbox.foreach(lambda row: self.chat_listbox.remove(row))
+        for sender, message in self.messages:
+            self._append_message_no_store(sender, message)
 
     def on_window_button_press(self, widget, event):
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
             self.begin_move_drag(event.button, int(event.x_root), int(event.y_root), event.time)
 
     def append_message(self, sender, message):
+        self.messages.append((sender, message))
+        self._append_message_no_store(sender, message)
+
+    def _append_message_no_store(self, sender, message):
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         webview = WebKit2.WebView()
         html = markdown.markdown(safe_decode(message))
         bubble_class = "bubble-user" if sender == "user" else "bubble-assistant"
-        style = '''<style>
+        if self.current_theme == 'dark':
+            style = '''<style>
 body {
   font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
   font-size: 15px;
@@ -165,6 +174,47 @@ h1, h2, h3 {
 pre, code {
   background: #23272e;
   color: #e6e6e6;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-family: 'Fira Mono', 'Consolas', monospace;
+}
+</style>'''
+        else:
+            style = '''<style>
+body {
+  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
+  font-size: 15px;
+  margin: 0;
+  padding: 0;
+  background: #f7f7fa;
+  color: #23272e;
+}
+.bubble {
+  margin: 12px 24px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+  max-width: 90%;
+  word-break: break-word;
+  display: inline-block;
+}
+.bubble-user {
+  background: #3b82f6;
+  color: #fff;
+  margin-left: auto;
+}
+.bubble-assistant {
+  background: #e6e6e6;
+  color: #23272e;
+  margin-right: auto;
+}
+h1, h2, h3 {
+  margin: 10px 0 6px 0;
+  font-weight: bold;
+}
+pre, code {
+  background: #e6e6e6;
+  color: #23272e;
   border-radius: 6px;
   padding: 2px 6px;
   font-family: 'Fira Mono', 'Consolas', monospace;
