@@ -138,14 +138,34 @@ class DeSciOSChatWidget(Gtk.Window):
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         webview = WebKit2.WebView()
-        webview.set_size_request(-1, 60)  # -1 for width means auto, 60px min height
-        # DEBUG: Print the HTML to be loaded and use minimal HTML
+        webview.set_size_request(-1, 1)  # Let it shrink to fit
+
         html = f"<html><body><p>{safe_decode(message)}</p></body></html>"
         print("HTML being loaded into WebView:")
         print(html)
         webview.load_html(html, "file:///")
         webview.set_hexpand(True)
         webview.set_vexpand(False)
+
+        def on_load_changed(webview, load_event):
+            if load_event == WebKit2.LoadEvent.FINISHED:
+                # This JS returns the height of the body content
+                webview.run_javascript(
+                    "document.body.scrollHeight;",
+                    None,
+                    lambda webview, result, user_data: set_webview_height(webview, result),
+                    None
+                )
+
+        def set_webview_height(webview, result):
+            value = webview.run_javascript_finish(result)
+            js_result = value.get_js_value()
+            height = js_result.to_int32()
+            print(f"Setting WebView height to: {height}")
+            webview.set_size_request(-1, height)
+
+        webview.connect("load-changed", on_load_changed)
+
         hbox.pack_end(webview, True, True, 0) if sender == "user" else hbox.pack_start(webview, True, True, 0)
         row.add(hbox)
         self.chat_listbox.add(row)
