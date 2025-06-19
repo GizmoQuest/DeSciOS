@@ -139,7 +139,7 @@ class DeSciOSChatWidget(Gtk.Window):
         if self.current_theme == 'dark':
             style = '''<style>
 body {
-  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
+  font-family: 'Segoe UI Emoji', 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
   font-size: 15px;
   margin: 0;
   padding: 0;
@@ -184,7 +184,7 @@ pre, code {
         else:
             style = '''<style>
 body {
-  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
+  font-family: 'Segoe UI Emoji', 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
   font-size: 15px;
   margin: 0;
   padding: 0;
@@ -228,7 +228,10 @@ pre, code {
 </style>'''
         html = f"""
 <html>
-<head>{style}</head>
+<head>
+<meta charset="UTF-8">
+{style}
+</head>
 <body><div class='bubble {bubble_class}'>{html}</div></body>
 </html>
 """
