@@ -270,6 +270,10 @@ pre, code {
             return
         self.append_message("user", user_text)
         self.input_entry.set_text("")
+        
+        # Add loading message immediately
+        self.append_message("assistant", "🤔 Thinking...")
+        
         threading.Thread(target=self.handle_user_query, args=(user_text,), daemon=True).start()
 
     def handle_user_query(self, user_text):
@@ -281,7 +285,21 @@ pre, code {
         else:
             response = self.generate_response()
         self.conversation_history.append({"role": "assistant", "content": response})
-        GLib.idle_add(self.append_message, "assistant", response)
+        
+        # Remove the loading message and add the actual response
+        GLib.idle_add(self.replace_last_message, "assistant", response)
+
+    def replace_last_message(self, sender, message):
+        """Replace the last message (loading message) with the actual response"""
+        # Remove the last message from both the display and storage
+        if self.messages:
+            self.messages.pop()
+        if self.chat_listbox.get_children():
+            last_row = self.chat_listbox.get_children()[-1]
+            self.chat_listbox.remove(last_row)
+        
+        # Add the new message
+        self.append_message(sender, message)
 
     def build_prompt(self):
         prompt = self.system_prompt + "\n\n"
@@ -341,7 +359,7 @@ pre, code {
             data = {
                 "model": "deepseek-r1:8b",
                 "prompt": self.build_prompt(),
-                "think": False,
+                "think": True,
                 "stream": False
             }
             response = requests.post(self.ollama_url, json=data)
