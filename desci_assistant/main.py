@@ -9,7 +9,6 @@ from gi.repository import Gtk, GLib, Notify, Gdk, WebKit2
 import threading
 from bs4 import BeautifulSoup
 import markdown
-import json
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -129,61 +128,160 @@ class DeSciOSChatWidget(Gtk.Window):
         self._append_message_no_store(sender, message)
 
     def _append_message_no_store(self, sender, message):
+        print(f"_append_message_no_store called with sender={sender}, message={message}")
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         webview = WebKit2.WebView()
-        
-        # Set WebView settings for better performance
-        settings = webview.get_settings()
-        settings.set_property("enable_smooth_scrolling", False)
-        settings.set_property("enable_write_console_messages_to_stdout", True)
-        
+        webview.set_size_request(-1, 1)  # Let it shrink to fit
+
         html = markdown.markdown(safe_decode(message))
         bubble_class = "bubble-user" if sender == "user" else "bubble-assistant"
-        bubble_html = f"""
-        <html>
-        <head>{self.get_style()}</head>
-        <body><div class='bubble {bubble_class}'>{html}</div></body>
-        </html>
-        """
-        webview.load_html(bubble_html, "file:///")
-        webview.set_size_request(350, -1)  # Fixed width, auto height
-        
+        if self.current_theme == 'dark':
+            style = '''<style>
+body {
+  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
+  font-size: 15px;
+  margin: 0;
+  padding: 0;
+  background: #181c24;
+  color: #e6e6e6;
+}
+.bubble {
+  margin: 12px 24px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+  max-width: 90%;
+  word-break: break-word;
+  display: inline-block;
+}
+h1, h2, h3 {
+  margin: 10px 0 6px 0;
+  font-weight: bold;
+}
+pre, code {
+  background: #23272e;
+  color: #e6e6e6;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-family: 'Fira Mono', 'Consolas', monospace;
+}
+.bubble-user {
+  background: #3b82f6;
+  color: #fff;
+  margin-left: auto;
+  float: right;
+  clear: both;
+}
+.bubble-assistant {
+  background: #23272e;
+  color: #e6e6e6;
+  margin-right: auto;
+  float: left;
+  clear: both;
+}
+</style>'''
+        else:
+            style = '''<style>
+body {
+  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
+  font-size: 15px;
+  margin: 0;
+  padding: 0;
+  background: #f7f7fa;
+  color: #23272e;
+}
+.bubble {
+  margin: 12px 24px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+  max-width: 90%;
+  word-break: break-word;
+  display: inline-block;
+}
+h1, h2, h3 {
+  margin: 10px 0 6px 0;
+  font-weight: bold;
+}
+pre, code {
+  background: #e6e6e6;
+  color: #23272e;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-family: 'Fira Mono', 'Consolas', monospace;
+}
+.bubble-user {
+  background: #3b82f6;
+  color: #fff;
+  margin-left: auto;
+  float: right;
+  clear: both;
+}
+.bubble-assistant {
+  background: #e6e6e6;
+  color: #23272e;
+  margin-right: auto;
+  float: left;
+  clear: both;
+}
+</style>'''
+        html = f"""
+<html>
+<head>{style}</head>
+<body><div class='bubble {bubble_class}'>{html}</div></body>
+</html>
+"""
+        print("HTML being loaded into WebView:")
+        print(html)
+        webview.load_html(html, "file:///")
+        webview.set_hexpand(True)
+        webview.set_vexpand(False)
+
+        def on_load_changed(webview, load_event):
+            if load_event == WebKit2.LoadEvent.FINISHED:
+                # This JS returns the height of the body content
+                webview.run_javascript(
+                    "document.body.scrollHeight;",
+                    None,
+                    lambda webview, result, user_data: set_webview_height(webview, result),
+                    None
+                )
+
+        def set_webview_height(webview, result):
+            value = webview.run_javascript_finish(result)
+            js_result = value.get_js_value()
+            height = js_result.to_int32()
+            print(f"Setting WebView height to: {height}")
+            webview.set_size_request(-1, height)
+
+        webview.connect("load-changed", on_load_changed)
+
         hbox.pack_end(webview, True, True, 0) if sender == "user" else hbox.pack_start(webview, True, True, 0)
         row.add(hbox)
         self.chat_listbox.add(row)
         self.chat_listbox.show_all()
-        
-        # Ensure we're scrolled to the bottom
         adj = self.chat_listbox.get_parent().get_vadjustment()
-        adj.set_value(adj.get_upper())
+        GLib.idle_add(adj.set_value, adj.get_upper())
 
     def on_send_clicked(self, widget):
         user_text = self.input_entry.get_text().strip()
         if not user_text:
             return
+        self.append_message("user", user_text)
         self.input_entry.set_text("")
         threading.Thread(target=self.handle_user_query, args=(user_text,), daemon=True).start()
 
     def handle_user_query(self, user_text):
-        # Add user message to conversation history and display it
         self.conversation_history.append({"role": "user", "content": user_text})
-        GLib.idle_add(self.append_message, "user", user_text)
-
-        # Create initial empty assistant message
-        GLib.idle_add(self.append_message, "assistant", "Typing...")
-
-        # Generate response based on query type
         if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up"]):
             response = self.web_search_and_summarize(user_text)
-            self.conversation_history.append({"role": "assistant", "content": response})
-            GLib.idle_add(self.update_last_message, response)
         elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
             response = self.scan_installed_tools()
-            self.conversation_history.append({"role": "assistant", "content": response})
-            GLib.idle_add(self.update_last_message, response)
         else:
-            self.generate_response()  # Streaming response will handle its own UI updates
+            response = self.generate_response()
+        self.conversation_history.append({"role": "assistant", "content": response})
+        GLib.idle_add(self.append_message, "assistant", response)
 
     def build_prompt(self):
         prompt = self.system_prompt + "\n\n"
@@ -238,173 +336,20 @@ class DeSciOSChatWidget(Gtk.Window):
         except Exception as e:
             return f"Error scanning environment: {str(e)}"
 
-    def update_last_message(self, text):
-        print(f"Updating last message with text: {text}")
-        # Remove the last message (which is the assistant's partial response)
-        last_row = self.chat_listbox.get_row_at_index(len(self.chat_listbox.get_children()) - 1)
-        if last_row:
-            self.chat_listbox.remove(last_row)
-        # Add updated message
-        self._append_message_no_store("assistant", text)
-        # Ensure the message is visible
-        adj = self.chat_listbox.get_parent().get_vadjustment()
-        GLib.idle_add(adj.set_value, adj.get_upper())
-        return False  # Required for GLib.idle_add
-
-    def generate_response(self, custom_prompt=None):
+    def generate_response(self):
         try:
             data = {
                 "model": "deepseek-r1:8b",
-                "prompt": custom_prompt if custom_prompt else self.build_prompt(),
+                "prompt": self.build_prompt(),
                 "think": False,
-                "stream": True
+                "stream": False
             }
-            response = requests.post(self.ollama_url, json=data, stream=True)
+            response = requests.post(self.ollama_url, json=data)
             if response.status_code == 200:
-                full_response = ""
-                for line in response.iter_lines():
-                    if line:
-                        try:
-                            json_response = json.loads(line)
-                            if "response" in json_response:
-                                chunk = json_response["response"]
-                                full_response += chunk
-                                if not custom_prompt:  # Only update UI for main chat responses
-                                    # Use a direct WebView update
-                                    GLib.idle_add(self.update_streaming_message, full_response)
-                        except json.JSONDecodeError:
-                            continue
-                # Add the complete response to conversation history
-                if not custom_prompt:  # Only add to history for main chat responses
-                    self.conversation_history.append({"role": "assistant", "content": full_response})
-                return full_response
+                return response.json().get("response", "(No response)")
             return "Error: Could not generate response"
         except Exception as e:
             return f"Error: {str(e)}"
-
-    def update_streaming_message(self, text):
-        try:
-            last_row = self.chat_listbox.get_row_at_index(len(self.chat_listbox.get_children()) - 1)
-            if last_row:
-                webview = None
-                # Find the WebView in the row's hierarchy
-                hbox = last_row.get_child()
-                for child in hbox.get_children():
-                    if isinstance(child, WebKit2.WebView):
-                        webview = child
-                        break
-                
-                if webview:
-                    html = markdown.markdown(safe_decode(text))
-                    bubble_html = f"""
-                    <html>
-                    <head>{self.get_style()}</head>
-                    <body><div class='bubble bubble-assistant'>{html}</div></body>
-                    </html>
-                    """
-                    webview.load_html(bubble_html, "file:///")
-                    # Force immediate update
-                    while Gtk.events_pending():
-                        Gtk.main_iteration()
-            
-            # Ensure we're scrolled to the bottom
-            adj = self.chat_listbox.get_parent().get_vadjustment()
-            adj.set_value(adj.get_upper())
-        except Exception as e:
-            print(f"Error updating streaming message: {e}")
-        return False
-
-    def get_style(self):
-        if self.current_theme == 'dark':
-            return '''<style>
-body {
-  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
-  font-size: 15px;
-  margin: 0;
-  padding: 0;
-  background: #181c24;
-  color: #e6e6e6;
-}
-.bubble {
-  margin: 12px 24px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-  max-width: 90%;
-  word-break: break-word;
-  display: inline-block;
-}
-h1, h2, h3 {
-  margin: 10px 0 6px 0;
-  font-weight: bold;
-}
-pre, code {
-  background: #23272e;
-  color: #e6e6e6;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-}
-.bubble-user {
-  background: #3b82f6;
-  color: #fff;
-  margin-left: auto;
-  float: right;
-  clear: both;
-}
-.bubble-assistant {
-  background: #23272e;
-  color: #e6e6e6;
-  margin-right: auto;
-  float: left;
-  clear: both;
-}
-</style>'''
-        else:
-            return '''<style>
-body {
-  font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif;
-  font-size: 15px;
-  margin: 0;
-  padding: 0;
-  background: #f7f7fa;
-  color: #23272e;
-}
-.bubble {
-  margin: 12px 24px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-  max-width: 90%;
-  word-break: break-word;
-  display: inline-block;
-}
-h1, h2, h3 {
-  margin: 10px 0 6px 0;
-  font-weight: bold;
-}
-pre, code {
-  background: #e6e6e6;
-  color: #23272e;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-}
-.bubble-user {
-  background: #3b82f6;
-  color: #fff;
-  margin-left: auto;
-  float: right;
-  clear: both;
-}
-.bubble-assistant {
-  background: #e6e6e6;
-  color: #23272e;
-  margin-right: auto;
-  float: left;
-  clear: both;
-}
-</style>'''
 
 if __name__ == "__main__":
     win = DeSciOSChatWidget()
