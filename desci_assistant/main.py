@@ -285,21 +285,7 @@ pre, code {
         else:
             response = self.generate_response()
         self.conversation_history.append({"role": "assistant", "content": response})
-        
-        # Remove the loading message and add the actual response
-        GLib.idle_add(self.replace_last_message, "assistant", response)
-
-    def replace_last_message(self, sender, message):
-        """Replace the last message (loading message) with the actual response"""
-        # Remove the last message from both the display and storage
-        if self.messages:
-            self.messages.pop()
-        if self.chat_listbox.get_children():
-            last_row = self.chat_listbox.get_children()[-1]
-            self.chat_listbox.remove(last_row)
-        
-        # Add the new message
-        self.append_message(sender, message)
+        GLib.idle_add(self.append_message, "assistant", response)
 
     def build_prompt(self):
         prompt = self.system_prompt + "\n\n"
