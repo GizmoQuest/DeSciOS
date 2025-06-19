@@ -274,15 +274,25 @@ pre, code {
         threading.Thread(target=self.handle_user_query, args=(user_text,), daemon=True).start()
 
     def handle_user_query(self, user_text):
+        # Add user message to conversation history and display it
         self.conversation_history.append({"role": "user", "content": user_text})
+        GLib.idle_add(self.append_message, "user", user_text)
+
+        # Create initial empty assistant message that will be updated
+        GLib.idle_add(self.append_message, "assistant", "")
+
+        # Generate response based on query type
         if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up"]):
             response = self.web_search_and_summarize(user_text)
         elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
             response = self.scan_installed_tools()
         else:
             response = self.generate_response()
-        self.conversation_history.append({"role": "assistant", "content": response})
-        GLib.idle_add(self.append_message, "assistant", response)
+            
+        # If it wasn't a streaming response, update the conversation history
+        if isinstance(response, str):
+            self.conversation_history.append({"role": "assistant", "content": response})
+            GLib.idle_add(self.update_last_message, response)
 
     def build_prompt(self):
         prompt = self.system_prompt + "\n\n"
@@ -360,6 +370,9 @@ pre, code {
                                     GLib.idle_add(self.update_last_message, full_response)
                         except json.JSONDecodeError:
                             continue
+                # Add the complete response to conversation history
+                if not custom_prompt:  # Only add to history for main chat responses
+                    self.conversation_history.append({"role": "assistant", "content": full_response})
                 return full_response
             return "Error: Could not generate response"
         except Exception as e:
