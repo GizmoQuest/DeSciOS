@@ -276,7 +276,17 @@ pre, code {
         
         threading.Thread(target=self.handle_user_query, args=(user_text,), daemon=True).start()
 
+    def is_new_topic(self, user_text):
+        new_topic_starters = [
+            "who is", "what about", "tell me about", "explain", "define", "give me information on", "describe"
+        ]
+        user_text_lower = user_text.strip().lower()
+        return any(user_text_lower.startswith(starter) for starter in new_topic_starters)
+
     def handle_user_query(self, user_text):
+        # If the user starts a new topic, reset the conversation history except for the system prompt
+        if self.is_new_topic(user_text):
+            self.conversation_history = []
         self.conversation_history.append({"role": "user", "content": user_text})
         if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up"]):
             response = self.web_search_and_summarize(user_text)
@@ -289,7 +299,17 @@ pre, code {
 
     def build_prompt(self):
         prompt = self.system_prompt + "\n\n"
-        for msg in self.conversation_history:
+        # Only include the last 2 user-assistant pairs for context
+        history = []
+        count = 0
+        for msg in reversed(self.conversation_history):
+            if msg["role"] == "assistant" or msg["role"] == "user":
+                history.append(msg)
+                if msg["role"] == "user":
+                    count += 1
+                if count == 2:
+                    break
+        for msg in reversed(history):
             if msg["role"] == "user":
                 prompt += f"User: {msg['content']}\n"
             else:
