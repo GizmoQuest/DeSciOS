@@ -135,6 +135,11 @@ class DeSciOSChatWidget(Gtk.Window):
         webview = WebKit2.WebView()
         webview.set_size_request(-1, 1)  # Let it shrink to fit
 
+        # Set WebView settings for better performance
+        settings = webview.get_settings()
+        settings.set_property("enable_smooth_scrolling", False)
+        settings.set_property("enable_write_console_messages_to_stdout", True)
+
         html = markdown.markdown(safe_decode(message))
         bubble_class = "bubble-user" if sender == "user" else "bubble-assistant"
         if self.current_theme == 'dark':
@@ -250,11 +255,16 @@ pre, code {
                 )
 
         def set_webview_height(webview, result):
-            value = webview.run_javascript_finish(result)
-            js_result = value.get_js_value()
-            height = js_result.to_int32()
-            print(f"Setting WebView height to: {height}")
-            webview.set_size_request(-1, height)
+            try:
+                value = webview.run_javascript_finish(result)
+                js_result = value.get_js_value()
+                height = js_result.to_int32()
+                print(f"Setting WebView height to: {height}")
+                webview.set_size_request(-1, height)
+                # Force an immediate redraw
+                self.chat_listbox.queue_draw()
+            except Exception as e:
+                print(f"Error setting WebView height: {e}")
 
         webview.connect("load-changed", on_load_changed)
 
@@ -379,7 +389,10 @@ pre, code {
                                 # Update UI with partial response
                                 if not custom_prompt:  # Only update UI for main chat responses
                                     print(f"Streaming chunk: {chunk}")
-                                    GLib.idle_add(self.update_last_message, full_response)
+                                    # Wait for the UI update to complete before continuing
+                                    update_event = threading.Event()
+                                    GLib.idle_add(lambda: self.update_last_message_and_signal(full_response, update_event))
+                                    update_event.wait(timeout=0.1)  # Small timeout to prevent blocking
                         except json.JSONDecodeError:
                             continue
                 # Add the complete response to conversation history
@@ -389,6 +402,21 @@ pre, code {
             return "Error: Could not generate response"
         except Exception as e:
             return f"Error: {str(e)}"
+
+    def update_last_message_and_signal(self, text, event):
+        try:
+            # Remove the last message (which is the assistant's partial response)
+            last_row = self.chat_listbox.get_row_at_index(len(self.chat_listbox.get_children()) - 1)
+            if last_row:
+                self.chat_listbox.remove(last_row)
+            # Add updated message
+            self._append_message_no_store("assistant", text)
+            # Ensure the message is visible
+            adj = self.chat_listbox.get_parent().get_vadjustment()
+            adj.set_value(adj.get_upper())
+        finally:
+            event.set()  # Signal that the update is complete
+        return False  # Required for GLib.idle_add
 
 if __name__ == "__main__":
     win = DeSciOSChatWidget()
