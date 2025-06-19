@@ -269,7 +269,6 @@ pre, code {
         user_text = self.input_entry.get_text().strip()
         if not user_text:
             return
-        self.append_message("user", user_text)
         self.input_entry.set_text("")
         threading.Thread(target=self.handle_user_query, args=(user_text,), daemon=True).start()
 
@@ -278,21 +277,20 @@ pre, code {
         self.conversation_history.append({"role": "user", "content": user_text})
         GLib.idle_add(self.append_message, "user", user_text)
 
-        # Create initial empty assistant message that will be updated
-        GLib.idle_add(self.append_message, "assistant", "")
+        # Create initial empty assistant message
+        GLib.idle_add(self.append_message, "assistant", "Typing...")
 
         # Generate response based on query type
         if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up"]):
             response = self.web_search_and_summarize(user_text)
-        elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
-            response = self.scan_installed_tools()
-        else:
-            response = self.generate_response()
-            
-        # If it wasn't a streaming response, update the conversation history
-        if isinstance(response, str):
             self.conversation_history.append({"role": "assistant", "content": response})
             GLib.idle_add(self.update_last_message, response)
+        elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
+            response = self.scan_installed_tools()
+            self.conversation_history.append({"role": "assistant", "content": response})
+            GLib.idle_add(self.update_last_message, response)
+        else:
+            self.generate_response()  # Streaming response will handle its own UI updates
 
     def build_prompt(self):
         prompt = self.system_prompt + "\n\n"
@@ -347,6 +345,19 @@ pre, code {
         except Exception as e:
             return f"Error scanning environment: {str(e)}"
 
+    def update_last_message(self, text):
+        print(f"Updating last message with text: {text}")
+        # Remove the last message (which is the assistant's partial response)
+        last_row = self.chat_listbox.get_row_at_index(len(self.chat_listbox.get_children()) - 1)
+        if last_row:
+            self.chat_listbox.remove(last_row)
+        # Add updated message
+        self._append_message_no_store("assistant", text)
+        # Ensure the message is visible
+        adj = self.chat_listbox.get_parent().get_vadjustment()
+        GLib.idle_add(adj.set_value, adj.get_upper())
+        return False  # Required for GLib.idle_add
+
     def generate_response(self, custom_prompt=None):
         try:
             data = {
@@ -367,6 +378,7 @@ pre, code {
                                 full_response += chunk
                                 # Update UI with partial response
                                 if not custom_prompt:  # Only update UI for main chat responses
+                                    print(f"Streaming chunk: {chunk}")
                                     GLib.idle_add(self.update_last_message, full_response)
                         except json.JSONDecodeError:
                             continue
@@ -377,15 +389,6 @@ pre, code {
             return "Error: Could not generate response"
         except Exception as e:
             return f"Error: {str(e)}"
-
-    def update_last_message(self, text):
-        # Remove the last message (which is the assistant's partial response)
-        last_row = self.chat_listbox.get_row_at_index(len(self.chat_listbox.get_children()) - 1)
-        if last_row:
-            self.chat_listbox.remove(last_row)
-        # Add updated message
-        self._append_message_no_store("assistant", text)
-        return False  # Required for GLib.idle_add
 
 if __name__ == "__main__":
     win = DeSciOSChatWidget()
