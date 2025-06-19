@@ -272,7 +272,7 @@ pre, code {
         self.input_entry.set_text("")
         
         # Add loading message immediately
-        self.append_message("assistant", "🤔 Thinking...")
+        self.append_message("assistant", "Thinking...")
         
         threading.Thread(target=self.handle_user_query, args=(user_text,), daemon=True).start()
 
