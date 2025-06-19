@@ -9,6 +9,7 @@ from gi.repository import Gtk, GLib, Notify, Gdk, WebKit2
 import threading
 from bs4 import BeautifulSoup
 import markdown
+import json
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -336,20 +337,42 @@ pre, code {
         except Exception as e:
             return f"Error scanning environment: {str(e)}"
 
-    def generate_response(self):
+    def generate_response(self, custom_prompt=None):
         try:
             data = {
                 "model": "deepseek-r1:8b",
-                "prompt": self.build_prompt(),
+                "prompt": custom_prompt if custom_prompt else self.build_prompt(),
                 "think": False,
-                "stream": False
+                "stream": True
             }
-            response = requests.post(self.ollama_url, json=data)
+            response = requests.post(self.ollama_url, json=data, stream=True)
             if response.status_code == 200:
-                return response.json().get("response", "(No response)")
+                full_response = ""
+                for line in response.iter_lines():
+                    if line:
+                        try:
+                            json_response = json.loads(line)
+                            if "response" in json_response:
+                                chunk = json_response["response"]
+                                full_response += chunk
+                                # Update UI with partial response
+                                if not custom_prompt:  # Only update UI for main chat responses
+                                    GLib.idle_add(self.update_last_message, full_response)
+                        except json.JSONDecodeError:
+                            continue
+                return full_response
             return "Error: Could not generate response"
         except Exception as e:
             return f"Error: {str(e)}"
+
+    def update_last_message(self, text):
+        # Remove the last message (which is the assistant's partial response)
+        last_row = self.chat_listbox.get_row_at_index(len(self.chat_listbox.get_children()) - 1)
+        if last_row:
+            self.chat_listbox.remove(last_row)
+        # Add updated message
+        self._append_message_no_store("assistant", text)
+        return False  # Required for GLib.idle_add
 
 if __name__ == "__main__":
     win = DeSciOSChatWidget()
