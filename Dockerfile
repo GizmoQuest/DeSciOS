@@ -182,7 +182,7 @@ COPY descios_assistant /opt/descios_assistant
 RUN cd /opt/descios_assistant && \
     /usr/bin/python3 -m pip install --break-system-packages -r requirements.txt && \
     chmod +x main.py && \
-    cp desci-assistant.desktop /usr/share/applications/ && \
+    cp descios-assistant.desktop /usr/share/applications/ && \
     chown -R $USER:$USER /opt/descios_assistant
 
 # Install DeSci Assistant font
