@@ -97,7 +97,7 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 | `descios_assistant/` | DeSciOS Assistant application directory |
 | `descios_assistant/main.py` | GTK-based chat interface with Ollama integration |
 | `descios_assistant/requirements.txt` | Python dependencies for the assistant |
-| `descios_assistant/desci-assistant.desktop` | Desktop entry for the assistant |
+| `descios_assistant/descios-assistant.desktop` | Desktop entry for the assistant |
 
 ---
 
