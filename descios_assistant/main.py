@@ -134,12 +134,42 @@ class DeSciOSChatWidget(Gtk.Window):
         # Input area
         input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         input_box.set_name("inputbox")
-        self.input_entry = Gtk.Entry()
-        self.input_entry.set_name("input_entry")
-        self.input_entry.set_placeholder_text("Type your question and press Enter...")
-        self.input_entry.set_size_request(0, 36)
-        self.input_entry.set_hexpand(True)
-        self.input_entry.connect("activate", self.on_send_clicked)
+
+        # Replace Entry with TextView for auto-resizing capability
+        input_scroll = Gtk.ScrolledWindow()
+        input_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        input_scroll.set_min_content_height(36)  # Minimum height
+        input_scroll.set_max_content_height(200)  # Maximum height before scrolling
+        input_scroll.set_hexpand(True)
+
+        self.input_textview = Gtk.TextView()
+        self.input_textview.set_name("input_textview")
+        self.input_textview.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        self.input_textview.set_accepts_tab(False)  # Don't capture tab key
+        self.input_textview.set_left_margin(12)
+        self.input_textview.set_right_margin(12)
+        self.input_textview.set_top_margin(8)
+        self.input_textview.set_bottom_margin(8)
+
+        # Get the text buffer
+        self.input_buffer = self.input_textview.get_buffer()
+
+        # Connect to buffer changes for auto-resizing
+        self.input_buffer.connect("changed", self.on_input_text_changed)
+
+        # Connect key press events for Enter handling
+        self.input_textview.connect("key-press-event", self.on_input_key_press)
+
+        # Connect focus events for placeholder handling
+        self.input_textview.connect("focus-in-event", self.on_input_focus_in)
+        self.input_textview.connect("focus-out-event", self.on_input_focus_out)
+
+        input_scroll.add(self.input_textview)
+
+        # Add placeholder text functionality
+        self.placeholder_text = "Type your question and press Enter..."
+        self.is_placeholder_active = True
+        self.setup_placeholder()
 
         # Create a stack for Send/Stop buttons
         self.button_stack = Gtk.Stack()
@@ -161,7 +191,7 @@ class DeSciOSChatWidget(Gtk.Window):
         reset_button.connect("clicked", self.on_reset_clicked)
         input_box.pack_start(reset_button, False, False, 0)
 
-        input_box.pack_start(self.input_entry, True, True, 0)
+        input_box.pack_start(input_scroll, True, True, 0)
         input_box.pack_start(self.button_stack, False, False, 0)
         main_vbox.pack_start(input_box, False, False, 0)
 
@@ -220,6 +250,23 @@ class DeSciOSChatWidget(Gtk.Window):
     border: none;
     border-radius: 12px;
     padding: 0 12px;
+}
+
+#input_textview {
+    background-color: #424242;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+}
+
+#input_textview text {
+    background-color: #424242;
+    color: #ffffff;
+}
+
+#inputbox scrolledwindow {
+    border-radius: 12px;
+    background-color: #424242;
 }
 
 #send_button, #reset_button, #stop_button {
@@ -337,16 +384,20 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         GLib.idle_add(adj.set_value, adj.get_upper())
 
     def on_send_clicked(self, widget):
-        user_text = self.input_entry.get_text().strip()
-        if not user_text or self.is_generating:
+        text_buffer = self.input_textview.get_buffer()
+        user_text = text_buffer.get_text(text_buffer.get_start_iter(), text_buffer.get_end_iter(), True).strip()
+        
+        # Don't send if it's just placeholder text or empty
+        if not user_text or self.is_placeholder_active or user_text == self.placeholder_text or self.is_generating:
             return
         
         self.is_generating = True
         self.button_stack.set_visible_child_name("stop")
-        self.input_entry.set_sensitive(False)
+        self.input_textview.set_sensitive(False)
 
         self.append_message("user", user_text)
-        self.input_entry.set_text("")
+        text_buffer.set_text("")
+        self.setup_placeholder()  # Reset placeholder after clearing
         
         # Add loading message immediately and store its row for updating
         self.append_message("assistant", "🤔 Thinking...")
@@ -372,7 +423,7 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         """Restore the input widgets to their default state."""
         self.is_generating = False
         self.button_stack.set_visible_child_name("send")
-        self.input_entry.set_sensitive(True)
+        self.input_textview.set_sensitive(True)
 
     def is_new_topic(self, user_text):
         new_topic_starters = [
@@ -585,6 +636,63 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
             self.chat_listbox.foreach(lambda widget: self.chat_listbox.remove(widget))
             self.append_message("assistant", "Hello! I am DeSciOS Assistant. How can I help you today?")
         dialog.destroy()
+
+    def on_input_text_changed(self, buffer):
+        # Implement placeholder functionality
+        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+        if text == "":
+            # Text is empty, show placeholder
+            if not self.is_placeholder_active:
+                self.is_placeholder_active = True
+                buffer.set_text(self.placeholder_text)
+        elif text == self.placeholder_text:
+            # Text is placeholder, mark as placeholder active
+            self.is_placeholder_active = True
+        else:
+            # Text is actual content
+            self.is_placeholder_active = False
+
+    def on_input_key_press(self, widget, event):
+        # Handle Enter key (send message)
+        if event.keyval == Gdk.KEY_Return or event.keyval == Gdk.KEY_KP_Enter:
+            if not (event.state & Gdk.ModifierType.SHIFT_MASK):  # Enter without Shift
+                self.on_send_clicked(widget)
+                return True  # Consume the event
+        
+        # Clear placeholder when typing
+        if self.is_placeholder_active:
+            buffer = widget.get_buffer()
+            if event.keyval not in [Gdk.KEY_Tab, Gdk.KEY_Shift_L, Gdk.KEY_Shift_R, 
+                                   Gdk.KEY_Control_L, Gdk.KEY_Control_R, Gdk.KEY_Alt_L, Gdk.KEY_Alt_R]:
+                buffer.set_text("")
+                self.is_placeholder_active = False
+        
+        return False
+
+    def on_input_focus_in(self, widget, event):
+        # Clear placeholder when focusing in
+        if self.is_placeholder_active:
+            buffer = widget.get_buffer()
+            text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+            if text == self.placeholder_text:
+                buffer.set_text("")
+                self.is_placeholder_active = False
+        return False
+
+    def on_input_focus_out(self, widget, event):
+        # Show placeholder when focusing out if empty
+        buffer = widget.get_buffer()
+        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True).strip()
+        if text == "":
+            buffer.set_text(self.placeholder_text)
+            self.is_placeholder_active = True
+        return False
+
+    def setup_placeholder(self):
+        # Initialize placeholder functionality
+        buffer = self.input_textview.get_buffer()
+        buffer.set_text(self.placeholder_text)
+        self.is_placeholder_active = True
 
 if __name__ == "__main__":
     win = DeSciOSChatWidget()
