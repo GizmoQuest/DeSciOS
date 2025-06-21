@@ -14,11 +14,18 @@
       <value type="int" value="3"/> <!-- Separator (stretch) -->
       <value type="int" value="4"/> <!-- Notification Area -->
       <value type="int" value="6"/> <!-- Separator (non-expand) -->
+      <value type="int" value="7"/> <!-- DeSciOS Assistant Launcher -->
+      <value type="int" value="8"/> <!-- Separator (non-expand) -->
       <value type="int" value="5"/> <!-- Clock -->
     </property>
   </property>
   <property name="plugins" type="empty">
-    <property name="plugin-1" type="string" value="applicationsmenu"/>
+    <property name="plugin-1" type="string" value="applicationsmenu">
+      <property name="custom-menu-file" type="empty"/>
+      <property name="button-icon" type="empty"/>
+      <property name="button-title" type="string" value="Let's DeSci!"/>
+      <property name="show-button-title" type="bool" value="true"/>
+    </property>
     <property name="plugin-2" type="string" value="tasklist"/>
     <property name="plugin-3" type="string" value="separator">
       <property name="expand" type="bool" value="true"/>
@@ -26,6 +33,17 @@
     <property name="plugin-4" type="string" value="notificationarea"/>
     <property name="plugin-5" type="string" value="clock"/>
     <property name="plugin-6" type="string" value="separator">
+      <property name="expand" type="bool" value="false"/>
+    </property>
+    <property name="plugin-7" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="desci-assistant.desktop"/>
+      </property>
+      <property name="show-label" type="bool" value="true"/>
+      <property name="names-visible" type="bool" value="true"/>
+      <property name="button-title" type="string" value="DeSciOS Assistant"/>
+    </property>
+    <property name="plugin-8" type="string" value="separator">
       <property name="expand" type="bool" value="false"/>
     </property>
   </property>

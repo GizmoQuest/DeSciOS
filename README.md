@@ -15,8 +15,8 @@
 Originally inspired by the idea of a Stadia-like environment, **DeSciOS** evolves that vision toward enabling:
 
 - Local-first scientific computing
-- AI-assisted research writing (LLM support coming soon)
-- Peer-to-peer publishing workflows (IPFS support included)
+- AI-assistance (with Ollama and DeepSeek-R1:8B model)
+- Peer-to-peer workflows (IPFS support included)
 - Modular scientific desktop environments for students, researchers, and citizen scientists
 
 ---
@@ -30,7 +30,6 @@ DeSciOS is currently under active development and remains **experimental**. It p
 You **might encounter**:
 - Unpolished workflows
 - GPU acceleration limitations (browser-dependent)
-- Missing features like built-in LLMs
 - Manual setup requirements
 
 That said, it's ready for contributors, educators, and DeSci enthusiasts eager to shape open research infrastructure.
@@ -45,16 +44,18 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 | **OpenCL**        | Critical for accelerated computing in diverse scientific tools   |
 | **TigerVNC**      | VNC server to expose the XFCE desktop                            |
 | **noVNC + Websockify** | Enables browser-based access via WebSocket                     |
+| **DeSciOS Assistant** | Native GTK chat interface with Ollama integration for AI assistance |
 | **JupyterLab**    | Development notebook environment with BeakerX multi-language support |
 | **RStudio**       | Full-featured R development environment                          |
 | **Spyder**        | Scientific Python IDE                                            |
 | **UGENE**         | Bioinformatics suite                                             |
-| **ParaView**      | Scientific visualization tool                                    |
 | **CellModeller**  | Multicellular modelling framework                                |
 | **GNU Octave**    | MATLAB-like numerical computing                                  |
 | **Fiji/ImageJ**   | Image processing and analysis                                    |
 | **QGIS**          | Geographic Information System                                    |
-| **Avogadro**      | Molecular modeling and visualization                             |
+| **GRASS GIS**     | Geographic Information System with full GUI support              |
+| **Nextflow**      | Workflow management system for reproducible research             |
+| **NGL Viewer**    | Molecular visualization tool (browser-based)                    |
 | **IPFS Desktop**  | Decentralized file system interface                              |
 | **Syncthing**     | P2P file synchronization                                         |
 | **EtherCalc**     | Collaborative spreadsheet                                        |
@@ -68,15 +69,19 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 ## 🛠️ Features
 
 - 🌐 **Full Linux desktop streaming from any modern browser**
+- 🤖 **Native AI assistant with Ollama integration (DeepSeek-R1:8B model) for scientific queries**
 - 📁 **Persistent scientific workspace (home folder mountable)**
 - 🧬 **Comprehensive scientific software suite**
 - 📊 **Data analysis tools (R, Python, Octave)**
 - 🔬 **Bioinformatics and cellular/molecular modeling**
-- 🗺️ **Geospatial analysis with QGIS**
+- 🗺️ **Geospatial analysis with QGIS and GRASS GIS**
 - 🖼️ **Image processing with Fiji/ImageJ**
 - 📡 **Decentralized tools (IPFS, Syncthing)**
 - 💰 **Cryptocurrency integration (Nano wallet)**
+- 🔍 **Web search and tool discovery capabilities**
 - 🔌 **Modular architecture for additional tools**
+- 🧪 **Workflow management with Nextflow**
+- 🧬 **Molecular visualization with NGL Viewer**
 
 ---
 
@@ -89,6 +94,34 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 | `supervisord.conf` | Orchestrates services like `vncserver`, `noVNC`, and `jupyterlab` |
 | `xfce4-panel.xml` | Pre-configured XFCE panel layout |
 | `os.svg` | DeSciOS branding/logo image |
+| `descios_assistant/` | DeSciOS Assistant application directory |
+| `descios_assistant/main.py` | GTK-based chat interface with Ollama integration |
+| `descios_assistant/requirements.txt` | Python dependencies for the assistant |
+| `descios_assistant/desci-assistant.desktop` | Desktop entry for the assistant |
+
+---
+
+## 🧑‍🔬 DeSciOS Assistant
+
+**DeSciOS Assistant** is a native GTK application that provides AI-powered assistance within the DeSciOS environment. It features:
+
+- **Ollama Integration**: Connects to local Ollama instance with DeepSeek-R1:8B model for AI responses
+- **Scientific Context**: Aware of DeSciOS environment and available tools
+- **Web Search**: Can search and summarize web content for research queries using Brave search
+- **Tool Discovery**: Scans and reports installed scientific software from system directories
+- **Modern UI**: Clean, responsive interface with Orbitron font and dark theme support
+- **Conversation Memory**: Maintains context across multiple interactions
+- **Real-time Updates**: Dynamic message updates with WebKit-based rendering
+
+### Assistant Capabilities
+
+- Answer questions about DeSciOS and its components
+- Help with scientific computing workflows
+- Search the web for research information
+- List available tools and software
+- Provide guidance on using scientific applications
+- Assist with data analysis and visualization tasks
+- Support for markdown rendering in responses
 
 ---
 
@@ -129,13 +162,7 @@ DeSciOS is designed for:
 * Contributors to the DeSci India and global DeSci movement
 * Educators seeking open, reproducible science infrastructure
 
-Future integrations will enable:
-
-* ✅ Local LLMs with Ollama and WebLLM
-* ✅ Enhanced IPFS-based publishing and archiving
-* ✅ Nano-based micropayments and research grant flows
-
-> **Build open science tools. Host your own lab. Publish without gatekeepers.**
+> **Build open science tools the decentralized way. Host your own lab. Publish without gatekeepers.**
 
 ---
 

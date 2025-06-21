@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=DeSciOS Assistant
+Comment=AI-powered scientific computing assistant
+Exec=/usr/bin/python3 /opt/descios_assistant/main.py
+Icon=applications-science
+Terminal=false
+Type=Application
+Categories=Education
+StartupNotify=true
+X-GNOME-UsesNotifications=true 
