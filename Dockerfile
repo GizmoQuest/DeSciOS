@@ -119,7 +119,11 @@ RUN apt update && apt install -y unzip wget && \
     wget https://downloads.imagej.net/fiji/latest/fiji-latest-linux64-jdk.zip && \
     unzip fiji-latest-linux64-jdk.zip -d /opt && \
     rm fiji-latest-linux64-jdk.zip && \
-    ln -s /opt/Fiji.app/ImageJ-linux64 /usr/local/bin/fiji
+    chown $USER:$USER -R /opt/Fiji && \
+    chmod +x /opt/Fiji/fiji-linux-x64 && \
+    echo 'alias fiji=/opt/Fiji/fiji-linux-x64' >> /home/$USER/.bashrc && \
+    echo '[Desktop Entry]\nName=Fiji\nExec=bash -c "cd /opt/Fiji && ./fiji"\nIcon=applications-science\nType=Application\nCategories=Science;' \
+    > /usr/share/applications/fiji.desktop
 
 # Install Nextflow
 RUN apt-get update && apt-get install -y openjdk-17-jre-headless && \

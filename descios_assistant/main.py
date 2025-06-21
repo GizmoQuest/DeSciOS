@@ -5,10 +5,11 @@ import requests
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
-from gi.repository import Gtk, GLib, Notify, Gdk, WebKit2
+from gi.repository import Gtk, GLib, Notify, Gdk, WebKit2, Pango
 import threading
 from bs4 import BeautifulSoup
 import markdown
+import random
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -37,7 +38,7 @@ def safe_decode(text):
 class DeSciOSChatWidget(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="DeSciOS Assistant")
-        self.set_default_size(440, 640)
+        self.set_default_size(440, 680)
         self.set_keep_above(True)
         self.set_resizable(True)
         self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
@@ -131,6 +132,50 @@ class DeSciOSChatWidget(Gtk.Window):
         chat_scroll.add(self.chat_listbox)
         main_vbox.pack_start(chat_scroll, True, True, 0)
 
+        # Prompt suggestions area
+        self.suggestions_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        self.suggestions_container.set_name("suggestions_container")
+        
+        # All available prompt suggestions (we'll randomly select 3)
+        self.all_prompt_suggestions = [
+            ("🧬 What bioinformatics tools are available?", "What bioinformatics tools are available in DeSciOS?"),
+            ("📊 How to analyze data with R and Python?", "How can I set up a data analysis workflow using both R and Python in DeSciOS?"),
+            ("🔬 Set up a reproducible research pipeline", "How do I create a reproducible research pipeline using Nextflow in DeSciOS?"),
+            ("🗺️ Analyze geospatial data with QGIS", "How can I perform geospatial analysis using QGIS and GRASS GIS in DeSciOS?"),
+            ("🤖 How does AI assistance work here?", "How does the AI assistance work in DeSciOS and what can you help me with?"),
+            ("🌐 Share research using decentralized tools", "How can I share my research data and collaborate using IPFS and decentralized tools?"),
+            ("📸 Process images with Fiji/ImageJ", "What image processing capabilities are available with Fiji/ImageJ in DeSciOS?"),
+            ("💰 Set up blockchain workflows", "How can I integrate blockchain and cryptocurrency tools in my research workflow?"),
+        ]
+        
+        # Create container for suggestion buttons (will be populated by create_suggestions)
+        self.suggestions_grid = Gtk.FlowBox()
+        self.suggestions_grid.set_name("suggestions_grid")
+        self.suggestions_grid.set_valign(Gtk.Align.START)
+        self.suggestions_grid.set_max_children_per_line(1)  # Changed to 1 since we only have 3 now
+        self.suggestions_grid.set_column_spacing(8)
+        self.suggestions_grid.set_row_spacing(8)
+        self.suggestions_grid.set_homogeneous(True)
+        self.suggestions_grid.set_selection_mode(Gtk.SelectionMode.NONE)
+        
+        # Add header for suggestions
+        suggestions_header = Gtk.Label("💡 Try these prompts:")
+        suggestions_header.set_name("suggestions_header")
+        suggestions_header.set_halign(Gtk.Align.START)
+        suggestions_header.set_margin_left(12)
+        suggestions_header.set_margin_bottom(8)
+        
+        self.suggestions_container.pack_start(suggestions_header, False, False, 0)
+        self.suggestions_container.pack_start(self.suggestions_grid, False, False, 0)
+        self.suggestions_container.set_margin_left(12)
+        self.suggestions_container.set_margin_right(12)
+        self.suggestions_container.set_margin_bottom(8)
+        
+        # Create initial random suggestions
+        self.create_random_suggestions()
+        
+        main_vbox.pack_start(self.suggestions_container, False, False, 0)
+
         # Input area
         input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         input_box.set_name("inputbox")
@@ -199,7 +244,11 @@ class DeSciOSChatWidget(Gtk.Window):
         self.is_generating = False
 
         # Welcome message (always show on startup)
-        self.append_message("assistant", "Hello! I am DeSciOS Assistant. How can I help you today?")
+        welcome_msg = ("Hello! I am DeSciOS Assistant, your AI-powered guide to decentralized science. "
+                      "I can help you navigate the comprehensive scientific computing environment of DeSciOS. "
+                      "Try one of the suggested prompts below, or ask me anything about research workflows, "
+                      "data analysis, bioinformatics, or the available tools!")
+        self.append_message("assistant", welcome_msg)
         self.update_app_theme()
         self.show_all()
 
@@ -286,6 +335,51 @@ class DeSciOSChatWidget(Gtk.Window):
 
 #send_button:active, #reset_button:active, #stop_button:active {
     background-color: #00251a;
+}
+
+#suggestions_container {
+    background-color: rgba(24, 28, 36, 0.8);
+    border-radius: 12px;
+    padding: 8px;
+}
+
+#suggestions_header {
+    color: #00bcd4;
+    font-weight: bold;
+    font-size: 1.1em;
+    font-family: "Orbitron", sans-serif;
+    font-style: italic;
+}
+
+#suggestions_grid {
+    margin: 0;
+    padding: 4px;
+}
+
+#suggestion_button {
+    background: linear-gradient(135deg, rgba(0, 105, 92, 0.3), rgba(0, 77, 64, 0.3));
+    border: 1px solid rgba(0, 188, 212, 0.4);
+    border-radius: 8px;
+    padding: 12px 8px;
+    margin: 2px;
+    min-width: 140px;
+    min-height: 60px;
+}
+
+#suggestion_button:hover {
+    background: linear-gradient(135deg, rgba(0, 105, 92, 0.5), rgba(0, 77, 64, 0.5));
+    border-color: rgba(0, 188, 212, 0.6);
+    box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);
+}
+
+#suggestion_button:active {
+    background: linear-gradient(135deg, rgba(0, 105, 92, 0.7), rgba(0, 77, 64, 0.7));
+    border-color: rgba(0, 188, 212, 0.8);
+}
+
+#suggestion_label {
+    color: #e6e6e6;
+    font-size: 0.9em;
 }
 
 """
@@ -633,8 +727,16 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         response = dialog.run()
         if response == Gtk.ResponseType.YES:
             self.conversation_history.clear()
+            self.messages.clear()
             self.chat_listbox.foreach(lambda widget: self.chat_listbox.remove(widget))
-            self.append_message("assistant", "Hello! I am DeSciOS Assistant. How can I help you today?")
+            welcome_msg = ("Hello! I am DeSciOS Assistant, your AI-powered guide to decentralized science. "
+                          "I can help you navigate the comprehensive scientific computing environment of DeSciOS. "
+                          "Try one of the suggested prompts below, or ask me anything about research workflows, "
+                          "data analysis, bioinformatics, or the available tools!")
+            self.append_message("assistant", welcome_msg)
+            # Show suggestions again after reset with new random selection
+            self.create_random_suggestions()
+            self.suggestions_container.show_all()
         dialog.destroy()
 
     def on_input_text_changed(self, buffer):
@@ -693,6 +795,52 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         buffer = self.input_textview.get_buffer()
         buffer.set_text(self.placeholder_text)
         self.is_placeholder_active = True
+
+    def create_random_suggestions(self):
+        """Create 3 random suggestion buttons from the available prompts."""
+        # Clear existing suggestions
+        for child in self.suggestions_grid.get_children():
+            self.suggestions_grid.remove(child)
+        
+        # Randomly select 3 suggestions
+        selected_suggestions = random.sample(self.all_prompt_suggestions, 3)
+        
+        # Create buttons for the selected suggestions
+        for display_text, full_prompt in selected_suggestions:
+            suggestion_button = Gtk.Button()
+            suggestion_button.set_name("suggestion_button")
+            suggestion_button.set_relief(Gtk.ReliefStyle.NONE)
+            
+            # Create label with text wrapping
+            label = Gtk.Label(display_text)
+            label.set_name("suggestion_label")
+            label.set_line_wrap(True)
+            label.set_line_wrap_mode(Pango.WrapMode.WORD_CHAR)
+            label.set_max_width_chars(35)  # Increased since we have more space with 3 buttons
+            label.set_justify(Gtk.Justification.CENTER)
+            suggestion_button.add(label)
+            
+            # Connect click handler
+            suggestion_button.connect("clicked", self.on_suggestion_clicked, full_prompt)
+            self.suggestions_grid.add(suggestion_button)
+        
+        # Show all the new buttons
+        self.suggestions_grid.show_all()
+
+    def on_suggestion_clicked(self, widget, full_prompt):
+        """Handle suggestion button click by filling input and sending the message."""
+        if self.is_generating:
+            return
+            
+        # Fill the input with the suggestion
+        self.input_buffer.set_text(full_prompt)
+        self.is_placeholder_active = False
+        
+        # Hide suggestions after first use
+        self.suggestions_container.hide()
+        
+        # Automatically send the message
+        self.on_send_clicked(widget)
 
 if __name__ == "__main__":
     win = DeSciOSChatWidget()
