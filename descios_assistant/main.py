@@ -45,8 +45,9 @@ class DeSciOSChatWidget(Gtk.Window):
         self.set_icon_name("applications-science")
         self.set_app_paintable(True)
         self.set_visual(self.get_screen().get_rgba_visual())
+        self.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 0))
         self.set_decorated(False)
-        self.set_opacity(0.98)
+        self.set_opacity(0.95)
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.connect("button-press-event", self.on_window_button_press)
         self.messages = []  # Store (sender, message) tuples for re-rendering
@@ -60,8 +61,8 @@ class DeSciOSChatWidget(Gtk.Window):
             "## YOUR CORE CAPABILITIES:\n"
             "• **Scientific Computing**: Python (JupyterLab, Spyder IDE), R (RStudio Desktop), GNU Octave\n"
             "• **Bioinformatics**: UGENE suite, Nextflow workflows, CellModeller for synthetic biology\n"
-            "• **Data Visualization**: ParaView, Fiji (ImageJ), QGIS for geospatial analysis\n"
-            "• **Molecular Modeling**: Avogadro for computational chemistry\n"
+            "• **Data Visualization**: Fiji (ImageJ), QGIS for geospatial analysis\n"
+            "• **Molecular Modeling**: Web-based NGL Viewer for computational chemistry\n"
             "• **Decentralized Tools**: IPFS Desktop, Syncthing, EtherCalc, Remix IDE, Nault wallet(nault.cc)\n"
             "• **AI/ML**: Ollama with DeepSeek-R1:8B model for local inference\n"
             "• **Development**: Multi-language support via BeakerX, browser-based development tools\n"
@@ -154,6 +155,12 @@ class DeSciOSChatWidget(Gtk.Window):
         stop_button.connect("clicked", self.on_stop_clicked)
         self.button_stack.add_named(stop_button, "stop")
 
+        # Create a Reset button
+        reset_button = Gtk.Button(label="Reset")
+        reset_button.set_name("reset_button")
+        reset_button.connect("clicked", self.on_reset_clicked)
+        input_box.pack_start(reset_button, False, False, 0)
+
         input_box.pack_start(self.input_entry, True, True, 0)
         input_box.pack_start(self.button_stack, False, False, 0)
         main_vbox.pack_start(input_box, False, False, 0)
@@ -169,8 +176,14 @@ class DeSciOSChatWidget(Gtk.Window):
     def update_app_theme(self):
         """Load CSS to style the app for dark mode."""
         css = b"""
+
+#main_vbox {
+    border-radius: 12px;
+}
+
 #chat_listbox, #chat_listbox row {
     background-color: #181c24;
+    border-radius: 12px;
 }
 
 #headerbar {
@@ -178,6 +191,7 @@ class DeSciOSChatWidget(Gtk.Window):
     border-bottom: 1px solid #00251a;
     color: #ffffff;
     padding: 2px 0;
+    border-radius: 12px 12px 0 0;
 }
 
 #headerbar .title {
@@ -204,35 +218,29 @@ class DeSciOSChatWidget(Gtk.Window):
     background-color: #424242;
     color: #ffffff;
     border: none;
-    border-radius: 18px;
+    border-radius: 12px;
     padding: 0 12px;
 }
 
-#send_button {
-    background-color: #f0f0f0;
-    color: #212121;
-    border: none;
-    border-radius: 18px;
-    padding: 0 16px;
-    font-weight: bold;
+#send_button, #reset_button, #stop_button {
+    background-image: linear-gradient(to bottom, #00695C, #004D40);
+    color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #00251a;
+    padding: 12px 16px;
+    font-style: italic;
+    font-family: "Orbitron", sans-serif;
+    font-size: 0.9em;
 }
 
-#send_button:hover {
-    background-color: #e0e0e0;
+#send_button:hover, #reset_button:hover, #stop_button:hover {
+    background-color: #004D40;
 }
 
-#stop_button {
-    background-color: #f0f0f0;
-    color: #212121;
-    border: none;
-    border-radius: 18px;
-    padding: 0 16px;
-    font-weight: bold;
+#send_button:active, #reset_button:active, #stop_button:active {
+    background-color: #00251a;
 }
 
-#stop_button:hover {
-    background-color: #e0e0e0;
-}
 """
         self.css_provider.load_from_data(css)
 
@@ -558,6 +566,25 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         row.show_all()
         adj = self.chat_listbox.get_parent().get_vadjustment()
         GLib.idle_add(adj.set_value, adj.get_upper())
+
+    def on_reset_clicked(self, widget):
+        """Handle the reset button click event."""
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            flags=0,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Are you sure you want to reset the conversation?",
+        )
+        dialog.format_secondary_text(
+            "This will clear the current conversation and start a new session."
+        )
+        response = dialog.run()
+        if response == Gtk.ResponseType.YES:
+            self.conversation_history.clear()
+            self.chat_listbox.foreach(lambda widget: self.chat_listbox.remove(widget))
+            self.append_message("assistant", "Hello! I am DeSciOS Assistant. How can I help you today?")
+        dialog.destroy()
 
 if __name__ == "__main__":
     win = DeSciOSChatWidget()
