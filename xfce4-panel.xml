@@ -37,7 +37,7 @@
     </property>
     <property name="plugin-7" type="string" value="launcher">
       <property name="items" type="array">
-        <value type="string" value="desci-assistant.desktop"/>
+        <value type="string" value="descios-assistant.desktop"/>
       </property>
       <property name="show-label" type="bool" value="true"/>
       <property name="names-visible" type="bool" value="true"/>
