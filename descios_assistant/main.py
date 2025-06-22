@@ -36,6 +36,38 @@ def safe_decode(text):
         return text.decode('utf-8', errors='replace')
     return str(text)
 
+def get_improved_css_styles():
+    """Get improved CSS styles for better text formatting"""
+    common_style = """
+body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size: 14px; margin: 0; padding: 0; background: transparent; line-height: 1.4; }
+.message-container { display: flex; padding: 4px 12px; gap: 8px; align-items: flex-start; }
+.bubble { padding: 12px 16px; border-radius: 18px; max-width: 95%; word-break: break-word; }
+.avatar { font-size: 28px; line-height: 1.2; }
+.text { padding-top: 2px; font-size: 14px; line-height: 1.5; }
+.text h1 { font-size: 18px; margin: 12px 0 8px 0; font-weight: bold; }
+.text h2 { font-size: 16px; margin: 10px 0 6px 0; font-weight: bold; }
+.text h3 { font-size: 15px; margin: 8px 0 5px 0; font-weight: bold; }
+.text h4, .text h5, .text h6 { font-size: 14px; margin: 6px 0 4px 0; font-weight: bold; }
+.text p { margin: 6px 0; font-size: 14px; }
+.text ul, .text ol { margin: 6px 0; padding-left: 20px; }
+.text li { margin: 2px 0; font-size: 14px; }
+.text blockquote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid #666; background: rgba(255,255,255,0.05); }
+.text strong { font-weight: 600; }
+.text em { font-style: italic; }
+    """
+
+    theme_style = """
+body { color: #e6e6e6; }
+.text pre { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 8px 12px; font-family: 'Fira Mono', 'Consolas', monospace; font-size: 13px; overflow-x: auto; margin: 8px 0; }
+.text code { background: #23272e; color: #e6e6e6; border-radius: 4px; padding: 2px 6px; font-family: 'Fira Mono', 'Consolas', monospace; font-size: 13px; }
+.text pre code { background: transparent; padding: 0; }
+.bubble-user { background: #3b82f6; color: #fff; border-top-right-radius: 5px; }
+.bubble-assistant { display: flex; gap: 10px; background: #343a40; color: #e6e6e6; border-top-left-radius: 5px; }
+.message-container.user { justify-content: flex-end; }
+    """
+    
+    return f"<style>{common_style}{theme_style}</style>"
+
 class DeSciOSChatWidget(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="DeSciOS Assistant")
@@ -427,25 +459,7 @@ class DeSciOSChatWidget(Gtk.Window):
         self.streaming_webview = webview
 
         html_content = markdown.markdown(safe_decode(message))
-
-        common_style = """
-body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size: 15px; margin: 0; padding: 0; background: transparent; }
-.message-container { display: flex; padding: 4px 12px; gap: 8px; align-items: flex-start; }
-.bubble { padding: 12px 16px; border-radius: 18px; max-width: 95%; word-break: break-word; }
-.avatar { font-size: 32px; line-height: 1.2; }
-.text { padding-top: 2px; }
-h1, h2, h3 { margin: 10px 0 6px 0; font-weight: bold; }
-        """
-
-        theme_style = """
-body { color: #e6e6e6; }
-pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2px 6px; font-family: 'Fira Mono', 'Consolas', monospace; }
-.bubble-user { background: #3b82f6; color: #fff; border-top-right-radius: 5px; }
-.bubble-assistant { display: flex; gap: 10px; background: #343a40; color: #e6e6e6; border-top-left-radius: 5px; }
-.message-container.user { justify-content: flex-end; }
-        """
-
-        full_style = f"<style>{common_style}{theme_style}</style>"
+        full_style = get_improved_css_styles()
 
         if sender == 'user':
             body_html = f"""
@@ -513,25 +527,7 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         webview.set_size_request(-1, 1)  # Let it shrink to fit
 
         html_content = markdown.markdown(safe_decode(message))
-
-        common_style = """
-body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size: 15px; margin: 0; padding: 0; background: transparent; }
-.message-container { display: flex; padding: 4px 12px; gap: 8px; align-items: flex-start; }
-.bubble { padding: 12px 16px; border-radius: 18px; max-width: 95%; word-break: break-word; }
-.avatar { font-size: 32px; line-height: 1.2; }
-.text { padding-top: 2px; }
-h1, h2, h3 { margin: 10px 0 6px 0; font-weight: bold; }
-        """
-
-        theme_style = """
-body { color: #e6e6e6; }
-pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2px 6px; font-family: 'Fira Mono', 'Consolas', monospace; }
-.bubble-user { background: #3b82f6; color: #fff; border-top-right-radius: 5px; }
-.bubble-assistant { display: flex; gap: 10px; background: #343a40; color: #e6e6e6; border-top-left-radius: 5px; }
-.message-container.user { justify-content: flex-end; }
-        """
-
-        full_style = f"<style>{common_style}{theme_style}</style>"
+        full_style = get_improved_css_styles()
 
         if sender == 'user':
             body_html = f"""
@@ -830,25 +826,7 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         webview.set_size_request(-1, 1)  # Let it shrink to fit
 
         html_content = markdown.markdown(safe_decode(message))
-
-        common_style = """
-body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size: 15px; margin: 0; padding: 0; background: transparent; }
-.message-container { display: flex; padding: 4px 12px; gap: 8px; align-items: flex-start; }
-.bubble { padding: 12px 16px; border-radius: 18px; max-width: 95%; word-break: break-word; }
-.avatar { font-size: 32px; line-height: 1.2; }
-.text { padding-top: 2px; }
-h1, h2, h3 { margin: 10px 0 6px 0; font-weight: bold; }
-        """
-
-        theme_style = """
-body { color: #e6e6e6; }
-pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2px 6px; font-family: 'Fira Mono', 'Consolas', monospace; }
-.bubble-user { background: #3b82f6; color: #fff; border-top-right-radius: 5px; }
-.bubble-assistant { display: flex; gap: 10px; background: #343a40; color: #e6e6e6; border-top-left-radius: 5px; }
-.message-container.user { justify-content: flex-end; }
-        """
-
-        full_style = f"<style>{common_style}{theme_style}</style>"
+        full_style = get_improved_css_styles()
 
         if sender == 'user':
             body_html = f"""
