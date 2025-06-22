@@ -112,6 +112,10 @@ class DeSciOSChatWidget(Gtk.Window):
 
         # Main vertical box
         main_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        main_vbox.set_vexpand(True)
+        main_vbox.set_hexpand(True)
+        main_vbox.set_valign(Gtk.Align.FILL)
+        main_vbox.set_halign(Gtk.Align.FILL)
         self.add(main_vbox)
 
         # Header bar
@@ -125,10 +129,17 @@ class DeSciOSChatWidget(Gtk.Window):
         self.chat_listbox = Gtk.ListBox()
         self.chat_listbox.set_name("chat_listbox")
         self.chat_listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.chat_listbox.set_vexpand(True)
+        self.chat_listbox.set_hexpand(True)
+        self.chat_listbox.set_valign(Gtk.Align.FILL)
+        self.chat_listbox.set_halign(Gtk.Align.FILL)
+        
         chat_scroll = Gtk.ScrolledWindow()
         chat_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         chat_scroll.set_vexpand(True)
         chat_scroll.set_hexpand(True)
+        chat_scroll.set_valign(Gtk.Align.FILL)
+        chat_scroll.set_halign(Gtk.Align.FILL)
         chat_scroll.add(self.chat_listbox)
         main_vbox.pack_start(chat_scroll, True, True, 0)
 
@@ -489,6 +500,9 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         self.button_stack.set_visible_child_name("stop")
         self.input_textview.set_sensitive(False)
 
+        # Hide suggestions after any message is sent (suggestion or manual)
+        self.suggestions_container.hide()
+
         self.append_message("user", user_text)
         text_buffer.set_text("")
         self.setup_placeholder()  # Reset placeholder after clearing
@@ -836,10 +850,7 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         self.input_buffer.set_text(full_prompt)
         self.is_placeholder_active = False
         
-        # Hide suggestions after first use
-        self.suggestions_container.hide()
-        
-        # Automatically send the message
+        # Automatically send the message (suggestions will be hidden in on_send_clicked)
         self.on_send_clicked(widget)
 
 if __name__ == "__main__":
