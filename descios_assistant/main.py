@@ -2,6 +2,7 @@
 
 import os
 import requests
+import json
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
@@ -405,6 +406,102 @@ class DeSciOSChatWidget(Gtk.Window):
         self.messages.append((sender, message))
         self._append_message_no_store(sender, message)
 
+    def append_streaming_message(self, sender, message):
+        """Append a message that can be updated in real-time for streaming"""
+        print(f"append_streaming_message called with sender={sender}, message={message}")
+        self.messages.append((sender, message))
+        self._append_streaming_message_no_store(sender, message)
+
+    def _append_streaming_message_no_store(self, sender, message):
+        """Append a message with WebView that can be updated for streaming"""
+        print(f"_append_streaming_message_no_store called with sender={sender}, message={message}")
+        row = Gtk.ListBoxRow()
+        row.set_selectable(False)
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        
+        webview = WebKit2.WebView()
+        webview.set_background_color(Gdk.RGBA(0, 0, 0, 0))
+        webview.set_size_request(-1, 1)  # Let it shrink to fit
+        
+        # Store reference for streaming updates
+        self.streaming_webview = webview
+
+        html_content = markdown.markdown(safe_decode(message))
+
+        common_style = """
+body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size: 15px; margin: 0; padding: 0; background: transparent; }
+.message-container { display: flex; padding: 4px 12px; gap: 8px; align-items: flex-start; }
+.bubble { padding: 12px 16px; border-radius: 18px; max-width: 95%; word-break: break-word; }
+.avatar { font-size: 32px; line-height: 1.2; }
+.text { padding-top: 2px; }
+h1, h2, h3 { margin: 10px 0 6px 0; font-weight: bold; }
+        """
+
+        theme_style = """
+body { color: #e6e6e6; }
+pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2px 6px; font-family: 'Fira Mono', 'Consolas', monospace; }
+.bubble-user { background: #3b82f6; color: #fff; border-top-right-radius: 5px; }
+.bubble-assistant { display: flex; gap: 10px; background: #343a40; color: #e6e6e6; border-top-left-radius: 5px; }
+.message-container.user { justify-content: flex-end; }
+        """
+
+        full_style = f"<style>{common_style}{theme_style}</style>"
+
+        if sender == 'user':
+            body_html = f"""
+              <div class="message-container user">
+                <div class="bubble bubble-user"><div class="text">{html_content}</div></div>
+                <div class="avatar">👤</div>
+              </div>
+            """
+        else: # assistant
+            body_html = f"""
+              <div class="message-container assistant">
+                <div class="bubble bubble-assistant">
+                  <div class="avatar">🧑‍🔬</div>
+                  <div class="text">{html_content}</div>
+                </div>
+              </div>
+            """
+        
+        html = f'<html><head><meta charset="UTF-8">{full_style}</head><body>{body_html}</body></html>'
+        
+        print("HTML being loaded into WebView:")
+        print(html)
+        webview.load_html(html, "file:///")
+        webview.set_hexpand(True)
+        webview.set_vexpand(False)
+
+        def on_load_changed(webview, load_event):
+            if load_event == WebKit2.LoadEvent.FINISHED:
+                # This JS returns the height of the body content
+                webview.run_javascript(
+                    "document.body.scrollHeight;",
+                    None,
+                    lambda webview, result, user_data: set_webview_height(webview, result),
+                    None
+                )
+
+        def set_webview_height(webview, result):
+            try:
+                value = webview.run_javascript_finish(result)
+                js_result = value.get_js_value()
+                height = js_result.to_int32()
+                print(f"Setting WebView height to: {height}")
+                webview.set_size_request(-1, height)
+            except Exception as e:
+                print(f"Error setting height: {e}")
+
+        webview.connect("load-changed", on_load_changed)
+
+        hbox.pack_start(webview, True, True, 0)
+        
+        row.add(hbox)
+        self.chat_listbox.add(row)
+        self.chat_listbox.show_all()
+        adj = self.chat_listbox.get_parent().get_vadjustment()
+        GLib.idle_add(adj.set_value, adj.get_upper())
+
     def _append_message_no_store(self, sender, message):
         print(f"_append_message_no_store called with sender={sender}, message={message}")
         row = Gtk.ListBoxRow()
@@ -507,8 +604,9 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
         text_buffer.set_text("")
         self.setup_placeholder()  # Reset placeholder after clearing
         
-        # Add loading message immediately and store its row for updating
-        self.append_message("assistant", "🤔 Thinking...")
+        # Add streaming message and prepare for real-time updates
+        self.streaming_response = ""  # Initialize streaming response buffer
+        self.append_streaming_message("assistant", "🤔 Thinking...")
         # Store the last row (the thinking message) for updating
         self.thinking_row = self.chat_listbox.get_row_at_index(len(self.chat_listbox.get_children()) - 1)
         
@@ -558,7 +656,9 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
             # Also update the messages list to replace the "Thinking..." message
             if self.messages and self.messages[-1][1] == "🤔 Thinking...":
                 self.messages[-1] = ("assistant", response)
-            GLib.idle_add(self.update_message, self.thinking_row, "assistant", response)
+            # Only update if we haven't been streaming (for non-streaming responses)
+            if not hasattr(self, 'streaming_response') or not self.streaming_response:
+                GLib.idle_add(self.update_message, self.thinking_row, "assistant", response)
         
         GLib.idle_add(self._restore_input_state)
 
@@ -632,14 +732,89 @@ pre, code { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 2p
                 "model": "deepseek-r1:8b",
                 "prompt": prompt,
                 "think": True,
-                "stream": False
+                "stream": True
             }
-            response = requests.post(self.ollama_url, json=data)
+            response = requests.post(self.ollama_url, json=data, stream=True)
             if response.status_code == 200:
-                return response.json().get("response", "(No response)")
+                full_response = ""
+                for line in response.iter_lines():
+                    if not self.is_generating:  # Check if stop was clicked
+                        break
+                    if line:
+                        try:
+                            json_response = json.loads(line.decode('utf-8'))
+                            chunk = json_response.get("response", "")
+                            if chunk:
+                                full_response += chunk
+                                print(f"Streaming chunk: {chunk[:50]}...")  # Debug print
+                                # Update UI in real-time during streaming
+                                GLib.idle_add(self.update_streaming_message, chunk)
+                            
+                            # Check if this is the final chunk
+                            if json_response.get("done", False):
+                                break
+                        except Exception as e:
+                            print(f"Error parsing JSON line: {e}")
+                            continue
+                return full_response if full_response else "(No response)"
             return "Error: Could not generate response"
         except Exception as e:
             return f"Error: {str(e)}"
+
+    def update_streaming_message(self, chunk):
+        """Update the streaming message with new chunk of text"""
+        print(f"update_streaming_message called with chunk: {chunk[:30]}...")
+        if not self.is_generating:
+            print("Not generating, returning")
+            return
+        
+        self.streaming_response += chunk
+        print(f"Total streaming response so far: {len(self.streaming_response)} chars")
+        # Update the UI with JavaScript injection for better performance
+        self.update_streaming_webview(self.streaming_response)
+        # Also update the messages list
+        if self.messages and self.messages[-1][0] == "assistant":
+            self.messages[-1] = ("assistant", self.streaming_response)
+
+    def update_streaming_webview(self, full_text):
+        """Update the streaming WebView using JavaScript for better performance"""
+        if hasattr(self, 'streaming_webview') and self.streaming_webview:
+            try:
+                # Convert markdown to HTML
+                html_content = markdown.markdown(safe_decode(full_text))
+                # Properly escape for JavaScript string literal
+                escaped_html = html_content.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+                # Update the content using JavaScript and then recalculate height
+                js_code = f'''
+                var textElement = document.querySelector(".text");
+                if (textElement) {{
+                    textElement.innerHTML = "{escaped_html}";
+                }}
+                document.body.scrollHeight;
+                '''
+                print(f"Executing JS: {js_code[:100]}...")  # Debug print
+                self.streaming_webview.run_javascript(
+                    js_code, 
+                    None, 
+                    lambda webview, result, user_data: self.update_streaming_height(webview, result),
+                    None
+                )
+            except Exception as e:
+                print(f"Error updating streaming webview: {e}")
+
+    def update_streaming_height(self, webview, result):
+        """Update the height of the streaming WebView after content change"""
+        try:
+            value = webview.run_javascript_finish(result)
+            js_result = value.get_js_value()
+            height = js_result.to_int32()
+            print(f"Updating streaming WebView height to: {height}")
+            webview.set_size_request(-1, height)
+            # Scroll to bottom to follow the streaming text
+            adj = self.chat_listbox.get_parent().get_vadjustment()
+            GLib.idle_add(adj.set_value, adj.get_upper())
+        except Exception as e:
+            print(f"Error updating streaming height: {e}")
 
     def update_message(self, row, sender, message):
         """Update an existing message row with new content"""
