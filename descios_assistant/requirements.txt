@@ -5,3 +5,6 @@ watchdog>=3.0.0
 markdown
 beautifulsoup4
 requests
+Pillow>=10.0.0
+python-xlib>=0.33
+imageio>=2.34.0

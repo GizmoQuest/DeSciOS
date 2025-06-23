@@ -69,7 +69,7 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 ## 🛠️ Features
 
 - 🌐 **Full Linux desktop streaming from any modern browser**
-- 🤖 **Native AI assistant with Ollama integration (DeepSeek-R1:8B model) for scientific queries**
+- 🤖 **Native AI assistant with dual-model Ollama integration (DeepSeek-R1:8B for text, MiniCPM-V:8B for vision) with automatic screenshot analysis capabilities**
 - 📁 **Persistent scientific workspace (home folder mountable)**
 - 🧬 **Comprehensive scientific software suite**
 - 📊 **Data analysis tools (R, Python, Octave)**
@@ -105,7 +105,8 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 
 **DeSciOS Assistant** is a native GTK application that provides AI-powered assistance within the DeSciOS environment. It features:
 
-- **Ollama Integration**: Connects to local Ollama instance with DeepSeek-R1:8B model for AI responses
+- **Dual-Model Ollama Integration**: Connects to local Ollama instance with DeepSeek-R1:8B for text responses and MiniCPM-V:8B for vision analysis
+- **Vision Capabilities**: Desktop screenshot analysis with intelligent image resizing (1920x1080 → 1344x1344) for visual context understanding
 - **Scientific Context**: Aware of DeSciOS environment and available tools
 - **Web Search**: Can search and summarize web content for research queries using Brave search
 - **Tool Discovery**: Scans and reports installed scientific software from system directories
@@ -121,6 +122,8 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 - List available tools and software
 - Provide guidance on using scientific applications
 - Assist with data analysis and visualization tasks
+- Analyze desktop screenshots and visual content using computer vision
+- Identify and explain scientific visualizations, plots, and interface elements
 - Support for markdown rendering in responses
 
 ---

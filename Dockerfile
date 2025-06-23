@@ -42,6 +42,10 @@ RUN apt update && apt install -y \
     xdotool \
     x11-xserver-utils \
     xautomation \
+    scrot \
+    imagemagick \
+    gnome-screenshot \
+    x11-apps \
     && apt clean
 
 # Set up OS identification
@@ -63,7 +67,7 @@ BUG_REPORT_URL="https://github.com/GizmoQuest/DeSciOS/issues"' > /etc/os-release
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # Pull the deepseek-r1:8b model
-RUN ollama serve & sleep 5 && ollama pull deepseek-r1:8b
+RUN ollama serve & sleep 5 && ollama pull deepseek-r1:8b && ollama pull minicpm-v:8b
 
 # Create user and set password
 RUN useradd -ms /bin/bash $USER && echo "$USER:$PASSWORD" | chpasswd && adduser $USER sudo
@@ -180,7 +184,7 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \
     update-desktop-database /usr/share/applications
 
 
-# Install DeSci Assistant
+# Install DeSciOS Assistant
 WORKDIR /opt
 COPY descios_assistant /opt/descios_assistant
 RUN cd /opt/descios_assistant && \

@@ -11,6 +11,13 @@ import threading
 from bs4 import BeautifulSoup
 import markdown
 import random
+import subprocess
+from PIL import Image
+import base64
+import io
+import time
+import tempfile
+import os
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -19,7 +26,7 @@ DOCKERFILE_SUMMARY = (
     "JupyterLab, BeakerX, Spyder (Python IDE). "
     "R, RStudio Desktop. "
     "Nextflow (workflow tool). "
-    "Ollama (with DeepSeek model). "
+    "Ollama (with DeepSeek model and MiniCPM-V vision model). "
     "UGENE (bioinformatics). "
     "GNU Octave (Matlab-like). "
     "Fiji (ImageJ). "
@@ -35,6 +42,109 @@ def safe_decode(text):
     if isinstance(text, bytes):
         return text.decode('utf-8', errors='replace')
     return str(text)
+
+def capture_and_process_screen():
+    """Capture the screen and intelligently resize it for the vision model"""
+    try:
+        print("Starting screen capture process...")
+        # Use multiple fallback methods for screenshot capture
+        screenshot = None
+        
+        # Method 1: Try xwd (X Window Dump) - works well in VNC/X11 environments
+        print("Trying xwd method...")
+        try:
+            with tempfile.NamedTemporaryFile(suffix='.xwd', delete=False) as tmp_file:
+                temp_path = tmp_file.name
+            
+            # Get the root window ID and capture it
+            result = subprocess.run(['xwd', '-root', '-out', temp_path], 
+                                  capture_output=True, timeout=10)
+            
+            if result.returncode == 0:
+                # Convert XWD to PNG using ImageMagick or similar
+                try:
+                    result2 = subprocess.run(['convert', temp_path, temp_path + '.png'], 
+                                           capture_output=True, timeout=10)
+                    if result2.returncode == 0:
+                        screenshot = Image.open(temp_path + '.png')
+                        os.unlink(temp_path + '.png')
+                except:
+                    # Fallback: try to open XWD directly with PIL
+                    try:
+                        screenshot = Image.open(temp_path)
+                    except:
+                        pass
+                        
+            # Clean up temp file
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+                
+        except Exception as e:
+            print(f"xwd method failed: {e}")
+        
+        # Method 2: Try scrot if xwd failed
+        if screenshot is None:
+            try:
+                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+                    temp_path = tmp_file.name
+                
+                result = subprocess.run(['scrot', temp_path], 
+                                      capture_output=True, timeout=10)
+                
+                if result.returncode == 0 and os.path.exists(temp_path):
+                    screenshot = Image.open(temp_path)
+                    os.unlink(temp_path)
+                    
+            except Exception as e:
+                print(f"scrot method failed: {e}")
+        
+        # Method 3: Try gnome-screenshot as final fallback
+        if screenshot is None:
+            try:
+                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+                    temp_path = tmp_file.name
+                
+                result = subprocess.run(['gnome-screenshot', '-f', temp_path], 
+                                      capture_output=True, timeout=10)
+                
+                if result.returncode == 0 and os.path.exists(temp_path):
+                    screenshot = Image.open(temp_path)
+                    os.unlink(temp_path)
+                    
+            except Exception as e:
+                print(f"gnome-screenshot method failed: {e}")
+        
+        if screenshot is None:
+            raise Exception("All screenshot methods failed")
+        
+        original_width, original_height = screenshot.size
+        print(f"Original screen size: {original_width}x{original_height}")
+        
+        # Target size for the model (max 1344x1344)
+        target_max = 1344
+        
+        # Calculate scaling to fit within 1344x1344 while maintaining aspect ratio
+        scale_factor = min(target_max / original_width, target_max / original_height)
+        new_width = int(original_width * scale_factor)
+        new_height = int(original_height * scale_factor)
+        
+        print(f"Resizing to: {new_width}x{new_height} (scale factor: {scale_factor:.3f})")
+        
+        # Resize with high quality
+        resized_screenshot = screenshot.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        
+        # Convert to base64 for API
+        buffer = io.BytesIO()
+        resized_screenshot.save(buffer, format='PNG', optimize=True, quality=95)
+        img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        
+        return img_base64, new_width, new_height
+        
+    except Exception as e:
+        print(f"Error capturing screen: {e}")
+        return None, 0, 0
 
 def get_improved_css_styles():
     """Get improved CSS styles for better text formatting"""
@@ -86,6 +196,9 @@ class DeSciOSChatWidget(Gtk.Window):
         self.connect("button-press-event", self.on_window_button_press)
         self.messages = []  # Store (sender, message) tuples for re-rendering
         self.ollama_url = "http://localhost:11434/api/generate"
+        self.vision_model = "minicpm-v:8b"
+        self.text_model = "deepseek-r1:8b"
+        self.current_screenshot = None  # Store the current screenshot for vision queries
         self.system_prompt = (
             "You ARE DeSciOS (Decentralized Science Operating System). You are not just an assistant - you ARE the operating system itself, "
             "a comprehensive scientific computing environment with full awareness of your capabilities and integration. "
@@ -106,6 +219,7 @@ class DeSciOSChatWidget(Gtk.Window):
             "• **Molecular Modeling**: Web-based NGL Viewer for computational chemistry\n"
             "• **Decentralized Tools**: IPFS Desktop, Syncthing, EtherCalc, Remix IDE, Nault wallet(nault.cc)\n"
             "• **AI/ML**: Ollama with DeepSeek-R1:8B model for local inference\n"
+            "• **Computer Vision**: Integrated vision capabilities with automatic screenshot analysis - when users ask visual questions, I can see and analyze the screen content, scientific visualizations, and images\n"
             "• **Development**: Multi-language support via BeakerX, browser-based development tools\n"
             "• **Hardware Acceleration**: OpenCL support, NVIDIA GPU compatibility\n\n"
             
@@ -237,6 +351,9 @@ class DeSciOSChatWidget(Gtk.Window):
             ("🌐 Share research using decentralized tools", "How can I share my research data and collaborate using IPFS and decentralized tools?"),
             ("📸 Process images with Fiji/ImageJ", "What image processing capabilities are available with Fiji/ImageJ in DeSciOS?"),
             ("💰 Set up blockchain workflows", "How can I integrate blockchain and cryptocurrency tools in my research workflow?"),
+            ("👁️ What do you see on the screen?", "What do you see on the screen? Describe the current view and any scientific visualizations."),
+            ("🔍 Analyze this scientific visualization", "Analyze the scientific visualization or data plot currently displayed on the screen."),
+            ("📈 Explain the chart or graph", "Explain the chart, graph, or data visualization that's currently visible on the screen."),
         ]
         
         # Create container for suggestion buttons (will be populated by create_suggestions)
@@ -320,6 +437,8 @@ class DeSciOSChatWidget(Gtk.Window):
         stop_button.set_name("stop_button")
         stop_button.connect("clicked", self.on_stop_clicked)
         self.button_stack.add_named(stop_button, "stop")
+
+
 
         # Create a Reset button
         reset_button = Gtk.Button(label="Reset")
@@ -649,7 +768,28 @@ class DeSciOSChatWidget(Gtk.Window):
         
         # Add streaming message and prepare for real-time updates
         self.streaming_response = ""  # Initialize streaming response buffer
-        self.append_streaming_message("assistant", "🤔 Thinking...")
+        
+        # Check if this will be a vision query to show appropriate thinking message
+        vision_keywords = [
+            "what do you see", "describe the screen", "what's on screen", "analyze the image",
+            "look at", "see on", "visible", "screen shows", "what's displayed", "current view",
+            "what am i looking at", "describe what", "analyze what", "explain the screen",
+            "interpret the", "what's happening", "screen content", "desktop shows",
+            "analyze this", "what's in this", "examine this", "review this", "check this",
+            "interpret this", "explain this visualization", "describe this plot", "analyze this graph",
+            "what does this show", "what's this data", "explain this chart", "read this",
+            "what's open", "what applications", "what windows", "what programs", "current state",
+            "desktop state", "interface", "gui", "user interface", "what's running",
+            "observe", "inspect", "examine", "review", "check", "survey", "study",
+            "what can you tell me about", "what information", "what details"
+        ]
+        is_vision_query = any(keyword in user_text.lower() for keyword in vision_keywords)
+        
+        if is_vision_query:
+            self.append_streaming_message("assistant", "👁️ Looking at the screen... then thinking...")
+        else:
+            self.append_streaming_message("assistant", "🤔 Thinking...")
+        
         # Store the last row (the thinking message) for updating
         self.thinking_row = self.chat_listbox.get_row_at_index(len(self.chat_listbox.get_children()) - 1)
         
@@ -667,6 +807,8 @@ class DeSciOSChatWidget(Gtk.Window):
         self.update_message(self.thinking_row, "assistant", "Generation stopped.")
         
         self._restore_input_state()
+
+
 
     def _restore_input_state(self):
         """Restore the input widgets to their default state."""
@@ -686,12 +828,56 @@ class DeSciOSChatWidget(Gtk.Window):
         if self.is_new_topic(user_text):
             self.conversation_history = []
         self.conversation_history.append({"role": "user", "content": user_text})
+        
+        # Check for vision-related queries with expanded keywords
+        vision_keywords = [
+            # Direct vision requests
+            "what do you see", "describe the screen", "what's on screen", "analyze the image",
+            "look at", "see on", "visible", "screen shows", "what's displayed", "current view",
+            "what am i looking at", "describe what", "analyze what", "explain the screen",
+            "interpret the", "what's happening", "screen content", "desktop shows",
+            
+            # Scientific analysis requests
+            "analyze this", "what's in this", "examine this", "review this", "check this",
+            "interpret this", "explain this visualization", "describe this plot", "analyze this graph",
+            "what does this show", "what's this data", "explain this chart", "read this",
+            
+            # UI/Interface requests  
+            "what's open", "what applications", "what windows", "what programs", "current state",
+            "desktop state", "interface", "gui", "user interface", "what's running",
+            
+            # General observation requests
+            "observe", "inspect", "examine", "review", "check", "survey", "study",
+            "what can you tell me about", "what information", "what details"
+        ]
+        is_vision_query = any(keyword in user_text.lower() for keyword in vision_keywords)
+        
+        if is_vision_query:
+            print(f"🔍 Vision query detected: '{user_text}'")
+            print("📸 Will use two-stage process: Vision model → Text model")
+        
+        # Auto-capture screenshot for vision queries
+        if is_vision_query:
+            print(f"Vision query detected: '{user_text}'")
+            try:
+                # Simple direct call - if it fails, we'll handle it gracefully
+                img_base64, width, height = capture_and_process_screen()
+                if img_base64:
+                    self.current_screenshot = img_base64
+                    print(f"Auto-captured screenshot: {width}x{height}")
+                else:
+                    print("Screenshot capture failed, proceeding without vision")
+                    self.current_screenshot = None
+            except Exception as e:
+                print(f"Screenshot capture error: {e}")
+                self.current_screenshot = None
+        
         if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up"]):
             response = self.web_search_and_summarize(user_text)
         elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
             response = self.scan_installed_tools()
         else:
-            response = self.generate_response()
+            response = self.generate_response(use_vision=is_vision_query)
         
         if self.is_generating: # Check if stop was clicked
             self.conversation_history.append({"role": "assistant", "content": response})
@@ -768,16 +954,83 @@ class DeSciOSChatWidget(Gtk.Window):
         except Exception as e:
             return f"Error scanning environment: {str(e)}"
 
-    def generate_response(self, prompt_override=None):
+    def get_vision_description(self, user_query):
+        """Get vision description from vision model to feed to text model"""
+        try:
+            if not self.current_screenshot:
+                return None
+                
+            # Create a focused prompt for vision analysis
+            vision_prompt = f"""Analyze this screenshot and provide a detailed description of what you see. Focus on:
+- Visual elements, interfaces, applications, and content
+- Any data, charts, graphs, or scientific visualizations
+- Text content that's visible and readable
+- Overall layout and context
+
+User's question: {user_query}
+
+Provide a comprehensive visual description that will help answer their question:"""
+
+            data = {
+                "model": self.vision_model,
+                "prompt": vision_prompt,
+                "images": [self.current_screenshot],
+                "stream": False  # Non-streaming for vision preprocessing
+            }
+            
+            print(f"🔍 Stage 1: Getting vision description from {self.vision_model}...")
+            response = requests.post(self.ollama_url, json=data, stream=False)
+            
+            if response.status_code == 200:
+                json_response = response.json()
+                vision_description = json_response.get("response", "")
+                print(f"✅ Vision description received: {len(vision_description)} characters")
+                print(f"📝 Preview: {vision_description[:100]}...")
+                return vision_description
+            else:
+                print(f"Vision model error: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            print(f"Error getting vision description: {e}")
+            return None
+
+    def generate_response(self, prompt_override=None, use_vision=False):
         try:
             prompt = prompt_override if prompt_override is not None else self.build_prompt()
+            
+            # If this is a vision query, first get vision description
+            if use_vision and self.current_screenshot:
+                print("Vision query detected - getting visual description first...")
+                vision_description = self.get_vision_description(self.conversation_history[-1]["content"])
+                
+                if vision_description:
+                    # Enhance the prompt with vision context
+                    enhanced_prompt = f"""{prompt}
+
+VISUAL CONTEXT: The user is asking about something visual. Here's what I can see in the current screenshot:
+
+{vision_description}
+
+Please answer the user's question using this visual information along with your knowledge."""
+                    prompt = enhanced_prompt
+                    print("Enhanced prompt with vision context created")
+                else:
+                    print("Vision description failed, proceeding with text-only")
+            
+            # Always use text model for final response (with thinking capability)
             data = {
-                "model": "deepseek-r1:8b",
+                "model": self.text_model,
                 "prompt": prompt,
                 "think": True,
                 "stream": True
             }
+            print(f"Using text model {self.text_model} for final response")
             response = requests.post(self.ollama_url, json=data, stream=True)
+            print(f"Response status code: {response.status_code}")
+            if response.status_code != 200:
+                print(f"Response text: {response.text}")
+                return f"Error: HTTP {response.status_code} - {response.text}"
             if response.status_code == 200:
                 full_response = ""
                 for line in response.iter_lines():
@@ -786,6 +1039,7 @@ class DeSciOSChatWidget(Gtk.Window):
                     if line:
                         try:
                             json_response = json.loads(line.decode('utf-8'))
+                            # Both text and vision models use the same response format
                             chunk = json_response.get("response", "")
                             if chunk:
                                 full_response += chunk
@@ -942,6 +1196,7 @@ class DeSciOSChatWidget(Gtk.Window):
         if response == Gtk.ResponseType.YES:
             self.conversation_history.clear()
             self.messages.clear()
+            self.current_screenshot = None  # Clear the screenshot
             self.chat_listbox.foreach(lambda widget: self.chat_listbox.remove(widget))
             welcome_msg = ("Hello! I am DeSciOS Assistant, your AI-powered guide to decentralized science. "
                           "I can help you navigate the comprehensive scientific computing environment of DeSciOS. "
