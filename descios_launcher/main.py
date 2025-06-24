@@ -10,6 +10,50 @@ import os
 import subprocess
 import threading
 from pathlib import Path
+import yaml
+import json
+
+# Application templates for common installation patterns
+APPLICATION_TEMPLATES = {
+    "python_package": {
+        "name": "Python Package Template",
+        "dockerfile_section": "RUN pip install --no-cache-dir {package}",
+        "description": "Install Python package via pip",
+        "fields": ["package"]
+    },
+    "apt_package": {
+        "name": "APT Package Template", 
+        "dockerfile_section": "RUN apt update && apt install -y {packages}",
+        "description": "Install system package via apt",
+        "fields": ["packages"]
+    },
+    "github_release": {
+        "name": "GitHub Release Template",
+        "dockerfile_section": '''# Install {name}
+RUN wget {download_url} && \\
+    tar -xzf {archive_name} -C /opt && \\
+    rm {archive_name} && \\
+    ln -s /opt/{app_dir}/{executable} /usr/local/bin/{app_name} && \\
+    echo '[Desktop Entry]\\nName={name}\\nExec={app_name}\\nIcon=applications-science\\nType=Application\\nCategories=Science;' \\
+    > /usr/share/applications/{app_id}.desktop''',
+        "description": "Install from GitHub release tarball",
+        "fields": ["download_url", "archive_name", "app_dir", "executable", "app_name"]
+    },
+    "web_app": {
+        "name": "Web Application Template",
+        "dockerfile_section": '''# {name} (via Browser)
+RUN echo '[Desktop Entry]\\nName={name}\\nExec=firefox {url}\\nIcon=applications-internet\\nType=Application\\nCategories={categories};' \\
+    > /usr/share/applications/{app_id}.desktop''',
+        "description": "Create desktop entry for web application",
+        "fields": ["url", "categories"]
+    },
+    "custom": {
+        "name": "Custom Dockerfile Section",
+        "dockerfile_section": "{custom_commands}",
+        "description": "Write custom Dockerfile commands",
+        "fields": ["custom_commands"]
+    }
+}
 
 class DeSciOSLauncher:
     def __init__(self, root):
@@ -39,6 +83,13 @@ class DeSciOSLauncher:
         
         # Configure styles
         self.setup_styles()
+        
+        # Initialize custom applications
+        self.custom_applications = {}
+        self.plugins_dir = Path("descios_plugins")
+        
+        # Create plugins directory if it doesn't exist
+        self.plugins_dir.mkdir(exist_ok=True)
         
         # Application definitions - these will be optional
         self.applications = {
@@ -218,7 +269,67 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
             }
         }
         
+        # Load custom applications from plugins
+        self.load_custom_applications()
+        
         self.setup_ui()
+
+    def load_custom_applications(self):
+        """Load custom applications from plugins directory"""
+        try:
+            for plugin_file in self.plugins_dir.glob("*.yaml"):
+                try:
+                    with open(plugin_file, 'r') as f:
+                        plugin_data = yaml.safe_load(f)
+                    
+                    if isinstance(plugin_data, dict):
+                        for app_id, app_info in plugin_data.items():
+                            if self.validate_app_definition(app_info):
+                                self.custom_applications[f"custom_{app_id}"] = {
+                                    **app_info,
+                                    "enabled": app_info.get("enabled", False),
+                                    "source": str(plugin_file)
+                                }
+                                
+                except Exception as e:
+                    print(f"Error loading plugin {plugin_file}: {e}")
+                    
+            # Also check for JSON files
+            for plugin_file in self.plugins_dir.glob("*.json"):
+                try:
+                    with open(plugin_file, 'r') as f:
+                        plugin_data = json.load(f)
+                    
+                    if isinstance(plugin_data, dict):
+                        for app_id, app_info in plugin_data.items():
+                            if self.validate_app_definition(app_info):
+                                self.custom_applications[f"custom_{app_id}"] = {
+                                    **app_info,
+                                    "enabled": app_info.get("enabled", False),
+                                    "source": str(plugin_file)
+                                }
+                                
+                except Exception as e:
+                    print(f"Error loading plugin {plugin_file}: {e}")
+                    
+        except Exception as e:
+            print(f"Error loading custom applications: {e}")
+
+    def validate_app_definition(self, app_info):
+        """Validate that an application definition has required fields"""
+        required_fields = ["name", "description", "dockerfile_section"]
+        return all(field in app_info for field in required_fields)
+
+    def save_custom_application(self, app_id, app_info):
+        """Save a custom application to the plugins directory"""
+        try:
+            plugin_file = self.plugins_dir / f"{app_id}.yaml"
+            with open(plugin_file, 'w') as f:
+                yaml.dump({app_id: app_info}, f, default_flow_style=False)
+            return True
+        except Exception as e:
+            print(f"Error saving custom application: {e}")
+            return False
         
     def setup_styles(self):
         """Configure beautiful styles for ttk widgets"""
@@ -338,6 +449,11 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
         notebook.add(apps_frame, text="🔧 Applications")
         self.setup_applications_tab(apps_frame)
         
+        # Custom Applications tab
+        custom_frame = ttk.Frame(notebook)
+        notebook.add(custom_frame, text="🧩 Custom Apps")
+        self.setup_custom_applications_tab(custom_frame)
+        
         # Settings tab
         settings_frame = ttk.Frame(notebook)
         notebook.add(settings_frame, text="⚙️ Settings")
@@ -347,6 +463,317 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
         build_frame = ttk.Frame(notebook)
         notebook.add(build_frame, text="🚀 Build & Deploy")
         self.setup_build_tab(build_frame)
+
+    def setup_custom_applications_tab(self, parent):
+        # Title
+        title_label = ttk.Label(parent, text="🧩 Custom Applications", 
+                               style='Title.TLabel')
+        title_label.pack(pady=(20, 30))
+        
+        # Create main content with proper spacing
+        content_frame = ttk.Frame(parent)
+        content_frame.pack(fill='both', expand=True, padx=20)
+        
+        # Existing custom applications section
+        if self.custom_applications:
+            existing_header = ttk.Label(content_frame, text="📦 Your Custom Applications", 
+                                      style='SectionHeader.TLabel')
+            existing_header.pack(anchor='w', pady=(0, 15))
+            
+            existing_frame = ttk.Frame(content_frame, style='Section.TFrame')
+            existing_frame.pack(fill='x', pady=(0, 30))
+            
+            # Create scrollable frame for custom apps
+            canvas = tk.Canvas(existing_frame, height=150, bg=self.colors['surface'])
+            scrollbar = ttk.Scrollbar(existing_frame, orient="vertical", command=canvas.yview)
+            scrollable_frame = ttk.Frame(canvas)
+            
+            scrollable_frame.bind(
+                "<Configure>",
+                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            )
+            
+            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+            canvas.configure(yscrollcommand=scrollbar.set)
+            
+            canvas.pack(side="left", fill="both", expand=True, padx=15, pady=15)
+            scrollbar.pack(side="right", fill="y")
+            
+            # Add custom applications to the scrollable frame
+            self.custom_app_vars = {}
+            for app_id, app_info in self.custom_applications.items():
+                self.custom_app_vars[app_id] = tk.BooleanVar(value=app_info.get('enabled', False))
+                
+                app_frame = ttk.Frame(scrollable_frame)
+                app_frame.pack(fill='x', pady=5, padx=10)
+                
+                cb = ttk.Checkbutton(app_frame, text=app_info['name'], 
+                                   variable=self.custom_app_vars[app_id],
+                                   command=self.update_config_status)
+                cb.pack(anchor='w')
+                
+                desc_label = ttk.Label(app_frame, text=f"• {app_info['description']}", 
+                                     style='Description.TLabel')
+                desc_label.pack(anchor='w', padx=(20, 0))
+                
+                source_label = ttk.Label(app_frame, text=f"Source: {Path(app_info.get('source', 'Unknown')).name}", 
+                                       foreground=self.colors['text_light'],
+                                       font=('TkDefaultFont', 11))
+                source_label.pack(anchor='w', padx=(20, 0))
+        
+        # Add new application section
+        add_header = ttk.Label(content_frame, text="➕ Add New Application", 
+                             style='SectionHeader.TLabel')
+        add_header.pack(anchor='w', pady=(20, 15))
+        
+        add_frame = ttk.Frame(content_frame, style='Section.TFrame')
+        add_frame.pack(fill='both', expand=True)
+        
+        # Template selection
+        template_frame = ttk.Frame(add_frame)
+        template_frame.pack(fill='x', padx=20, pady=15)
+        
+        ttk.Label(template_frame, text="Choose Template:", font=('TkDefaultFont', 13)).pack(anchor='w', pady=(0, 10))
+        
+        self.template_var = tk.StringVar(value="python_package")
+        template_combo = ttk.Combobox(template_frame, textvariable=self.template_var, 
+                                    values=list(APPLICATION_TEMPLATES.keys()),
+                                    state="readonly", width=30)
+        template_combo.pack(anchor='w', pady=(0, 10))
+        template_combo.bind('<<ComboboxSelected>>', self.on_template_changed)
+        
+        # Template description
+        self.template_desc_label = ttk.Label(template_frame, text="", 
+                                           style='Description.TLabel')
+        self.template_desc_label.pack(anchor='w', pady=(0, 15))
+        
+        # Application details form
+        form_frame = ttk.Frame(add_frame)
+        form_frame.pack(fill='both', expand=True, padx=20, pady=(0, 20))
+        form_frame.grid_columnconfigure(1, weight=1)
+        
+        # Basic info
+        row = 0
+        ttk.Label(form_frame, text="App ID:", font=('TkDefaultFont', 13)).grid(row=row, column=0, sticky='w', pady=8)
+        self.app_id_var = tk.StringVar()
+        ttk.Entry(form_frame, textvariable=self.app_id_var, width=30).grid(row=row, column=1, sticky='ew', padx=(20, 0), pady=8)
+        
+        row += 1
+        ttk.Label(form_frame, text="Name:", font=('TkDefaultFont', 13)).grid(row=row, column=0, sticky='w', pady=8)
+        self.app_name_var = tk.StringVar()
+        ttk.Entry(form_frame, textvariable=self.app_name_var, width=30).grid(row=row, column=1, sticky='ew', padx=(20, 0), pady=8)
+        
+        row += 1
+        ttk.Label(form_frame, text="Description:", font=('TkDefaultFont', 13)).grid(row=row, column=0, sticky='w', pady=8)
+        self.app_desc_var = tk.StringVar()
+        ttk.Entry(form_frame, textvariable=self.app_desc_var, width=30).grid(row=row, column=1, sticky='ew', padx=(20, 0), pady=8)
+        
+        # Dynamic template fields
+        self.template_fields_frame = ttk.Frame(form_frame)
+        self.template_fields_frame.grid(row=row+1, column=0, columnspan=2, sticky='ew', pady=15)
+        self.template_fields_frame.grid_columnconfigure(1, weight=1)
+        
+        self.template_field_vars = {}
+        
+        # Preview section
+        preview_frame = ttk.Frame(add_frame)
+        preview_frame.pack(fill='both', expand=True, padx=20, pady=(0, 20))
+        
+        ttk.Label(preview_frame, text="Dockerfile Preview:", font=('TkDefaultFont', 13, 'bold')).pack(anchor='w', pady=(0, 10))
+        
+        self.dockerfile_preview = tk.Text(preview_frame, height=8, width=80,
+                                        bg='white', fg=self.colors['text'],
+                                        font=('Monaco', 11),
+                                        relief='solid', borderwidth=1)
+        self.dockerfile_preview.pack(fill='both', expand=True)
+        
+        # Buttons
+        buttons_frame = ttk.Frame(add_frame)
+        buttons_frame.pack(fill='x', padx=20, pady=15)
+        
+        ttk.Button(buttons_frame, text="🔄 Update Preview", 
+                  command=self.update_dockerfile_preview).pack(side='left', padx=10)
+        ttk.Button(buttons_frame, text="💾 Save Application", 
+                  command=self.save_new_application, style='Success.TButton').pack(side='left', padx=10)
+        ttk.Button(buttons_frame, text="📁 Load Plugin File", 
+                  command=self.load_plugin_file).pack(side='left', padx=10)
+        
+        # Initialize template fields
+        self.on_template_changed()
+
+    def on_template_changed(self, event=None):
+        """Update template fields when template selection changes"""
+        # Clear existing fields
+        for widget in self.template_fields_frame.winfo_children():
+            widget.destroy()
+        self.template_field_vars.clear()
+        
+        template_key = self.template_var.get()
+        template = APPLICATION_TEMPLATES.get(template_key, {})
+        
+        # Update description
+        self.template_desc_label.config(text=template.get('description', ''))
+        
+        # Create fields for this template
+        fields = template.get('fields', [])
+        for i, field in enumerate(fields):
+            ttk.Label(self.template_fields_frame, text=f"{field.replace('_', ' ').title()}:", 
+                     font=('TkDefaultFont', 13)).grid(row=i, column=0, sticky='w', pady=8)
+            
+            self.template_field_vars[field] = tk.StringVar()
+            
+            if field == 'custom_commands':
+                # Multi-line text for custom commands
+                text_widget = tk.Text(self.template_fields_frame, height=4, width=50,
+                                    bg='white', fg=self.colors['text'],
+                                    font=('Monaco', 11),
+                                    relief='solid', borderwidth=1)
+                text_widget.grid(row=i, column=1, sticky='ew', padx=(20, 0), pady=8)
+                self.template_field_vars[field].text_widget = text_widget
+            else:
+                entry = ttk.Entry(self.template_fields_frame, textvariable=self.template_field_vars[field], width=50)
+                entry.grid(row=i, column=1, sticky='ew', padx=(20, 0), pady=8)
+        
+        # Update preview
+        self.update_dockerfile_preview()
+
+    def update_dockerfile_preview(self):
+        """Update the Dockerfile preview based on current form values"""
+        try:
+            template_key = self.template_var.get()
+            template = APPLICATION_TEMPLATES.get(template_key, {})
+            dockerfile_template = template.get('dockerfile_section', '')
+            
+            # Gather field values
+            field_values = {}
+            for field, var in self.template_field_vars.items():
+                if hasattr(var, 'text_widget'):
+                    field_values[field] = var.text_widget.get('1.0', tk.END).strip()
+                else:
+                    field_values[field] = var.get()
+            
+            # Add basic info
+            field_values['name'] = self.app_name_var.get()
+            field_values['app_id'] = self.app_id_var.get()
+            
+            # Generate Dockerfile section
+            try:
+                dockerfile_section = dockerfile_template.format(**field_values)
+            except KeyError as e:
+                dockerfile_section = f"# Missing field: {e}\n{dockerfile_template}"
+            
+            # Update preview
+            self.dockerfile_preview.delete('1.0', tk.END)
+            self.dockerfile_preview.insert('1.0', dockerfile_section)
+            
+        except Exception as e:
+            self.dockerfile_preview.delete('1.0', tk.END)
+            self.dockerfile_preview.insert('1.0', f"# Error generating preview: {e}")
+
+    def save_new_application(self):
+        """Save a new custom application"""
+        try:
+            app_id = self.app_id_var.get().strip()
+            name = self.app_name_var.get().strip()
+            description = self.app_desc_var.get().strip()
+            
+            if not app_id or not name or not description:
+                messagebox.showerror("Error", "Please fill in App ID, Name, and Description")
+                return
+            
+            # Check if app_id already exists
+            if app_id in self.applications or f"custom_{app_id}" in self.custom_applications:
+                messagebox.showerror("Error", f"Application ID '{app_id}' already exists")
+                return
+            
+            # Generate dockerfile section
+            template_key = self.template_var.get()
+            template = APPLICATION_TEMPLATES.get(template_key, {})
+            dockerfile_template = template.get('dockerfile_section', '')
+            
+            # Gather field values
+            field_values = {}
+            for field, var in self.template_field_vars.items():
+                if hasattr(var, 'text_widget'):
+                    field_values[field] = var.text_widget.get('1.0', tk.END).strip()
+                else:
+                    field_values[field] = var.get()
+            
+            field_values['name'] = name
+            field_values['app_id'] = app_id
+            
+            try:
+                dockerfile_section = dockerfile_template.format(**field_values)
+            except KeyError as e:
+                messagebox.showerror("Error", f"Missing required field: {e}")
+                return
+            
+            # Create app definition
+            app_info = {
+                "name": name,
+                "description": description,
+                "dockerfile_section": dockerfile_section,
+                "enabled": False,
+                "template": template_key,
+                "template_fields": field_values
+            }
+            
+            # Save to file
+            if self.save_custom_application(app_id, app_info):
+                # Add to current session
+                self.custom_applications[f"custom_{app_id}"] = {
+                    **app_info,
+                    "source": str(self.plugins_dir / f"{app_id}.yaml")
+                }
+                
+                messagebox.showinfo("Success", f"Application '{name}' saved successfully!")
+                
+                # Clear form
+                self.app_id_var.set("")
+                self.app_name_var.set("")
+                self.app_desc_var.set("")
+                for var in self.template_field_vars.values():
+                    if hasattr(var, 'text_widget'):
+                        var.text_widget.delete('1.0', tk.END)
+                    else:
+                        var.set("")
+                self.update_dockerfile_preview()
+                
+                # Refresh the custom applications display
+                # Note: In a full implementation, you'd want to refresh the UI
+                messagebox.showinfo("Note", "Please restart the launcher to see your new application in the list.")
+                
+            else:
+                messagebox.showerror("Error", "Failed to save application")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Error saving application: {str(e)}")
+
+    def load_plugin_file(self):
+        """Load a plugin file and import applications"""
+        try:
+            filename = filedialog.askopenfilename(
+                title="Load Plugin File",
+                filetypes=[("YAML files", "*.yaml"), ("JSON files", "*.json"), ("All files", "*.*")]
+            )
+            
+            if filename:
+                # Copy file to plugins directory
+                import shutil
+                dest_file = self.plugins_dir / Path(filename).name
+                shutil.copy2(filename, dest_file)
+                
+                messagebox.showinfo("Success", f"Plugin file loaded: {Path(filename).name}")
+                messagebox.showinfo("Note", "Please restart the launcher to see the new applications.")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Error loading plugin file: {str(e)}")
+
+    def get_all_applications(self):
+        """Get combined dictionary of built-in and custom applications"""
+        all_apps = self.applications.copy()
+        all_apps.update(self.custom_applications)
+        return all_apps
         
     def setup_applications_tab(self, parent):
         # Title with beautiful styling
@@ -395,7 +822,8 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
         
         # Create checkboxes for each application in 3 columns
         self.app_vars = {}
-        apps_list = list(self.applications.items())
+        all_apps = self.get_all_applications()
+        apps_list = list(all_apps.items())
         
         for idx, (app_id, app_info) in enumerate(apps_list):
             self.app_vars[app_id] = tk.BooleanVar(value=app_info['enabled'])
@@ -409,7 +837,11 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
             app_frame.grid(row=row, column=col, sticky='ew', padx=10, pady=8)
             
             # Checkbox and name
-            cb = ttk.Checkbutton(app_frame, text=app_info['name'], 
+            app_name = app_info['name']
+            if app_id.startswith('custom_'):
+                app_name += " 🧩"  # Add custom app indicator
+                
+            cb = ttk.Checkbutton(app_frame, text=app_name, 
                                variable=self.app_vars[app_id],
                                command=self.update_config_status)
             cb.pack(anchor='w')
@@ -430,6 +862,24 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
         ttk.Button(buttons_frame, text="🔄 Reset to Defaults", 
                   command=self.reset_defaults).pack(side='left', padx=10)
         
+    def select_all(self):
+        for var in self.app_vars.values():
+            var.set(True)
+        self.update_config_status()
+            
+    def select_none(self):
+        for var in self.app_vars.values():
+            var.set(False)
+        self.update_config_status()
+            
+    def reset_defaults(self):
+        for app_id, var in self.app_vars.items():
+            if app_id in self.applications:
+                var.set(self.applications[app_id]['enabled'])
+            else:
+                var.set(False)  # Custom apps default to disabled
+        self.update_config_status()
+            
     def setup_settings_tab(self, parent):
         # Title
         title_label = ttk.Label(parent, text="🔧 DeSciOS Configuration", 
@@ -637,28 +1087,20 @@ docker start descios
         
         self.docker_cmd_text.delete('1.0', tk.END)
         self.docker_cmd_text.insert('1.0', command_text)
-        
-    def select_all(self):
-        for var in self.app_vars.values():
-            var.set(True)
-        self.update_config_status()
-            
-    def select_none(self):
-        for var in self.app_vars.values():
-            var.set(False)
-        self.update_config_status()
-            
-    def reset_defaults(self):
-        for app_id, var in self.app_vars.items():
-            var.set(self.applications[app_id]['enabled'])
-        self.update_config_status()
             
     def is_default_configuration(self):
         """Check if current configuration matches defaults"""
-        # Check if all applications match their default enabled state
-        all_defaults_selected = all(
+        # Check if all built-in applications match their default enabled state
+        builtin_defaults_match = all(
             var.get() == self.applications[app_id]['enabled'] 
-            for app_id, var in self.app_vars.items()
+            for app_id, var in self.app_vars.items() 
+            if app_id in self.applications
+        )
+        
+        # Check if any custom applications are enabled
+        custom_apps_enabled = any(
+            var.get() for app_id, var in self.app_vars.items() 
+            if app_id.startswith('custom_')
         )
         
         # Check if default models and user settings
@@ -666,7 +1108,7 @@ docker start descios
         default_user = self.username_var.get() == 'deScier'
         default_password = self.password_var.get() == 'vncpassword'
         
-        return all_defaults_selected and default_models and default_user and default_password
+        return builtin_defaults_match and not custom_apps_enabled and default_models and default_user and default_password
             
     def update_config_status(self):
         """Update the configuration status display"""
@@ -779,10 +1221,12 @@ docker start descios
             new_content.append("\n# Essential GUI dependencies for Qt/X11 applications")
             new_content.append(self.get_qt_dependencies())
             
-            # Add selected applications
+            # Add selected applications (both built-in and custom)
+            all_apps = self.get_all_applications()
             for app_id, selected in self.app_vars.items():
-                if selected.get():
-                    new_content.append(f"\n# {self.applications[app_id]['name']}")
+                if selected.get() and app_id in all_apps:
+                    app_info = all_apps[app_id]
+                    new_content.append(f"\n# {app_info['name']}")
                     if app_id == "cellmodeller":
                         new_content.append('''# CellModeller
 # Install Qt5 and X11 dependencies for CellModeller GUI
@@ -799,7 +1243,7 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
     chmod 644 /usr/share/applications/cellmodeller.desktop && \\
     update-desktop-database /usr/share/applications''')
                     else:
-                        new_content.append(self.applications[app_id]['dockerfile_section'])
+                        new_content.append(app_info['dockerfile_section'])
             
             # Add mandatory DeSciOS Assistant section
             new_content.append('''
@@ -851,7 +1295,14 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
                 f.write('\n'.join(new_content))
             
             self.log_message(f"✅ Generated custom Dockerfile: {output_path}")
-            self.log_message(f"Selected {sum(var.get() for var in self.app_vars.values())} applications")
+            
+            # Count selected applications
+            selected_count = sum(var.get() for var in self.app_vars.values())
+            custom_count = sum(var.get() for app_id, var in self.app_vars.items() if app_id.startswith('custom_'))
+            
+            self.log_message(f"Selected {selected_count} applications total")
+            if custom_count > 0:
+                self.log_message(f"Including {custom_count} custom applications 🧩")
             self.log_message(f"GPU support: {'Enabled' if self.gpu_enabled_var.get() else 'Disabled'}")
             
             # Update the Docker command display
@@ -868,17 +1319,7 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
                 image_tag = self.image_tag_var.get()
                 
                 # Check if user wants default configuration
-                all_defaults_selected = all(
-                    var.get() == self.applications[app_id]['enabled'] 
-                    for app_id, var in self.app_vars.items()
-                )
-                
-                # Check if default models and user settings
-                default_models = self.ollama_models.get('1.0', tk.END).strip() == 'deepseek-r1:8b\nminicpm-v:8b'
-                default_user = self.username_var.get() == 'deScier'
-                default_password = self.password_var.get() == 'vncpassword'
-                
-                if all_defaults_selected and default_models and default_user and default_password:
+                if self.is_default_configuration():
                     # Use original Dockerfile for faster build
                     self.log_message("✨ Using default configuration - building from original Dockerfile")
                     dockerfile_path = 'Dockerfile'
@@ -912,6 +1353,11 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
                     self.log_message(f"📋 Image built {gpu_status}")
                     if dockerfile_path == 'Dockerfile':
                         self.log_message("⚡ Built using default configuration for maximum speed!")
+                    else:
+                        # Count custom apps
+                        custom_count = sum(var.get() for app_id, var in self.app_vars.items() if app_id.startswith('custom_'))
+                        if custom_count > 0:
+                            self.log_message(f"🧩 Included {custom_count} custom applications!")
                 else:
                     self.log_message(f"❌ Build failed with return code: {process.returncode}")
                     
@@ -1018,6 +1464,11 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
                 
                 self.log_message(f"🎉 DeSciOS is now running at: http://localhost:6080/vnc.html")
                 self.log_message("💡 To stop: docker stop descios")
+                
+                # Show info about custom apps if any
+                custom_count = sum(var.get() for app_id, var in self.app_vars.items() if app_id.startswith('custom_'))
+                if custom_count > 0:
+                    self.log_message(f"🧩 Your {custom_count} custom applications are now available!")
                 
             else:
                 self.log_message(f"❌ Failed to start container: {result.stderr}")

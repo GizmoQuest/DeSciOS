@@ -154,13 +154,17 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 git clone https://github.com/GizmoQuest/DeSciOS.git
 cd DeSciOS
 
+# Install launcher dependencies (for custom app support)
+pip install -r descios_launcher/requirements.txt
+
 # Launch the GUI customizer
 python3 descios_launcher/main.py
 ```
 
 1. **Applications Tab**: Select which scientific tools to include (all enabled by default)
-2. **Settings Tab**: Configure AI models, username, password, and GPU support  
-3. **Build & Deploy Tab**: Generate custom builds and deploy with one click
+2. **Custom Apps Tab**: Create and manage your own custom applications using templates or plugins
+3. **Settings Tab**: Configure AI models, username, password, and GPU support  
+4. **Build & Deploy Tab**: Generate custom builds and deploy with one click
 
 The launcher automatically detects default configurations and uses the optimized build path for faster deployment.
 
@@ -177,6 +181,30 @@ The launcher allows you to customize which applications are included:
 - **Workflows**: Nextflow pipeline manager
 - **Decentralized Tools**: IPFS Desktop, Syncthing
 - **Web-based Tools**: EtherCalc, NGL Viewer, Remix IDE, Nault wallet
+
+### 🧩 Custom Applications & Extensibility
+
+**For Researchers**: Easily add your own tools and applications!
+
+- **Template-based Builder**: Use pre-built templates for common installation patterns
+- **Plugin System**: Load applications from external YAML/JSON files  
+- **Community Plugins**: Share and discover applications from other researchers
+- **Installation Templates**:
+  - Python packages (pip install)
+  - System packages (apt install) 
+  - GitHub releases and tarballs
+  - Web application shortcuts
+  - Custom Dockerfile commands
+
+**Example Plugin Structure:**
+```
+descios_plugins/
+├── my_research_tools.yaml
+├── bioinformatics_extras.yaml
+└── python_data_science.yaml
+```
+
+The launcher includes example plugins and comprehensive documentation in the `descios_plugins/` directory.
 
 ---
 

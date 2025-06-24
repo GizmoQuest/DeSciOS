@@ -1,0 +1,23 @@
+matplotlib:
+  name: "Matplotlib"
+  description: "Python plotting library for publication quality figures"
+  dockerfile_section: "RUN pip install --no-cache-dir matplotlib"
+  enabled: false
+
+numpy:
+  name: "NumPy"
+  description: "Fundamental package for scientific computing with Python"
+  dockerfile_section: "RUN pip install --no-cache-dir numpy"
+  enabled: false
+
+pandas:
+  name: "Pandas"
+  description: "Powerful data structures and data analysis toolkit"
+  dockerfile_section: "RUN pip install --no-cache-dir pandas"
+  enabled: false
+
+seaborn:
+  name: "Seaborn"
+  description: "Statistical data visualization library based on matplotlib"
+  dockerfile_section: "RUN pip install --no-cache-dir seaborn"
+  enabled: false 

@@ -1,3 +1,6 @@
 # DeSciOS Launcher Requirements
 # Using built-in tkinter (no additional GUI dependencies needed)
 # No external dependencies required - using Python standard library only 
+
+# For YAML plugin support
+PyYAML>=6.0 

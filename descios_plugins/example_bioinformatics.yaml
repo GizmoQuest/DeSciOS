@@ -1,0 +1,27 @@
+biopython:
+  name: "BioPython"
+  description: "Python tools for computational molecular biology"
+  dockerfile_section: "RUN pip install --no-cache-dir biopython"
+  enabled: false
+
+blast:
+  name: "NCBI BLAST+"
+  description: "Basic Local Alignment Search Tool for sequence similarity"
+  dockerfile_section: |
+    # Install NCBI BLAST+
+    RUN apt update && apt install -y ncbi-blast+ && \
+        echo '[Desktop Entry]\nName=BLAST+\nExec=gnome-terminal -- blastn -help\nIcon=applications-science\nType=Application\nCategories=Science;' \
+        > /usr/share/applications/blast.desktop
+  enabled: false
+
+samtools:
+  name: "SAMtools"
+  description: "Tools for manipulating alignments in SAM/BAM format"
+  dockerfile_section: "RUN apt update && apt install -y samtools"
+  enabled: false
+
+bedtools:
+  name: "BEDTools"
+  description: "Toolset for genome arithmetic and interval operations"
+  dockerfile_section: "RUN apt update && apt install -y bedtools"
+  enabled: false 

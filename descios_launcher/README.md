@@ -5,6 +5,9 @@ A GUI application for customizing DeSciOS Docker builds with an intuitive interf
 ## Features
 
 - **Application Selection**: Choose which scientific applications to include in your DeSciOS build
+- **🧩 Custom Applications**: Create and manage your own applications using templates or plugins
+- **Template System**: Built-in templates for Python packages, APT packages, GitHub releases, web apps, and custom commands
+- **Plugin Support**: Load applications from external YAML/JSON files in the `descios_plugins/` directory
 - **Ollama Model Configuration**: Customize which AI models to install
 - **User Settings**: Configure username and VNC password
 - **GPU Support**: Enable/disable GPU acceleration with automatic Docker command generation
@@ -26,15 +29,28 @@ python3 descios_launcher/main.py
    - Select which applications to install
    - Mandatory: DeSciOS Assistant, Font, and Python3-pip (always included)
    - Optional: All other scientific applications (JupyterLab is now truly optional!)
+   - Custom applications marked with 🧩 emoji
    - Use "Select All", "Select None", or "Reset to Defaults" buttons
 
-2. **Settings Tab**
+2. **🧩 Custom Apps Tab**
+   - **Your Custom Applications**: View and select custom apps loaded from plugins
+   - **Add New Application**: Create new applications using templates:
+     - **Python Package**: Install via pip
+     - **APT Package**: Install system packages  
+     - **GitHub Release**: Download and install from releases
+     - **Web App**: Create browser shortcuts
+     - **Custom**: Write your own Dockerfile commands
+   - **Real-time Preview**: See generated Dockerfile commands
+   - **Save & Load**: Save applications and load plugin files
+   - **Template Builder**: Form-based application creation with validation
+
+3. **Settings Tab**
    - Configure Ollama AI models (one per line)
    - Set username and VNC password
    - Enable/disable GPU support for deployment
    - Default models: deepseek-r1:8b, minicpm-v:8b
 
-3. **Build & Deploy Tab**
+4. **Build & Deploy Tab**
    - Set custom Docker image tag
    - Generate customized Dockerfile with essential Qt dependencies
    - Build Docker image with real-time logging
