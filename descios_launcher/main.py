@@ -763,7 +763,7 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
                 
                 # Open the web interface
                 web_url = "http://localhost:6080/vnc.html"
-                subprocess.run(['xdg-open', web_url])
+                subprocess.run(['sleep 3 && xdg-open', web_url])
                 
                 self.log_message(f"🎉 DeSciOS is now running at: {web_url}")
                 self.log_message("💡 To stop: docker stop descios")
