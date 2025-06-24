@@ -206,7 +206,7 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/libOpenCL.so.1 /usr/lib/libOpenCL.so
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=graphics,utility,compute
 
-# Switch to jupyter user
+# Switch to deScier user
 USER $USER
 WORKDIR /home/$USER
 
