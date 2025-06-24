@@ -15,7 +15,30 @@ class DeSciOSLauncher:
     def __init__(self, root):
         self.root = root
         self.root.title("DeSciOS Launcher")
-        self.root.geometry("900x700")
+        self.root.geometry("1410x1250")  # Increased window size for better layout
+        
+        # Beautiful color scheme
+        self.colors = {
+            'primary': '#2563eb',      # Beautiful blue
+            'primary_light': '#3b82f6', # Lighter blue
+            'secondary': '#10b981',     # Emerald green
+            'accent': '#f59e0b',       # Amber
+            'success': '#059669',      # Green
+            'warning': '#d97706',      # Orange
+            'error': '#dc2626',        # Red
+            'background': '#f8fafc',   # Light gray
+            'surface': '#f8fafc',      # White
+            'text': '#1f2937',         # Dark gray
+            'text_light': '#6b7280',   # Medium gray
+            'border': '#e5e7eb',       # Light border
+            'hover': '#f3f4f6'         # Hover state
+        }
+        
+        # Configure root window
+        self.root.configure(bg=self.colors['background'])
+        
+        # Configure styles
+        self.setup_styles()
         
         # Application definitions - these will be optional
         self.applications = {
@@ -197,203 +220,399 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
         
         self.setup_ui()
         
+    def setup_styles(self):
+        """Configure beautiful styles for ttk widgets"""
+        style = ttk.Style()
+        
+        # Configure Notebook (tabs)
+        style.configure('TNotebook', 
+                       background=self.colors['surface'],
+                       borderwidth=0)
+        style.configure('TNotebook.Tab', 
+                       padding=[24, 16],  # Increased padding
+                       background=self.colors['hover'],
+                       foreground=self.colors['text'],
+                       focuscolor='none',
+                       font=('TkDefaultFont', 14, 'bold'))  # 12 * 1.2 = 14
+        style.map('TNotebook.Tab',
+                 background=[('selected', self.colors['primary']),
+                           ('active', self.colors['primary_light'])],
+                 foreground=[('selected', 'white'),
+                           ('active', 'white')])
+        
+        # Configure Frames
+        style.configure('TFrame', 
+                       background=self.colors['surface'])
+        
+        # Modern section frame (no gray background)
+        style.configure('Section.TFrame',
+                       background=self.colors['surface'],
+                       relief='flat',
+                       borderwidth=0)
+        
+        # Clean LabelFrame (minimal styling)
+        style.configure('Clean.TLabelFrame', 
+                       background=self.colors['surface'],
+                       borderwidth=1,
+                       relief='solid',
+                       bordercolor=self.colors['border'])
+        style.configure('Clean.TLabelFrame.Label',
+                       background=self.colors['surface'],
+                       foreground=self.colors['primary'],
+                       font=('TkDefaultFont', 14, 'bold'))  # 12 * 1.2 = 14
+        
+        # Configure Buttons
+        style.configure('TButton',
+                       padding=[20, 12],  # Increased padding
+                       background=self.colors['primary'],
+                       foreground='white',
+                       borderwidth=0,
+                       focuscolor='none',
+                       font=('TkDefaultFont', 13, 'bold'))  # 11 * 1.2 = 13
+        style.map('TButton',
+                 background=[('active', self.colors['primary_light']),
+                           ('pressed', self.colors['primary'])])
+        
+        # Configure special button styles
+        style.configure('Success.TButton',
+                       background=self.colors['secondary'],
+                       foreground='white')
+        style.map('Success.TButton',
+                 background=[('active', '#059669')])
+        
+        style.configure('Warning.TButton',
+                       background=self.colors['accent'],
+                       foreground='white')
+        style.map('Warning.TButton',
+                 background=[('active', '#d97706')])
+        
+        # Configure Labels
+        style.configure('TLabel',
+                       background=self.colors['surface'],
+                       foreground=self.colors['text'],
+                       font=('TkDefaultFont', 13))  # 11 * 1.2 = 13
+        style.configure('Title.TLabel',
+                       font=('TkDefaultFont', 24, 'bold'),  # 20 * 1.2 = 24
+                       foreground=self.colors['primary'])
+        style.configure('Subtitle.TLabel',
+                       font=('TkDefaultFont', 17, 'bold'),  # 14 * 1.2 = 17
+                       foreground=self.colors['text'])
+        style.configure('SectionHeader.TLabel',
+                       font=('TkDefaultFont', 19, 'bold'),  # 16 * 1.2 = 19
+                       foreground=self.colors['primary'],
+                       background=self.colors['surface'])
+        style.configure('Description.TLabel',
+                       foreground=self.colors['text_light'],
+                       font=('TkDefaultFont', 12))  # 10 * 1.2 = 12
+        
+        # Configure Checkbuttons
+        style.configure('TCheckbutton',
+                       background=self.colors['surface'],
+                       foreground=self.colors['text'],
+                       focuscolor='none',
+                       font=('TkDefaultFont', 13))  # 11 * 1.2 = 13
+        style.map('TCheckbutton',
+                 background=[('active', self.colors['hover'])])
+        
+        # Configure Entry widgets
+        style.configure('TEntry',
+                       fieldbackground='white',
+                       borderwidth=1,
+                       insertcolor=self.colors['primary'],
+                       relief='solid',
+                       font=('TkDefaultFont', 13))  # 11 * 1.2 = 13
+        style.map('TEntry',
+                 bordercolor=[('focus', self.colors['primary'])])
+        
     def setup_ui(self):
+        # Create main container with padding
+        main_container = ttk.Frame(self.root)
+        main_container.pack(fill='both', expand=True, padx=20, pady=20)
+        
         # Create notebook for tabs
-        notebook = ttk.Notebook(self.root)
-        notebook.pack(fill='both', expand=True, padx=10, pady=10)
+        notebook = ttk.Notebook(main_container)
+        notebook.pack(fill='both', expand=True)
         
         # Applications tab
         apps_frame = ttk.Frame(notebook)
-        notebook.add(apps_frame, text="Applications")
+        notebook.add(apps_frame, text="🔧 Applications")
         self.setup_applications_tab(apps_frame)
         
         # Settings tab
         settings_frame = ttk.Frame(notebook)
-        notebook.add(settings_frame, text="Settings")
+        notebook.add(settings_frame, text="⚙️ Settings")
         self.setup_settings_tab(settings_frame)
         
         # Build tab
         build_frame = ttk.Frame(notebook)
-        notebook.add(build_frame, text="Build & Deploy")
+        notebook.add(build_frame, text="🚀 Build & Deploy")
         self.setup_build_tab(build_frame)
         
     def setup_applications_tab(self, parent):
-        # Title
+        # Title with beautiful styling
         title_label = ttk.Label(parent, text="Select Applications to Install", 
-                               font=('TkDefaultFont', 14, 'bold'))
-        title_label.pack(pady=(10, 20))
+                               style='Title.TLabel')
+        title_label.pack(pady=(20, 30))
         
-        # Scrollable frame for applications
-        canvas = tk.Canvas(parent)
-        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
+        # Main content frame
+        content_frame = ttk.Frame(parent)
+        content_frame.pack(fill='both', expand=True, padx=20)
         
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+        # Mandatory section with beautiful styling
+        mandatory_label = ttk.Label(content_frame, text="🔒 Mandatory Components", 
+                                   style='Subtitle.TLabel')
+        mandatory_label.pack(anchor='w', pady=(0, 15))
         
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        mandatory_frame = ttk.Frame(content_frame)
+        mandatory_frame.pack(fill='x', pady=(0, 30))
         
-        # Create checkboxes for each application
-        self.app_vars = {}
-        row = 0
+        # Mandatory items with checkmark emoji and success color
+        mandatory_items = [
+            "✅ DeSciOS Assistant",
+            "✅ DeSciOS Assistant Font", 
+            "✅ Python3-pip (System Python package manager)"
+        ]
         
-        # Mandatory section
-        mandatory_label = ttk.Label(scrollable_frame, text="Mandatory Components:", 
-                                   font=('TkDefaultFont', 12, 'bold'))
-        mandatory_label.grid(row=row, column=0, columnspan=2, sticky='w', pady=(0, 10))
-        row += 1
-        
-        mandatory_frame = ttk.Frame(scrollable_frame)
-        mandatory_frame.grid(row=row, column=0, columnspan=2, sticky='ew', pady=(0, 20))
-        
-        ttk.Label(mandatory_frame, text="✓ DeSciOS Assistant", 
-                 foreground='green').pack(anchor='w')
-        ttk.Label(mandatory_frame, text="✓ DeSciOS Assistant Font", 
-                 foreground='green').pack(anchor='w')
-        ttk.Label(mandatory_frame, text="✓ Python3-pip (System Python package manager)", 
-                 foreground='green').pack(anchor='w')
-        row += 1
+        for item in mandatory_items:
+            item_label = ttk.Label(mandatory_frame, text=item, 
+                                 foreground=self.colors['success'],
+                                 font=('TkDefaultFont', 14))  # 12 * 1.2 = 14
+            item_label.pack(anchor='w', pady=4)
         
         # Optional applications section
-        optional_label = ttk.Label(scrollable_frame, text="Optional Applications:", 
-                                  font=('TkDefaultFont', 12, 'bold'))
-        optional_label.grid(row=row, column=0, columnspan=2, sticky='w', pady=(0, 10))
-        row += 1
+        optional_label = ttk.Label(content_frame, text="📦 Optional Applications", 
+                                  style='Subtitle.TLabel')
+        optional_label.pack(anchor='w', pady=(0, 20))
         
-        for app_id, app_info in self.applications.items():
+        # Create a frame for applications in columns
+        apps_container = ttk.Frame(content_frame)
+        apps_container.pack(fill='both', expand=True)
+        
+        # Configure column weights for responsive layout
+        apps_container.grid_columnconfigure(0, weight=1)
+        apps_container.grid_columnconfigure(1, weight=1)
+        apps_container.grid_columnconfigure(2, weight=1)
+        
+        # Create checkboxes for each application in 3 columns
+        self.app_vars = {}
+        apps_list = list(self.applications.items())
+        
+        for idx, (app_id, app_info) in enumerate(apps_list):
             self.app_vars[app_id] = tk.BooleanVar(value=app_info['enabled'])
             
+            # Determine column (0, 1, or 2)
+            col = idx % 3
+            row = idx // 3
+            
             # Create frame for each application
-            app_frame = ttk.Frame(scrollable_frame)
-            app_frame.grid(row=row, column=0, columnspan=2, sticky='ew', pady=2)
+            app_frame = ttk.Frame(apps_container)
+            app_frame.grid(row=row, column=col, sticky='ew', padx=10, pady=8)
             
             # Checkbox and name
             cb = ttk.Checkbutton(app_frame, text=app_info['name'], 
                                variable=self.app_vars[app_id],
                                command=self.update_config_status)
-            cb.pack(side='left')
+            cb.pack(anchor='w')
             
-            # Description
-            desc_label = ttk.Label(app_frame, text=f"- {app_info['description']}", 
-                                 foreground='gray')
-            desc_label.pack(side='left', padx=(10, 0))
-            
-            row += 1
+            # Description with beautiful styling
+            desc_label = ttk.Label(app_frame, text=f"• {app_info['description']}", 
+                                 style='Description.TLabel')
+            desc_label.pack(anchor='w', padx=(20, 0))
         
-        # Pack canvas and scrollbar
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-        
-        # Buttons frame
+        # Buttons frame with beautiful styling
         buttons_frame = ttk.Frame(parent)
-        buttons_frame.pack(fill='x', pady=10)
+        buttons_frame.pack(fill='x', pady=20, padx=20)
         
-        ttk.Button(buttons_frame, text="Select All", 
-                  command=self.select_all).pack(side='left', padx=5)
-        ttk.Button(buttons_frame, text="Select None", 
-                  command=self.select_none).pack(side='left', padx=5)
-        ttk.Button(buttons_frame, text="Reset to Defaults", 
-                  command=self.reset_defaults).pack(side='left', padx=5)
+        ttk.Button(buttons_frame, text="✅ Select All", 
+                  command=self.select_all, style='Success.TButton').pack(side='left', padx=10)
+        ttk.Button(buttons_frame, text="❌ Select None", 
+                  command=self.select_none, style='Warning.TButton').pack(side='left', padx=10)
+        ttk.Button(buttons_frame, text="🔄 Reset to Defaults", 
+                  command=self.reset_defaults).pack(side='left', padx=10)
         
     def setup_settings_tab(self, parent):
         # Title
-        title_label = ttk.Label(parent, text="DeSciOS Configuration", 
-                               font=('TkDefaultFont', 14, 'bold'))
-        title_label.pack(pady=(10, 20))
+        title_label = ttk.Label(parent, text="🔧 DeSciOS Configuration", 
+                               style='Title.TLabel')
+        title_label.pack(pady=(20, 30))
+        
+        # Create main content with proper spacing
+        content_frame = ttk.Frame(parent)
+        content_frame.pack(fill='both', expand=True, padx=20)
         
         # Ollama models section
-        ollama_frame = ttk.LabelFrame(parent, text="Ollama AI Models", padding=10)
-        ollama_frame.pack(fill='x', padx=10, pady=10)
+        ollama_header = ttk.Label(content_frame, text="🤖 Ollama AI Models", 
+                                style='SectionHeader.TLabel')
+        ollama_header.pack(anchor='w', pady=(0, 15))
         
-        ttk.Label(ollama_frame, text="Models to install (one per line):").pack(anchor='w')
+        ollama_frame = ttk.Frame(content_frame, style='Section.TFrame')
+        ollama_frame.pack(fill='x', pady=(0, 30))
         
-        self.ollama_models = tk.Text(ollama_frame, height=4, width=50)
-        self.ollama_models.pack(fill='x', pady=5)
+        # Clean content area without borders
+        ollama_content = ttk.Frame(ollama_frame)
+        ollama_content.pack(fill='x', padx=20, pady=15)
+        
+        ttk.Label(ollama_content, text="Models to install (one per line):", 
+                 style='Description.TLabel').pack(anchor='w', padx=15, pady=(15, 10))
+        
+        self.ollama_models = tk.Text(ollama_content, height=4, width=50,
+                                   bg='white', fg=self.colors['text'],
+                                   insertbackground=self.colors['primary'],
+                                   selectbackground=self.colors['primary'],
+                                   selectforeground='white',
+                                   relief='solid', borderwidth=1,
+                                   font=('TkDefaultFont', 13))  # 11 * 1.2 = 13
+        self.ollama_models.pack(fill='x', padx=15, pady=(0, 15))
         self.ollama_models.insert('1.0', 'deepseek-r1:8b\nminicpm-v:8b')
         self.ollama_models.bind('<KeyRelease>', lambda e: self.update_config_status())
         
         # User settings
-        user_frame = ttk.LabelFrame(parent, text="User Configuration", padding=10)
-        user_frame.pack(fill='x', padx=10, pady=10)
+        user_header = ttk.Label(content_frame, text="👤 User Configuration", 
+                              style='SectionHeader.TLabel')
+        user_header.pack(anchor='w', pady=(0, 15))
         
-        ttk.Label(user_frame, text="Username:").grid(row=0, column=0, sticky='w', pady=2)
+        user_frame = ttk.Frame(content_frame, style='Section.TFrame')
+        user_frame.pack(fill='x', pady=(0, 30))
+        
+        # Clean content area without borders
+        user_content = ttk.Frame(user_frame)
+        user_content.pack(fill='x', padx=20, pady=15)
+        
+        user_grid = ttk.Frame(user_content)
+        user_grid.pack(fill='x', padx=15, pady=15)
+        user_grid.grid_columnconfigure(1, weight=1)
+        
+        ttk.Label(user_grid, text="Username:", font=('TkDefaultFont', 13)).grid(row=0, column=0, sticky='w', pady=12)  # 11 * 1.2 = 13
         self.username_var = tk.StringVar(value="deScier")
         self.username_var.trace('w', lambda *args: self.update_config_status())
-        ttk.Entry(user_frame, textvariable=self.username_var, width=20).grid(row=0, column=1, sticky='w', padx=10)
+        username_entry = ttk.Entry(user_grid, textvariable=self.username_var, width=25)
+        username_entry.grid(row=0, column=1, sticky='ew', padx=(20, 0), pady=12)
         
-        ttk.Label(user_frame, text="VNC Password:").grid(row=1, column=0, sticky='w', pady=2)
+        ttk.Label(user_grid, text="VNC Password:", font=('TkDefaultFont', 13)).grid(row=1, column=0, sticky='w', pady=12)  # 11 * 1.2 = 13
         self.password_var = tk.StringVar(value="vncpassword")
         self.password_var.trace('w', lambda *args: self.update_config_status())
-        ttk.Entry(user_frame, textvariable=self.password_var, width=20, show="*").grid(row=1, column=1, sticky='w', padx=10)
+        password_entry = ttk.Entry(user_grid, textvariable=self.password_var, width=25, show="*")
+        password_entry.grid(row=1, column=1, sticky='ew', padx=(20, 0), pady=12)
         
         # GPU settings
-        gpu_frame = ttk.LabelFrame(parent, text="GPU Configuration", padding=10)
-        gpu_frame.pack(fill='x', padx=10, pady=10)
+        gpu_header = ttk.Label(content_frame, text="🎮 GPU Configuration", 
+                             style='SectionHeader.TLabel')
+        gpu_header.pack(anchor='w', pady=(0, 15))
+        
+        gpu_frame = ttk.Frame(content_frame, style='Section.TFrame')
+        gpu_frame.pack(fill='x')
+        
+        # Clean content area without borders
+        gpu_content = ttk.Frame(gpu_frame)
+        gpu_content.pack(fill='x', padx=20, pady=15)
         
         self.gpu_enabled_var = tk.BooleanVar(value=False)
-        gpu_cb = ttk.Checkbutton(gpu_frame, text="Enable GPU support (requires NVIDIA GPU with Docker support)", 
+        gpu_cb = ttk.Checkbutton(gpu_content, text="Enable GPU support (requires NVIDIA GPU with Docker support)", 
                                variable=self.gpu_enabled_var)
-        gpu_cb.pack(anchor='w', pady=2)
+        gpu_cb.pack(anchor='w', padx=15, pady=(15, 10))
         
-        gpu_info_label = ttk.Label(gpu_frame, 
-                                 text="Note: GPU support requires NVIDIA Docker runtime and compatible GPU drivers.",
-                                 foreground='gray', font=('TkDefaultFont', 9))
-        gpu_info_label.pack(anchor='w', pady=(0, 5))
+        gpu_info_label = ttk.Label(gpu_content, 
+                                 text="💡 Note: GPU support requires NVIDIA Docker runtime and compatible GPU drivers.",
+                                 style='Description.TLabel')
+        gpu_info_label.pack(anchor='w', padx=15, pady=(0, 15))
         
     def setup_build_tab(self, parent):
         # Title
-        title_label = ttk.Label(parent, text="Build & Deploy DeSciOS", 
-                               font=('TkDefaultFont', 14, 'bold'))
-        title_label.pack(pady=(10, 20))
+        title_label = ttk.Label(parent, text="🚀 Build & Deploy DeSciOS", 
+                               style='Title.TLabel')
+        title_label.pack(pady=(20, 30))
+        
+        # Create main content with proper spacing
+        content_frame = ttk.Frame(parent)
+        content_frame.pack(fill='both', expand=True, padx=20)
         
         # Build options
-        options_frame = ttk.LabelFrame(parent, text="Build Options", padding=10)
-        options_frame.pack(fill='x', padx=10, pady=10)
+        build_header = ttk.Label(content_frame, text="🔨 Build Options", 
+                               style='SectionHeader.TLabel')
+        build_header.pack(anchor='w', pady=(0, 15))
         
-        ttk.Label(options_frame, text="Docker Image Tag:").grid(row=0, column=0, sticky='w', pady=2)
+        options_frame = ttk.Frame(content_frame, style='Section.TFrame')
+        options_frame.pack(fill='x', pady=(0, 30))
+        
+        # Clean content area without borders
+        options_content = ttk.Frame(options_frame)
+        options_content.pack(fill='x', padx=20, pady=15)
+        
+        tag_grid = ttk.Frame(options_content)
+        tag_grid.pack(fill='x', padx=15, pady=15)
+        tag_grid.grid_columnconfigure(1, weight=1)
+        
+        ttk.Label(tag_grid, text="Docker Image Tag:", font=('TkDefaultFont', 13)).grid(row=0, column=0, sticky='w', pady=12)  # 11 * 1.2 = 13
         self.image_tag_var = tk.StringVar(value="descios:custom")
-        ttk.Entry(options_frame, textvariable=self.image_tag_var, width=30).grid(row=0, column=1, sticky='w', padx=10)
+        tag_entry = ttk.Entry(tag_grid, textvariable=self.image_tag_var, width=35)
+        tag_entry.grid(row=0, column=1, sticky='ew', padx=(20, 0), pady=12)
         
-        # Buttons
-        buttons_frame = ttk.Frame(options_frame)
-        buttons_frame.grid(row=1, column=0, columnspan=2, pady=10)
+        # Buttons with beautiful styling
+        buttons_frame = ttk.Frame(options_content)
+        buttons_frame.pack(fill='x', padx=15, pady=(0, 15))
         
-        ttk.Button(buttons_frame, text="Generate Dockerfile", 
-                  command=self.generate_dockerfile).pack(side='left', padx=5)
-        ttk.Button(buttons_frame, text="Build Docker Image", 
-                  command=self.build_image).pack(side='left', padx=5)
-        ttk.Button(buttons_frame, text="Save Configuration", 
-                  command=self.save_config).pack(side='left', padx=5)
-        ttk.Button(buttons_frame, text="Deploy!", 
-                  command=self.deploy_image).pack(side='left', padx=5)
+        ttk.Button(buttons_frame, text="📄 Generate Dockerfile", 
+                  command=self.generate_dockerfile).pack(side='left', padx=10)
+        ttk.Button(buttons_frame, text="🔨 Build Docker Image", 
+                  command=self.build_image, style='Success.TButton').pack(side='left', padx=10)
+        ttk.Button(buttons_frame, text="💾 Save Configuration", 
+                  command=self.save_config).pack(side='left', padx=10)
+        ttk.Button(buttons_frame, text="🚀 Deploy!", 
+                  command=self.deploy_image, style='Warning.TButton').pack(side='left', padx=10)
         
-        # Configuration status
-        self.config_status_label = ttk.Label(options_frame, text="", foreground='blue')
-        self.config_status_label.grid(row=2, column=0, columnspan=2, pady=5)
+        # Configuration status with beautiful styling
+        self.config_status_label = ttk.Label(options_content, text="", 
+                                           font=('TkDefaultFont', 14, 'bold'))  # 12 * 1.2 = 14
+        self.config_status_label.pack(padx=15, pady=(0, 15))
         self.update_config_status()
         
         # Deployment section
-        deploy_frame = ttk.LabelFrame(parent, text="Deployment Commands", padding=10)
-        deploy_frame.pack(fill='x', padx=10, pady=10)
+        deploy_header = ttk.Label(content_frame, text="🌐 Deployment Commands", 
+                                style='SectionHeader.TLabel')
+        deploy_header.pack(anchor='w', pady=(0, 15))
+        
+        deploy_frame = ttk.Frame(content_frame, style='Section.TFrame')
+        deploy_frame.pack(fill='x', pady=(0, 30))
+        
+        # Clean content area without borders
+        deploy_content = ttk.Frame(deploy_frame)
+        deploy_content.pack(fill='x', padx=20, pady=15)
         
         # Docker run command display
-        self.docker_cmd_text = scrolledtext.ScrolledText(deploy_frame, height=4, width=80)
-        self.docker_cmd_text.pack(fill='x', pady=5)
+        self.docker_cmd_text = scrolledtext.ScrolledText(deploy_content, height=5, width=80,
+                                                       bg='white', fg=self.colors['text'],
+                                                       insertbackground=self.colors['primary'],
+                                                       selectbackground=self.colors['primary'],
+                                                       selectforeground='white',
+                                                       relief='solid', borderwidth=1,
+                                                       font=('Monaco', 12))  # 10 * 1.2 = 12
+        self.docker_cmd_text.pack(fill='x', padx=15, pady=15)
         self.update_docker_command()
         
         # Button to update command
-        ttk.Button(deploy_frame, text="Update Docker Run Command", 
-                  command=self.update_docker_command).pack(pady=5)
+        ttk.Button(deploy_content, text="🔄 Update Docker Run Command", 
+                  command=self.update_docker_command).pack(padx=15, pady=(0, 15))
         
         # Output log
-        log_frame = ttk.LabelFrame(parent, text="Build Log", padding=10)
-        log_frame.pack(fill='both', expand=True, padx=10, pady=10)
+        log_header = ttk.Label(content_frame, text="📋 Build Log", 
+                             style='SectionHeader.TLabel')
+        log_header.pack(anchor='w', pady=(0, 15))
         
-        self.log_text = scrolledtext.ScrolledText(log_frame, height=10)
-        self.log_text.pack(fill='both', expand=True)
+        log_frame = ttk.Frame(content_frame, style='Section.TFrame')
+        log_frame.pack(fill='both', expand=True)
+        
+        # Clean content area without borders
+        log_content = ttk.Frame(log_frame)
+        log_content.pack(fill='both', expand=True, padx=20, pady=15)
+        
+        self.log_text = scrolledtext.ScrolledText(log_content, height=8,
+                                                bg='white', fg='black',
+                                                insertbackground=self.colors['primary'],
+                                                selectbackground=self.colors['primary'],
+                                                selectforeground='white',
+                                                relief='solid', borderwidth=1,
+                                                font=('Monaco', 12))  # 10 * 1.2 = 12
+        self.log_text.pack(fill='both', expand=True, padx=15, pady=15)
         
     def update_docker_command(self):
         """Update the Docker run command based on current settings"""
@@ -455,19 +674,36 @@ docker start descios
             if self.is_default_configuration():
                 self.config_status_label.config(
                     text="✨ Default configuration detected - will build from original Dockerfile for speed",
-                    foreground='green'
+                    foreground=self.colors['success']
                 )
             else:
                 self.config_status_label.config(
                     text="🔧 Custom configuration - will generate and use Dockerfile.custom",
-                    foreground='blue'
+                    foreground=self.colors['primary']
                 )
 
     def log_message(self, message):
+        # Color-coded log messages for white background
+        if "✅" in message or "Successfully" in message:
+            color = '#059669'  # Success green (darker for white bg)
+        elif "❌" in message or "Error" in message or "Failed" in message:
+            color = '#dc2626'  # Error red
+        elif "🔨" in message or "Building" in message:
+            color = '#d97706'  # Warning orange
+        elif "🚀" in message or "Deploy" in message:
+            color = '#7c3aed'  # Purple
+        else:
+            color = 'black'  # Default black text
+            
         self.log_text.insert(tk.END, f"{message}\n")
+        # Apply color to the last line
+        line_start = self.log_text.index("end-2c linestart")
+        line_end = self.log_text.index("end-2c lineend")
+        self.log_text.tag_add("colored", line_start, line_end)
+        self.log_text.tag_config("colored", foreground=color)
         self.log_text.see(tk.END)
         self.root.update()
-        
+
     def get_qt_dependencies(self):
         return '''RUN apt update && apt install -y \\
     qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools \\
