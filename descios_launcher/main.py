@@ -993,15 +993,30 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
                 self.log_message(f"✅ Container started successfully: {container_id}")
                 self.log_message("🌐 Opening web interface...")
                 
-                # Wait a moment for the container to start
-                import time
-                time.sleep(2)
+                # Wait a moment for the container to start, then open browser
+                def open_browser():
+                    import time
+                    time.sleep(3)
+                    web_url = "http://localhost:6080/vnc.html"
+                    try:
+                        subprocess.run(['xdg-open', web_url], check=False)
+                    except FileNotFoundError:
+                        # Fallback for systems without xdg-open
+                        try:
+                            subprocess.run(['firefox', web_url], check=False)
+                        except FileNotFoundError:
+                            try:
+                                subprocess.run(['chromium-browser', web_url], check=False)
+                            except FileNotFoundError:
+                                try:
+                                    subprocess.run(['google-chrome', web_url], check=False)
+                                except FileNotFoundError:
+                                    self.log_message(f"💡 Please open manually: {web_url}")
                 
-                # Open the web interface
-                web_url = "http://localhost:6080/vnc.html"
-                subprocess.run(['sleep 3 && xdg-open', web_url])
+                # Run browser opening in a separate thread
+                threading.Thread(target=open_browser, daemon=True).start()
                 
-                self.log_message(f"🎉 DeSciOS is now running at: {web_url}")
+                self.log_message(f"🎉 DeSciOS is now running at: http://localhost:6080/vnc.html")
                 self.log_message("💡 To stop: docker stop descios")
                 
             else:
