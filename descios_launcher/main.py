@@ -777,10 +777,45 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
             messagebox.showerror("Error", f"Deploy failed: {str(e)}")
 
 def main():
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description="DeSciOS Launcher - GUI for customizing and deploying DeSciOS",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  descios                    # Launch GUI
+  descios --version          # Show version
+  descios --help             # Show this help
+  
+DeSciOS is a containerized scientific computing environment.
+Visit: https://github.com/GizmoQuest/DeSciOS
+        """
+    )
+    
+    parser.add_argument(
+        '--version', '-v',
+        action='version',
+        version='DeSciOS Launcher 0.1.0'
+    )
+    
+    parser.add_argument(
+        '--no-gui',
+        action='store_true',
+        help='Run in command-line mode (not implemented yet)'
+    )
+    
+    args = parser.parse_args()
+    
+    if args.no_gui:
+        print("Command-line mode not implemented yet. Use GUI mode.")
+        return 1
+    
     # Check if we're in the right directory
     if not os.path.exists('Dockerfile'):
-        messagebox.showerror("Error", "Dockerfile not found. Please run from the DeSciOS directory.")
-        return
+        print("Error: Dockerfile not found.")
+        print("Please run from the DeSciOS directory, or use 'cd' to navigate there first.")
+        return 1
         
     root = tk.Tk()
     app = DeSciOSLauncher(root)
@@ -792,6 +827,8 @@ def main():
         pass  # Fallback to default theme
     
     root.mainloop()
+    return 0
 
 if __name__ == "__main__":
-    main() 
+    import sys
+    sys.exit(main()) 

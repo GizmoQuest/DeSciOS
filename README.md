@@ -98,6 +98,10 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 | `descios_assistant/main.py` | GTK-based chat interface with Ollama integration |
 | `descios_assistant/requirements.txt` | Python dependencies for the assistant |
 | `descios_assistant/descios-assistant.desktop` | Desktop entry for the assistant |
+| `descios_launcher/` | DeSciOS Launcher application directory |
+| `descios_launcher/main.py` | GUI for customizing DeSciOS Docker builds |
+| `descios_launcher/README.md` | Detailed launcher documentation |
+| `descios_launcher/requirements.txt` | Launcher dependencies (uses Python standard library) |
 
 ---
 
@@ -128,7 +132,169 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 
 ---
 
-## 🧪 Quick Start (Local Docker)
+## 🚀 DeSciOS Launcher
+
+**DeSciOS Launcher** is a comprehensive GUI application that allows users to customize their DeSciOS builds with an intuitive interface. Instead of manually editing Dockerfiles, users can now select applications, configure settings, and deploy customized DeSciOS instances with just a few clicks.
+
+### Launcher Features
+
+- **Application Selection**: Choose which scientific applications to include in your build from the full suite
+- **Smart Build System**: Automatically uses the original Dockerfile for default configurations (faster builds) or generates custom Dockerfiles when needed
+- **Ollama Model Configuration**: Customize which AI models to install and configure
+- **User Settings**: Set custom username and VNC password for your instance
+- **GPU Support**: Enable/disable GPU acceleration with automatic Docker command generation
+- **One-Click Deployment**: Build and deploy DeSciOS with automatic web interface launch
+- **Configuration Management**: Save and load your build configurations
+- **Real-time Build Logging**: Monitor Docker build progress with live output
+
+### Quick Start with Launcher
+
+```bash
+# Clone the repo
+git clone https://github.com/GizmoQuest/DeSciOS.git
+cd DeSciOS
+
+# Launch the GUI customizer
+python3 descios_launcher/main.py
+```
+
+1. **Applications Tab**: Select which scientific tools to include (all enabled by default)
+2. **Settings Tab**: Configure AI models, username, password, and GPU support  
+3. **Build & Deploy Tab**: Generate custom builds and deploy with one click
+
+The launcher automatically detects default configurations and uses the optimized build path for faster deployment.
+
+### Available Applications via Launcher
+
+The launcher allows you to customize which applications are included:
+
+- **Core Components** (always included): DeSciOS Assistant, Python3, system fonts
+- **Development**: JupyterLab, Spyder, BeakerX multi-language kernels
+- **Data Science**: R & RStudio, GNU Octave
+- **Bioinformatics**: UGENE, CellModeller bacterial simulation
+- **Image Processing**: Fiji/ImageJ  
+- **Geospatial**: QGIS, GRASS GIS
+- **Workflows**: Nextflow pipeline manager
+- **Decentralized Tools**: IPFS Desktop, Syncthing
+- **Web-based Tools**: EtherCalc, NGL Viewer, Remix IDE, Nault wallet
+
+---
+
+## 📋 System Requirements
+
+### Minimum Requirements
+
+- **Operating System**: Linux, macOS, or Windows with Docker support
+- **RAM**: 4GB minimum, 8GB+ recommended for scientific workloads
+- **Storage**: 10GB+ free disk space for Docker images and data
+- **Network**: Internet connection for initial setup and package downloads
+
+### Required Software
+
+#### For DeSciOS Launcher
+- **Python**: 3.6 or later
+- **tkinter**: GUI toolkit (usually included with Python)
+- **Docker**: 20.10 or later for container management
+- **xdg-open** (Linux/macOS): For automatic browser launching
+
+#### For DeSciOS Container
+- **Docker**: 20.10 or later with BuildKit support
+- **Docker Buildx**: For multi-platform builds (included in recent Docker versions)
+- **Modern Web Browser**: Chrome, Firefox, Safari, or Edge for accessing the desktop interface
+
+### Optional Requirements
+
+#### GPU Acceleration (NVIDIA only)
+- **NVIDIA GPU**: CUDA-compatible graphics card
+- **NVIDIA Container Toolkit**: For Docker GPU access
+- **NVIDIA Drivers**: 450.80.02+ or compatible with your GPU
+- **CUDA**: 11.0+ (installed automatically in container)
+
+#### Performance Recommendations
+- **Multi-core CPU**: 4+ cores recommended for scientific computing
+- **SSD Storage**: For faster Docker builds and data processing
+- **16GB+ RAM**: For memory-intensive scientific applications
+
+### Installation Prerequisites
+
+#### Ubuntu/Debian
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+
+# Install Python and tkinter (if not already installed)
+sudo apt install -y python3 python3-tk
+
+# For GPU support (optional)
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt update && sudo apt install -y nvidia-container-toolkit
+sudo systemctl restart docker
+```
+
+#### macOS
+```bash
+# Install Docker Desktop from https://www.docker.com/products/docker-desktop
+# Python 3 is usually pre-installed, tkinter included
+
+# Verify installations
+python3 --version
+docker --version
+```
+
+#### Windows
+```bash
+# Install Docker Desktop from https://www.docker.com/products/docker-desktop
+# Install Python 3 from https://www.python.org/downloads/
+# tkinter is included with Python on Windows
+
+# Verify installations in PowerShell or Command Prompt
+python --version
+docker --version
+```
+
+### Browser Requirements
+
+DeSciOS is accessed through a web browser using noVNC. Supported browsers:
+- **Chrome/Chromium**: 88+ (recommended for best performance)
+- **Firefox**: 85+ 
+- **Safari**: 14+
+- **Edge**: 88+
+
+### Network Configuration
+
+- **Port 6080**: HTTP access to noVNC interface
+- **Port 5901**: Direct VNC access (optional)
+- **Firewall**: Ensure ports are accessible if accessing from remote machines
+
+---
+
+## 🧪 Quick Start
+
+### Option 1: GUI Launcher (Recommended)
+
+```bash
+# Clone the repo
+git clone https://github.com/GizmoQuest/DeSciOS.git
+cd DeSciOS
+
+# Launch the GUI customizer
+python3 descios_launcher/main.py
+```
+
+Use the intuitive GUI to:
+- Select which applications to include
+- Configure AI models and settings
+- Build and deploy with one click
+- Automatically launch in your browser
+
+### Option 2: Manual Docker Build
 
 ```bash
 # Clone the repo
@@ -148,7 +314,7 @@ docker run -d -p 6080:6080 --name desci-lab descios
 docker run -d --gpus all -p 6080:6080 --name desci-lab descios
 ```
 
-Access via:
+### Access DeSciOS
 
 * 🌐 `http://localhost:6080/vnc.html` → Full Linux desktop in browser (use the password you set during build)
 
