@@ -171,7 +171,3 @@ Ensure you have:
 - NVIDIA Container Toolkit installed
 - Compatible GPU drivers
 - GPU support enabled in Settings tab
-
-## Installation in DeSciOS
-
-The launcher will be automatically installed when building DeSciOS and available as "DeSciOS Launcher" in the applications menu. 
