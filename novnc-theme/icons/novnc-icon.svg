@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2E8B57;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4682B4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="url(#gradient)" stroke="#FFD700" stroke-width="2"/>
+  
+  <!-- DNA helix symbol -->
+  <path d="M20 16 Q32 20 44 16 Q32 24 20 28 Q32 32 44 36 Q32 40 20 44 Q32 48 44 52" 
+        stroke="#FFD700" stroke-width="2" fill="none"/>
+  <path d="M20 20 Q32 16 44 20 Q32 28 20 24 Q32 36 44 32 Q32 44 20 40 Q32 52 44 48" 
+        stroke="#F5F5F5" stroke-width="1.5" fill="none"/>
+  
+  <!-- Circuit pattern -->
+  <circle cx="24" cy="24" r="2" fill="#FFD700"/>
+  <circle cx="40" cy="40" r="2" fill="#FFD700"/>
+  <line x1="24" y1="24" x2="40" y2="40" stroke="#FFD700" stroke-width="1"/>
+  
+  <!-- Molecular structure dots -->
+  <circle cx="16" cy="32" r="1.5" fill="#F5F5F5"/>
+  <circle cx="48" cy="32" r="1.5" fill="#F5F5F5"/>
+  <circle cx="32" cy="12" r="1.5" fill="#F5F5F5"/>
+  <circle cx="32" cy="52" r="1.5" fill="#F5F5F5"/>
+</svg>

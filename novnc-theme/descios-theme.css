@@ -1,0 +1,614 @@
+/* DeSciOS Theme for noVNC */
+/* Transforms the default noVNC UI into a scientific computing environment theme */
+
+/* 
+ * DeSciOS Color Palette:
+ * Primary: #2E8B57 (Sea Green) - Scientific/research green
+ * Secondary: #4682B4 (Steel Blue) - Data visualization blue  
+ * Accent: #FFD700 (Gold) - Highlight color for important elements
+ * Dark: #1C1C1C (Dark Gray) - Background
+ * Light: #F5F5F5 (Off White) - Text on dark backgrounds
+ */
+
+:root {
+  --descios-primary: #2E8B57;
+  --descios-secondary: #4682B4;
+  --descios-accent: #FFD700;
+  --descios-dark: #1C1C1C;
+  --descios-light: #F5F5F5;
+  --descios-hover: #32CD32;
+  --descios-shadow: rgba(46, 139, 87, 0.3);
+}
+
+/* Override main background */
+body {
+  background-color: var(--descios-dark) !important;
+  background-image: linear-gradient(45deg, #1C1C1C 0%, #2C2C2C 50%, #1C1C1C 100%);
+}
+
+#noVNC_container {
+  background-color: var(--descios-dark) !important;
+  border-bottom-right-radius: 20px !important;
+}
+
+/* Control bar styling */
+#noVNC_control_bar {
+  background-color: var(--descios-primary) !important;
+  border: 2px solid var(--descios-secondary);
+  box-shadow: 0 4px 15px var(--descios-shadow) !important;
+}
+
+#noVNC_control_bar.noVNC_open {
+  box-shadow: 0 6px 20px var(--descios-shadow) !important;
+}
+
+/* Control bar handle */
+#noVNC_control_bar_handle {
+  background-color: var(--descios-secondary) !important;
+  border: 1px solid var(--descios-primary);
+  box-shadow: 0 3px 10px var(--descios-shadow) !important;
+}
+
+#noVNC_control_bar_handle:hover {
+  background-color: var(--descios-hover) !important;
+}
+
+/* Panel headings */
+.noVNC_panel .noVNC_heading {
+  background: linear-gradient(135deg, var(--descios-primary), var(--descios-secondary)) !important;
+  color: var(--descios-light) !important;
+  border: 1px solid var(--descios-accent);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Connect button */
+#noVNC_connect_button {
+  background: linear-gradient(135deg, var(--descios-primary), var(--descios-secondary)) !important;
+  border: 2px solid var(--descios-accent);
+  color: var(--descios-light) !important;
+  box-shadow: 0 4px 15px var(--descios-shadow) !important;
+}
+
+#noVNC_connect_button:hover {
+  background: linear-gradient(135deg, var(--descios-hover), var(--descios-primary)) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--descios-shadow) !important;
+}
+
+#noVNC_connect_button div {
+  border: 1px solid var(--descios-accent) !important;
+  background: linear-gradient(to top, var(--descios-primary), var(--descios-secondary)) !important;
+}
+
+/* Panels */
+.noVNC_panel {
+  background-color: rgba(28, 28, 28, 0.95) !important;
+  border: 2px solid var(--descios-primary);
+  border-radius: 10px;
+  box-shadow: 0 8px 25px var(--descios-shadow);
+}
+
+/* Logo customization */
+.noVNC_logo {
+  color: var(--descios-accent) !important;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+  font-weight: bold;
+}
+
+.noVNC_logo span {
+  color: var(--descios-light) !important;
+}
+
+/* Input fields */
+input[type="text"], input[type="password"], select {
+  background-color: var(--descios-dark) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  color: var(--descios-light) !important;
+  border-radius: 5px;
+  padding: 8px;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, select:focus {
+  border-color: var(--descios-accent) !important;
+  box-shadow: 0 0 10px var(--descios-shadow);
+}
+
+/* Custom DeSciOS branding elements */
+.descios-branding {
+  position: absolute;
+  bottom: 10px;
+  right: 15px;
+  color: var(--descios-accent);
+  font-size: 12px;
+  opacity: 0.8;
+  font-family: "Orbitron", monospace;
+}
+
+.descios-version {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  color: var(--descios-light);
+  font-size: 10px;
+  opacity: 0.6;
+  font-family: "Orbitron", monospace;
+}
+
+/* Animation for scientific feel */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 var(--descios-shadow); }
+  70% { box-shadow: 0 0 0 10px rgba(46, 139, 87, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 139, 87, 0); }
+}
+
+#noVNC_connect_button {
+  animation: pulse 2s infinite;
+}
+
+/* Force DeSciOS logo styling */
+.noVNC_logo {
+  color: var(--descios-accent) !important;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7) !important;
+  font-weight: bold !important;
+  font-size: 24px !important;
+  text-align: center !important;
+}
+
+.noVNC_logo span {
+  color: var(--descios-light) !important;
+  font-weight: 900 !important;
+}
+
+/* Ensure connect dialog logo is styled */
+#noVNC_connect_dlg .noVNC_logo {
+  font-size: 48px !important;
+  margin-bottom: 20px !important;
+  
+  letter-spacing: 2px !important;
+}
+
+/* Override any existing noVNC branding */
+.noVNC_logo:before {
+  content: "" !important;
+}
+
+.noVNC_logo:after {
+  content: "" !important;
+}
+
+/* Fix password input field visibility */
+input[type="password"] {
+  background-color: var(--descios-dark) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  color: var(--descios-light) !important;
+  border-radius: 5px;
+  padding: 8px;
+  font-family: monospace !important;
+  font-size: 14px !important;
+}
+
+input[type="password"]:focus {
+  border-color: var(--descios-accent) !important;
+  box-shadow: 0 0 10px var(--descios-shadow);
+  background-color: #2C2C2C !important;
+}
+
+/* Ensure password dots are visible */
+input[type="password"]::-webkit-input-placeholder {
+  color: rgba(245, 245, 245, 0.5) !important;
+}
+
+input[type="password"]::placeholder {
+  color: rgba(245, 245, 245, 0.5) !important;
+}
+
+/* Fix all credential form inputs */
+#noVNC_credentials_dlg input {
+  background-color: var(--descios-dark) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  color: var(--descios-light) !important;
+  border-radius: 5px !important;
+  padding: 8px !important;
+  margin: 5px 0 !important;
+}
+
+#noVNC_credentials_dlg input:focus {
+  border-color: var(--descios-accent) !important;
+  box-shadow: 0 0 10px var(--descios-shadow) !important;
+  background-color: #2C2C2C !important;
+  outline: none !important;
+}
+
+/* Style the credentials button */
+#noVNC_credentials_button {
+  background: linear-gradient(135deg, var(--descios-primary), var(--descios-secondary)) !important;
+  border: 2px solid var(--descios-accent) !important;
+  color: var(--descios-light) !important;
+  padding: 10px 20px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+}
+
+#noVNC_credentials_button:hover {
+  background: linear-gradient(135deg, var(--descios-hover), var(--descios-primary)) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 15px var(--descios-shadow) !important;
+}
+
+/* Force password field dark theme - override all defaults */
+#noVNC_password_input {
+  background-color: var(--descios-dark) !important;
+  background: var(--descios-dark) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  color: var(--descios-light) !important;
+  border-radius: 5px !important;
+  padding: 8px !important;
+  font-family: monospace !important;
+  font-size: 14px !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3) !important;
+}
+
+#noVNC_password_input:focus {
+  background-color: #2C2C2C !important;
+  background: #2C2C2C !important;
+  border-color: var(--descios-accent) !important;
+  box-shadow: 0 0 10px var(--descios-shadow), inset 0 1px 3px rgba(0,0,0,0.3) !important;
+  outline: none !important;
+}
+
+/* Also target by attribute selector */
+input[type="password"]#noVNC_password_input {
+  background-color: var(--descios-dark) !important;
+  background: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+}
+
+/* Override any webkit autofill styles */
+#noVNC_password_input:-webkit-autofill,
+#noVNC_password_input:-webkit-autofill:hover,
+#noVNC_password_input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px var(--descios-dark) inset !important;
+  -webkit-text-fill-color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+}
+
+/* Ensure all credentials dialog inputs are dark */
+#noVNC_credentials_dlg {
+  background-color: rgba(28, 28, 28, 0.95) !important;
+  border: 2px solid var(--descios-primary) !important;
+  border-radius: 10px !important;
+}
+
+#noVNC_credentials_dlg label {
+  color: var(--descios-light) !important;
+  font-weight: bold !important;
+}
+
+/* Settings panel dark theme styling */
+#noVNC_settings {
+  background-color: rgba(28, 28, 28, 0.95) !important;
+  border: 2px solid var(--descios-primary) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 25px var(--descios-shadow) !important;
+}
+
+/* Settings panel inputs */
+#noVNC_settings input[type="text"],
+#noVNC_settings input[type="number"],
+#noVNC_settings input[type="range"],
+#noVNC_settings select {
+  background-color: var(--descios-dark) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  color: var(--descios-light) !important;
+  border-radius: 5px !important;
+  padding: 6px 8px !important;
+  margin: 2px 0 !important;
+  font-family: monospace !important;
+}
+
+#noVNC_settings input[type="text"]:focus,
+#noVNC_settings input[type="number"]:focus,
+#noVNC_settings select:focus {
+  border-color: var(--descios-accent) !important;
+  box-shadow: 0 0 8px var(--descios-shadow) !important;
+  background-color: #2C2C2C !important;
+  outline: none !important;
+}
+
+/* Range sliders */
+#noVNC_settings input[type="range"] {
+  background: var(--descios-dark) !important;
+  border: 1px solid var(--descios-secondary) !important;
+  border-radius: 5px !important;
+  height: 8px !important;
+}
+
+#noVNC_settings input[type="range"]::-webkit-slider-thumb {
+  background: var(--descios-accent) !important;
+  border: 2px solid var(--descios-primary) !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  height: 18px !important;
+  width: 18px !important;
+}
+
+#noVNC_settings input[type="range"]::-moz-range-thumb {
+  background: var(--descios-accent) !important;
+  border: 2px solid var(--descios-primary) !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  height: 18px !important;
+  width: 18px !important;
+}
+
+/* Checkboxes */
+#noVNC_settings input[type="checkbox"] {
+  accent-color: var(--descios-accent) !important;
+  transform: scale(1.2) !important;
+  margin-right: 8px !important;
+}
+
+/* Labels */
+#noVNC_settings label {
+  color: var(--descios-light) !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+}
+
+/* Settings headings */
+#noVNC_settings .noVNC_heading {
+  background: linear-gradient(135deg, var(--descios-primary), var(--descios-secondary)) !important;
+  color: var(--descios-light) !important;
+  border: 1px solid var(--descios-accent) !important;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
+  border-radius: 5px !important;
+  padding: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+/* Expander sections */
+#noVNC_settings .noVNC_expander {
+  background-color: var(--descios-secondary) !important;
+  color: var(--descios-light) !important;
+  border: 1px solid var(--descios-primary) !important;
+  border-radius: 5px !important;
+  padding: 6px 10px !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+}
+
+#noVNC_settings .noVNC_expander:hover {
+  background-color: var(--descios-hover) !important;
+}
+
+/* Version info */
+#noVNC_settings .noVNC_version {
+  color: var(--descios-accent) !important;
+  font-weight: bold !important;
+}
+
+/* Specific input field targeting */
+#noVNC_setting_host,
+#noVNC_setting_port,
+#noVNC_setting_path,
+#noVNC_setting_repeaterID,
+#noVNC_setting_reconnect_delay {
+  background-color: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+}
+
+/* Select dropdowns */
+#noVNC_setting_resize,
+#noVNC_setting_logging {
+  background-color: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+}
+
+/* Quality and compression sliders */
+#noVNC_setting_quality,
+#noVNC_setting_compression {
+  background: linear-gradient(to right, var(--descios-primary), var(--descios-secondary)) !important;
+  border-radius: 5px !important;
+}
+
+/* Force specific select dropdowns to dark theme */
+select#noVNC_setting_resize,
+select#noVNC_setting_reconnect_delay,
+select#noVNC_setting_logging {
+  background-color: var(--descios-dark) !important;
+  background: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  border-radius: 5px !important;
+  padding: 6px 8px !important;
+  font-family: monospace !important;
+  font-size: 14px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+select#noVNC_setting_resize:focus,
+select#noVNC_setting_reconnect_delay:focus,
+select#noVNC_setting_logging:focus {
+  border-color: var(--descios-accent) !important;
+  box-shadow: 0 0 8px var(--descios-shadow) !important;
+  background-color: #2C2C2C !important;
+  outline: none !important;
+}
+
+/* Override webkit select styling */
+select#noVNC_setting_resize option,
+select#noVNC_setting_reconnect_delay option,
+select#noVNC_setting_logging option {
+  background-color: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+}
+
+/* Force all select elements in settings */
+#noVNC_settings select {
+  background-color: var(--descios-dark) !important;
+  background: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  border-radius: 5px !important;
+  padding: 6px 8px !important;
+  font-family: monospace !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+/* Add custom dropdown arrow */
+#noVNC_settings select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFD700' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  background-size: 16px !important;
+  padding-right: 32px !important;
+}
+
+/* Reconnect delay input field */
+input#noVNC_setting_reconnect_delay {
+  background-color: var(--descios-dark) !important;
+  background: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  border-radius: 5px !important;
+  padding: 6px 8px !important;
+  font-family: monospace !important;
+}
+
+/* Force specific text input fields to dark theme */
+input#noVNC_setting_repeaterID,
+input#noVNC_setting_host,
+input#noVNC_setting_port,
+input#noVNC_setting_path {
+  background-color: var(--descios-dark) !important;
+  background: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  border-radius: 5px !important;
+  padding: 6px 8px !important;
+  font-family: monospace !important;
+  font-size: 14px !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3) !important;
+}
+
+input#noVNC_setting_repeaterID:focus,
+input#noVNC_setting_host:focus,
+input#noVNC_setting_port:focus,
+input#noVNC_setting_path:focus {
+  background-color: #2C2C2C !important;
+  background: #2C2C2C !important;
+  border-color: var(--descios-accent) !important;
+  box-shadow: 0 0 8px var(--descios-shadow), inset 0 1px 3px rgba(0,0,0,0.3) !important;
+  outline: none !important;
+}
+
+/* Override webkit autofill for these specific fields */
+input#noVNC_setting_repeaterID:-webkit-autofill,
+input#noVNC_setting_host:-webkit-autofill,
+input#noVNC_setting_port:-webkit-autofill,
+input#noVNC_setting_path:-webkit-autofill,
+input#noVNC_setting_repeaterID:-webkit-autofill:hover,
+input#noVNC_setting_host:-webkit-autofill:hover,
+input#noVNC_setting_port:-webkit-autofill:hover,
+input#noVNC_setting_path:-webkit-autofill:hover,
+input#noVNC_setting_repeaterID:-webkit-autofill:focus,
+input#noVNC_setting_host:-webkit-autofill:focus,
+input#noVNC_setting_port:-webkit-autofill:focus,
+input#noVNC_setting_path:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px var(--descios-dark) inset !important;
+  -webkit-text-fill-color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Force all WebSocket section inputs */
+.noVNC_expander + * input[type="text"],
+.noVNC_expander + * input[type="number"] {
+  background-color: var(--descios-dark) !important;
+  background: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+}
+
+/* Additional broad targeting for stubborn inputs */
+#noVNC_settings input[type="text"],
+#noVNC_settings input[type="number"] {
+  background-color: var(--descios-dark) !important;
+  background: var(--descios-dark) !important;
+  color: var(--descios-light) !important;
+  border: 2px solid var(--descios-secondary) !important;
+  border-radius: 5px !important;
+  padding: 6px 8px !important;
+  font-family: monospace !important;
+}
+
+/* Improve control bar layout and icon positioning */
+#noVNC_control_bar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 10px 8px !important;
+}
+
+/* Position the logo at the top */
+.noVNC_logo {
+  order: 1 !important;
+  margin-bottom: 8px !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
+}
+
+/* Position icons directly below the logo */
+#noVNC_fullscreen_button,
+#noVNC_settings_button {
+  order: 2 !important;
+  margin: 3px 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+/* Ensure other control elements come after */
+#noVNC_view_drag_button,
+#noVNC_mobile_buttons,
+#noVNC_modifiers,
+#noVNC_power_button,
+#noVNC_clipboard_button,
+#noVNC_disconnect_button {
+  order: 3 !important;
+}
+
+/* Adjust control bar width for better icon spacing */
+#noVNC_control_bar {
+  min-width: 60px !important;
+  width: auto !important;
+}
+
+/* Stack icons vertically below logo */
+#noVNC_control_bar .noVNC_button {
+  display: block !important;
+  margin: 2px auto !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+/* Improve logo spacing */
+.noVNC_logo span {
+  display: inline !important;
+}
+
+/* Specific positioning for fullscreen and settings */
+#noVNC_fullscreen_button {
+  margin-top: 5px !important;
+}
+
+#noVNC_settings_button {
+  margin-top: 2px !important;
+  margin-bottom: 8px !important;
+}

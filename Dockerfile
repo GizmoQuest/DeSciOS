@@ -239,5 +239,11 @@ COPY xfce4-panel.xml /etc/xdg/xfce4/panel/default.xml
 # Expose ports for noVNC
 EXPOSE 6080
 
+# Apply DeSciOS noVNC Theme
+COPY novnc-theme/descios-theme.css /usr/share/novnc/app/styles/
+COPY novnc-theme/vnc.html /usr/share/novnc/
+COPY novnc-theme/ui.js /usr/share/novnc/app/
+COPY novnc-theme/icons/* /usr/share/novnc/app/images/icons/
+
 # Start services
 CMD ["/startup.sh"]
