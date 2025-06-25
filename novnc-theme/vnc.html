@@ -49,7 +49,7 @@
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="app/styles/base.css">
-    <link rel="stylesheet" href="app/styles/descios-theme.css?v=12.0&t=1737653600">
+    <link rel="stylesheet" href="app/styles/descios-theme.css?v=15.1&t=1737654000">
 
     <!-- Images that will later appear via CSS -->
     <link rel="preload" as="image" href="app/images/info.svg">
@@ -377,8 +377,17 @@
         <div class="satellite satellite-1">🛸</div>
     </div>
 
+    <!-- DeSciOS Connection Loading Animation -->
+    <div class="descios-connection-loader" id="descios-loader">
+        <div class="descios-spinner">
+            <div class="descios-progress-ring"></div>
+        </div>
+        <div class="descios-loading-text">Launching DeSciOS</div>
+        <div class="descios-loading-subtext">Establishing connection...</div>
+    </div>
+
     <!-- DeSciOS Branding -->
-    <div class="descios-branding">DeSciOS v1.0</div>
+    <div class="descios-branding">DeSciOS v0.1</div>
     <div class="descios-version">Scientific Computing Platform</div>
  </body>
 </html>
@@ -531,5 +540,151 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Initialize effects after a short delay
     setTimeout(initDeSciEffects, 500);
+
+    // Test function - can be called from browser console
+    window.testLoader = function() {
+        console.log('Testing loader manually');
+        showConnectionLoader();
+        setTimeout(hideConnectionLoader, 5000);
+    };
+
+    // Connection Loading Animation Handler
+    let loaderStartTime = null;
+    
+    function showConnectionLoader() {
+        const loader = document.getElementById('descios-loader');
+        if (loader && !loader.classList.contains('active')) {
+            console.log('Showing connection loader');
+            loader.classList.add('active');
+            loaderStartTime = Date.now();
+        }
+    }
+
+    function hideConnectionLoader() {
+        const loader = document.getElementById('descios-loader');
+        if (loader && loader.classList.contains('active')) {
+            const minDisplayTime = 2000; // Minimum 2 seconds
+            const elapsedTime = loaderStartTime ? Date.now() - loaderStartTime : minDisplayTime;
+            const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
+            
+            console.log('Hiding connection loader in', remainingTime, 'ms');
+            setTimeout(() => {
+                loader.classList.remove('active');
+                console.log('Connection loader hidden');
+            }, remainingTime);
+        }
+    }
+
+    // Function to setup credential listeners when elements become available
+    function setupCredentialListeners() {
+        // Show loader ONLY when credentials are submitted (after password entry)
+        const credentialsForm = document.querySelector('#noVNC_credentials_dlg form');
+        const credentialsButton = document.getElementById('noVNC_credentials_button');
+        
+        if (credentialsForm && !credentialsForm.hasAttribute('data-listener-added')) {
+            credentialsForm.setAttribute('data-listener-added', 'true');
+            credentialsForm.addEventListener('submit', function(e) {
+                console.log('Password form submitted, showing loader');
+                showConnectionLoader();
+            });
+            console.log('Added form submit listener');
+        }
+
+        if (credentialsButton && !credentialsButton.hasAttribute('data-listener-added')) {
+            credentialsButton.setAttribute('data-listener-added', 'true');
+            credentialsButton.addEventListener('click', function(e) {
+                const passwordInput = document.getElementById('noVNC_password_input');
+                console.log('Send Credentials button clicked, password length:', passwordInput ? passwordInput.value.length : 'no input');
+                if (passwordInput && passwordInput.value.trim() !== '') {
+                    console.log('Password entered, showing loader');
+                    showConnectionLoader();
+                }
+            });
+            console.log('Added credentials button listener');
+        }
+    }
+
+    // Listen for Enter key on password field (global listener)
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const passwordInput = document.getElementById('noVNC_password_input');
+            if (passwordInput && passwordInput === document.activeElement && passwordInput.value.trim() !== '') {
+                console.log('Enter pressed on password field, showing loader');
+                showConnectionLoader();
+            }
+        }
+    });
+
+    // Set up observers to watch for credential dialog appearance
+    const credentialsDialogObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                const credentialsDialog = document.getElementById('noVNC_credentials_dlg');
+                if (credentialsDialog && credentialsDialog.offsetParent !== null) {
+                    console.log('Credentials dialog appeared, setting up listeners');
+                    setupCredentialListeners();
+                }
+            }
+        });
+    });
+
+    // Start observing the document for changes
+    credentialsDialogObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+    });
+
+    // Also try to set up listeners immediately in case elements are already there
+    setTimeout(setupCredentialListeners, 1000);
+
+    // Make sure we don't show loader on initial connect button click
+    const connectButton = document.getElementById('noVNC_connect_button');
+    if (connectButton) {
+        connectButton.addEventListener('click', function(e) {
+            console.log('Connect button clicked - NOT showing loader yet');
+        });
+    }
+
+    // Hide loader when connection is established (when noVNC_connected class is added)
+    const connectionObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                if (document.documentElement.classList.contains('noVNC_connected')) {
+                    setTimeout(hideConnectionLoader, 500); // Small delay for smooth transition
+                }
+            }
+        });
+    });
+
+    // Observe changes to the html element's class attribute
+    connectionObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+    });
+
+    // Also hide loader if connection fails (fallback)
+    setTimeout(function() {
+        const statusElement = document.getElementById('noVNC_status');
+        if (statusElement) {
+            const statusObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                        const statusText = statusElement.textContent;
+                        if (statusText && (statusText.includes('Failed') || statusText.includes('Error'))) {
+                            hideConnectionLoader();
+                        }
+                    }
+                });
+            });
+            
+            statusObserver.observe(statusElement, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        }
+    }, 1000);
 });
 </script>
