@@ -1319,9 +1319,9 @@ html.noVNC_connected .space-elements {
 }
 
 @keyframes rocket-fly-1 {
-  0% { transform: translateX(0) translateY(0) rotate(-45deg); }
-  50% { transform: translateX(50vw) translateY(-10vh) rotate(-45deg); }
-  100% { transform: translateX(110vw) translateY(-20vh) rotate(-45deg); }
+  0% { transform: translateX(0) translateY(0) rotate(15deg); }
+  50% { transform: translateX(50vw) translateY(-10vh) rotate(15deg); }
+  100% { transform: translateX(110vw) translateY(-20vh) rotate(15deg); }
 }
 
 @keyframes rocket-fly-2 {
