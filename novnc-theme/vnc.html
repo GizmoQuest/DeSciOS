@@ -48,8 +48,8 @@
     <link rel="apple-touch-icon" sizes="152x152" type="image/png" href="app/images/icons/novnc-152x152.png">
 
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="app/styles/descios-theme.css?v=4.0">
     <link rel="stylesheet" href="app/styles/base.css">
+    <link rel="stylesheet" href="app/styles/descios-theme.css?v=12.0&t=1737653600">
 
     <!-- Images that will later appear via CSS -->
     <link rel="preload" as="image" href="app/images/info.svg">
@@ -268,10 +268,58 @@
     <!-- Connect button -->
     <div class="noVNC_center">
         <div id="noVNC_connect_dlg">
-            <div class="noVNC_logo" translate="no"><span>DeSci</span>OS</div>
-            <div id="noVNC_connect_button"><div>
-                <img alt="" src="app/images/connect.svg"> Connect
-            </div></div>
+            <!-- DeSci Vision Header -->
+            <div class="descios-vision-header">
+                <div class="descios-particles"></div>
+                <h1 class="descios-main-title">DeSci<span class="descios-highlight">OS</span></h1>
+                <p class="descios-tagline">Decentralized Scientific Computing Platform</p>
+                <div class="descios-dna-animation"></div>
+            </div>
+            
+            <!-- Mission Statement -->
+            <div class="descios-mission">
+                <p class="descios-mission-text">
+                    🧬 <strong>Open Science</strong> • 🤖 <strong>AI-Powered</strong> • 🌐 <strong>Browser-Native</strong>
+                </p>
+                <p class="descios-subtitle">
+                    Breaking barriers in scientific collaboration and discovery
+                </p>
+            </div>
+            
+            <!-- Connect Button with Enhanced Styling -->
+            <div id="noVNC_connect_button" class="descios-enhanced-connect">
+                <div class="descios-connect-content">
+                    <div class="descios-connect-icon">🚀</div>
+                    <span class="descios-connect-text">Launch Scientific Desktop</span>
+                    <div class="descios-connect-subtext">Full Linux environment in your browser</div>
+                </div>
+            </div>
+            
+            <!-- Feature Highlights -->
+            <div class="descios-features">
+                <div class="descios-feature">
+                    <div class="descios-feature-icon">🔬</div>
+                    <div class="descios-feature-text">Research Tools</div>
+                </div>
+                <div class="descios-feature">
+                    <div class="descios-feature-icon">📊</div>
+                    <div class="descios-feature-text">Data Analysis</div>
+                </div>
+                <div class="descios-feature">
+                    <div class="descios-feature-icon">🧠</div>
+                    <div class="descios-feature-text">AI Assistant</div>
+                </div>
+                <div class="descios-feature">
+                    <div class="descios-feature-icon">🌐</div>
+                    <div class="descios-feature-text">Decentralized</div>
+                </div>
+            </div>
+            
+            <!-- Scientific Quote -->
+            <div class="descios-quote">
+                <p>"The best way to predict the future is to invent it."</p>
+                <cite>— Alan Kay</cite>
+            </div>
         </div>
     </div>
 
@@ -317,6 +365,18 @@
         <source src="app/sounds/bell.oga" type="audio/ogg">
         <source src="app/sounds/bell.mp3" type="audio/mpeg">
     </audio>
+    <!-- Space Elements -->
+    <div class="space-elements">
+        <div class="rocket rocket-1">🚀</div>
+        <div class="rocket rocket-2">🛸</div>
+        <div class="spaceship spaceship-1">🛰️</div>
+        <div class="spaceship spaceship-2">🌌</div>
+        <div class="planet planet-1">🪐</div>
+        <div class="planet planet-2">🌍</div>
+        <div class="comet comet-1">☄️</div>
+        <div class="satellite satellite-1">🛸</div>
+    </div>
+
     <!-- DeSciOS Branding -->
     <div class="descios-branding">DeSciOS v1.0</div>
     <div class="descios-version">Scientific Computing Platform</div>
@@ -341,18 +401,60 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         
         passwordInput.addEventListener("blur", function() {
+            this.style.backgroundColor = "#1C1C1C";
+            this.style.borderColor = "#4682B4";
+        });
+    }
 
     // Style settings panel inputs
     const settingsInputs = document.querySelectorAll("#noVNC_settings input, #noVNC_settings select");
     settingsInputs.forEach(function(input) {
+        if (input.type === "text" || input.type === "number" || input.type === "password" || input.tagName === "SELECT") {
+            input.style.backgroundColor = "#1C1C1C";
+            input.style.color = "#F5F5F5";
+            input.style.border = "2px solid #4682B4";
+            input.style.borderRadius = "5px";
+            input.style.padding = "6px 8px";
+            input.style.fontFamily = "monospace";
+        }
+    });
 
     // Force specific problematic selects
     const problemSelects = ["noVNC_setting_resize", "noVNC_setting_reconnect_delay", "noVNC_setting_logging"];
     problemSelects.forEach(function(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.backgroundColor = "#1C1C1C";
+            element.style.color = "#F5F5F5";
+            element.style.border = "2px solid #4682B4";
+            element.style.borderRadius = "5px";
+            element.style.padding = "6px 8px";
+        }
+    });
 
     // Force specific text input fields
     const problemInputs = ["noVNC_setting_repeaterID", "noVNC_setting_host", "noVNC_setting_port", "noVNC_setting_path"];
     problemInputs.forEach(function(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.backgroundColor = "#1C1C1C";
+            element.style.color = "#F5F5F5";
+            element.style.border = "2px solid #4682B4";
+            element.style.borderRadius = "5px";
+            element.style.padding = "6px 8px";
+            element.style.fontFamily = "monospace";
+            
+            element.addEventListener("focus", function() {
+                this.style.backgroundColor = "#2C2C2C";
+                this.style.borderColor = "#FFD700";
+            });
+            
+            element.addEventListener("blur", function() {
+                this.style.backgroundColor = "#1C1C1C";
+                this.style.borderColor = "#4682B4";
+            });
+        }
+    });
 
     // Mutation observer to catch dynamically styled elements
     const observer = new MutationObserver(function(mutations) {
@@ -379,48 +481,55 @@ document.addEventListener("DOMContentLoaded", function() {
             attributeFilter: ["style"]
         });
     }
-        const element = document.getElementById(id);
-        if (element) {
-            element.style.backgroundColor = "#1C1C1C";
-            element.style.color = "#F5F5F5";
-            element.style.border = "2px solid #4682B4";
-            element.style.borderRadius = "5px";
-            element.style.padding = "6px 8px";
-            element.style.fontFamily = "monospace";
-            
-            element.addEventListener("focus", function() {
-                this.style.backgroundColor = "#2C2C2C";
-                this.style.borderColor = "#FFD700";
-            });
-            
-            element.addEventListener("blur", function() {
-                this.style.backgroundColor = "#1C1C1C";
-                this.style.borderColor = "#4682B4";
-            });
+
+    // Enhanced DeSci login experience
+    function initDeSciEffects() {
+        // Typing effect for tagline
+        const tagline = document.querySelector('.descios-tagline');
+        if (tagline) {
+            const text = tagline.textContent;
+            tagline.textContent = '';
+            let i = 0;
+            const typeWriter = () => {
+                if (i < text.length) {
+                    tagline.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 100);
+                }
+            };
+            setTimeout(typeWriter, 1000);
         }
-    });
-        const element = document.getElementById(id);
-        if (element) {
-            element.style.backgroundColor = "#1C1C1C";
-            element.style.color = "#F5F5F5";
-            element.style.border = "2px solid #4682B4";
-            element.style.borderRadius = "5px";
-            element.style.padding = "6px 8px";
-            element.style.fontFamily = "monospace";
-        }
-    });
-        if (input.type === "text" || input.type === "number" || input.type === "password" || input.tagName === "SELECT") {
-            input.style.backgroundColor = "#1C1C1C";
-            input.style.color = "#F5F5F5";
-            input.style.border = "2px solid #4682B4";
-            input.style.borderRadius = "5px";
-            input.style.padding = "6px 8px";
-            input.style.fontFamily = "monospace";
-        }
-    });
-            this.style.backgroundColor = "#1C1C1C";
-            this.style.borderColor = "#4682B4";
+
+        // Feature icons animation on hover
+        const features = document.querySelectorAll('.descios-feature');
+        features.forEach((feature, index) => {
+            feature.style.animationDelay = `${index * 0.2}s`;
+            feature.classList.add('fade-in-up');
         });
+
+        // Connect button pulse enhancement
+        const connectBtn = document.getElementById('noVNC_connect_button');
+        if (connectBtn) {
+            connectBtn.addEventListener('mouseenter', () => {
+                connectBtn.style.animation = 'pulse 0.6s ease-in-out';
+            });
+            connectBtn.addEventListener('mouseleave', () => {
+                connectBtn.style.animation = 'pulse 2s infinite';
+            });
+        }
+
+        // Random particle movement
+        const particles = document.querySelector('.descios-particles');
+        if (particles) {
+            setInterval(() => {
+                const randomX = Math.random() * 10 - 5;
+                const randomY = Math.random() * 10 - 5;
+                particles.style.transform = `translate(${randomX}px, ${randomY}px)`;
+            }, 3000);
+        }
     }
+
+    // Initialize effects after a short delay
+    setTimeout(initDeSciEffects, 500);
 });
 </script>

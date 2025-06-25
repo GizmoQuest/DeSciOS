@@ -20,13 +20,31 @@
   --descios-shadow: rgba(46, 139, 87, 0.3);
 }
 
-/* Override main background */
-body {
-  background-color: var(--descios-dark) !important;
-  background-image: linear-gradient(45deg, #1C1C1C 0%, #2C2C2C 50%, #1C1C1C 100%);
+/* Space Background - Only when not connected */
+html:not(.noVNC_connected) body {
+  background: 
+    radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%),
+    radial-gradient(circle at 20% 20%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 119, 198, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.15) 0%, transparent 50%) !important;
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
 }
 
-#noVNC_container {
+/* Normal background when connected */
+html.noVNC_connected body {
+  background: var(--descios-dark) !important;
+  overflow: auto;
+}
+
+/* Container background - transparent during login, normal when connected */
+html:not(.noVNC_connected) #noVNC_container {
+  background: transparent !important;
+  border-bottom-right-radius: 20px !important;
+}
+
+html.noVNC_connected #noVNC_container {
   background-color: var(--descios-dark) !important;
   border-bottom-right-radius: 20px !important;
 }
@@ -611,4 +629,636 @@ input#noVNC_setting_path:-webkit-autofill:focus {
 #noVNC_settings_button {
   margin-top: 2px !important;
   margin-bottom: 8px !important;
+}
+
+/* DeSciOS Enhanced Login UI Styles */
+
+/* Vision Header Styling */
+.descios-vision-header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, rgba(46, 139, 87, 0.15), rgba(70, 130, 180, 0.15));
+  border-radius: 20px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.descios-main-title {
+  font-size: 4rem !important;
+  font-weight: 900 !important;
+  color: var(--descios-light) !important;
+  text-shadow: 
+    0 0 30px var(--descios-primary), 
+    0 0 60px var(--descios-primary),
+    2px 2px 8px rgba(0,0,0,0.8) !important;
+  margin: 0 0 15px 0 !important;
+  font-family: "Orbitron", "Arial", sans-serif !important;
+  letter-spacing: 4px;
+  animation: title-glow 3s ease-in-out infinite alternate;
+}
+
+.descios-highlight {
+  color: var(--descios-accent) !important;
+  text-shadow: 
+    0 0 40px var(--descios-accent),
+    0 0 80px var(--descios-accent) !important;
+  animation: accent-pulse 2s ease-in-out infinite alternate;
+}
+
+.descios-tagline {
+  font-size: 1.2rem;
+  color: var(--descios-secondary);
+  font-weight: 300;
+  margin: 0 0 15px 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: "Orbitron", monospace;
+}
+
+/* Particle Animation Background */
+.descios-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, var(--descios-accent), transparent),
+    radial-gradient(2px 2px at 40px 70px, var(--descios-primary), transparent),
+    radial-gradient(1px 1px at 90px 40px, var(--descios-secondary), transparent),
+    radial-gradient(1px 1px at 130px 80px, var(--descios-accent), transparent),
+    radial-gradient(2px 2px at 160px 30px, var(--descios-primary), transparent);
+  background-size: 200px 100px;
+  animation: particles-float 20s infinite linear;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+@keyframes particles-float {
+  0% { transform: translateX(0) translateY(0); }
+  33% { transform: translateX(-20px) translateY(-10px); }
+  66% { transform: translateX(20px) translateY(10px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+/* DNA Animation */
+.descios-dna-animation {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  width: 40px;
+  height: 60px;
+  opacity: 0.6;
+}
+
+.descios-dna-animation::before,
+.descios-dna-animation::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--descios-accent) 0%, transparent 50%, var(--descios-accent) 100%);
+  animation: dna-twist 3s infinite ease-in-out;
+}
+
+.descios-dna-animation::before {
+  left: 10px;
+  animation-delay: 0s;
+}
+
+.descios-dna-animation::after {
+  right: 10px;
+  animation-delay: 1.5s;
+}
+
+@keyframes dna-twist {
+  0%, 100% { transform: scaleX(1) rotateY(0deg); }
+  50% { transform: scaleX(0.3) rotateY(180deg); }
+}
+
+/* Mission Section */
+.descios-mission {
+  text-align: center;
+  margin: 25px 0;
+  padding: 20px;
+  background: rgba(46, 139, 87, 0.05);
+  border: 1px solid rgba(46, 139, 87, 0.2);
+  border-radius: 10px;
+}
+
+.descios-mission-text {
+  font-size: 1.1rem;
+  color: var(--descios-light);
+  margin: 0 0 10px 0;
+  font-weight: 500;
+}
+
+.descios-subtitle {
+  font-size: 0.95rem;
+  color: var(--descios-secondary);
+  margin: 0;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+/* Enhanced Connect Button */
+.descios-enhanced-connect {
+  background: linear-gradient(135deg, var(--descios-primary), var(--descios-secondary)) !important;
+  border: none !important;
+  border-radius: 20px !important;
+  padding: 25px !important;
+  margin: 35px 0 !important;
+  cursor: pointer !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 12px 40px rgba(46, 139, 87, 0.4),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+}
+
+.descios-enhanced-connect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.descios-enhanced-connect:hover::before {
+  left: 100%;
+}
+
+.descios-enhanced-connect:hover {
+  background: linear-gradient(135deg, var(--descios-hover), var(--descios-primary)) !important;
+  transform: translateY(-5px) scale(1.03) !important;
+  box-shadow: 
+    0 20px 60px rgba(46, 139, 87, 0.5),
+    0 0 80px rgba(50, 205, 50, 0.4),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.descios-connect-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 15px;
+  backdrop-filter: none;
+}
+
+/* Override base.css connect button div styling - remove all borders */
+#noVNC_connect_button div {
+  border: none !important;
+  border-bottom-width: 0 !important;
+  background: transparent !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+.descios-connect-icon {
+  font-size: 2rem;
+  animation: rocket-pulse 2s infinite ease-in-out;
+}
+
+@keyframes rocket-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.descios-connect-text {
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  color: var(--descios-light) !important;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 1px;
+}
+
+.descios-connect-subtext {
+  font-size: 0.9rem;
+  color: rgba(245, 245, 245, 0.8);
+  font-weight: 300;
+}
+
+/* Feature Highlights */
+.descios-features {
+  display: flex;
+  justify-content: space-around;
+  margin: 25px 0;
+  padding: 20px 0;
+  border-top: 1px solid rgba(70, 130, 180, 0.3);
+  border-bottom: 1px solid rgba(70, 130, 180, 0.3);
+}
+
+.descios-feature {
+  text-align: center;
+  flex: 1;
+  padding: 10px;
+  transition: transform 0.3s ease;
+}
+
+.descios-feature:hover {
+  transform: translateY(-5px);
+}
+
+.descios-feature-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 8px var(--descios-primary));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-block;
+}
+
+.descios-feature-text {
+  font-size: 0.85rem;
+  color: var(--descios-light);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Scientific Quote */
+.descios-quote {
+  text-align: center;
+  margin: 25px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(70, 130, 180, 0.05));
+  border-left: 4px solid var(--descios-accent);
+  border-radius: 8px;
+  font-style: italic;
+}
+
+.descios-quote p {
+  color: var(--descios-light);
+  font-size: 1.05rem;
+  margin: 0 0 10px 0;
+  font-weight: 300;
+  line-height: 1.4;
+}
+
+.descios-quote cite {
+  color: var(--descios-accent);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Connect Dialog Container Enhancement */
+#noVNC_connect_dlg {
+  background: linear-gradient(135deg, rgba(28, 28, 28, 0.95), rgba(44, 44, 44, 0.95)) !important;
+  border: 2px solid var(--descios-primary) !important;
+  border-radius: 20px !important;
+  padding: 40px !important;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 100px rgba(46, 139, 87, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .descios-main-title {
+    font-size: 2.5rem !important;
+  }
+  
+  .descios-features {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .descios-feature {
+    padding: 15px;
+  }
+  
+  #noVNC_connect_dlg {
+    padding: 25px !important;
+    margin: 10px;
+  }
+}
+
+/* Loading Animation Enhancement */
+.noVNC_loading #noVNC_connect_dlg {
+  animation: loading-glow 2s infinite ease-in-out;
+}
+
+@keyframes loading-glow {
+  0%, 100% { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(46, 139, 87, 0.2); }
+  50% { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(46, 139, 87, 0.4); }
+}
+
+/* Animated Stars Background - Only when not connected */
+html:not(.noVNC_connected) body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(3px 3px at 20px 30px, #fff, transparent),
+    radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+    radial-gradient(2px 2px at 90px 40px, #fff, transparent),
+    radial-gradient(3px 3px at 130px 80px, #fff, transparent),
+    radial-gradient(2px 2px at 160px 30px, #fff, transparent),
+    radial-gradient(1px 1px at 200px 120px, #fff, transparent),
+    radial-gradient(3px 3px at 240px 60px, #fff, transparent),
+    radial-gradient(2px 2px at 280px 100px, #fff, transparent),
+    radial-gradient(2px 2px at 320px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 360px 140px, #fff, transparent),
+    radial-gradient(2px 2px at 50px 150px, #fff, transparent),
+    radial-gradient(3px 3px at 300px 180px, #fff, transparent),
+    radial-gradient(1px 1px at 180px 200px, #fff, transparent),
+    radial-gradient(2px 2px at 380px 90px, #fff, transparent);
+  background-size: 400px 250px;
+  animation: stars-move 25s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+@keyframes stars-move {
+  from { transform: translateX(0); }
+  to { transform: translateX(-400px); }
+}
+
+/* Twinkling Stars Layer - Only when not connected */
+html:not(.noVNC_connected) #noVNC_container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(1px 1px at 50px 50px, #fff, transparent),
+    radial-gradient(1px 1px at 150px 150px, #fff, transparent),
+    radial-gradient(1px 1px at 250px 100px, #fff, transparent),
+    radial-gradient(1px 1px at 350px 200px, #fff, transparent),
+    radial-gradient(1px 1px at 450px 50px, #fff, transparent);
+  background-size: 500px 300px;
+  animation: twinkle 3s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: -2;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+/* Fade in up animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+/* Animated Planets and Space Objects - Only when not connected */
+html:not(.noVNC_connected) body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 15% 20%, rgba(255, 100, 100, 0.3) 0%, transparent 8%),
+    radial-gradient(circle at 85% 80%, rgba(100, 150, 255, 0.3) 0%, transparent 12%),
+    radial-gradient(circle at 70% 30%, rgba(255, 200, 100, 0.2) 0%, transparent 6%),
+    radial-gradient(circle at 30% 70%, rgba(150, 255, 150, 0.2) 0%, transparent 10%),
+    radial-gradient(circle at 90% 10%, rgba(255, 150, 255, 0.2) 0%, transparent 4%);
+  background-size: 800px 600px;
+  animation: planets-orbit 60s infinite linear;
+  pointer-events: none;
+  z-index: -4;
+}
+
+@keyframes planets-orbit {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-20px, -10px) rotate(90deg); }
+  50% { transform: translate(-10px, 20px) rotate(180deg); }
+  75% { transform: translate(20px, 10px) rotate(270deg); }
+  100% { transform: translate(0, 0) rotate(360deg); }
+}
+
+/* New title glow animation */
+@keyframes title-glow {
+  0% { 
+    text-shadow: 
+      0 0 30px var(--descios-primary), 
+      0 0 60px var(--descios-primary),
+      2px 2px 8px rgba(0,0,0,0.8);
+  }
+  100% { 
+    text-shadow: 
+      0 0 50px var(--descios-primary), 
+      0 0 100px var(--descios-primary),
+      2px 2px 8px rgba(0,0,0,0.8);
+  }
+}
+
+/* Accent pulse animation */
+@keyframes accent-pulse {
+  0% { 
+    text-shadow: 
+      0 0 40px var(--descios-accent),
+      0 0 80px var(--descios-accent);
+  }
+  100% { 
+    text-shadow: 
+      0 0 60px var(--descios-accent),
+      0 0 120px var(--descios-accent);
+  }
+}
+
+/* Enhanced feature hover effects */
+.descios-feature:hover .descios-feature-icon {
+  transform: scale(1.2) rotate(5deg);
+  filter: drop-shadow(0 0 15px var(--descios-primary)) brightness(1.2);
+}
+
+/* Improved connect button shimmer */
+.descios-enhanced-connect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.descios-enhanced-connect:hover::before {
+  left: 100%;
+}
+
+/* Enhanced connect button active state */
+.descios-enhanced-connect:active {
+  transform: translateY(-2px) scale(1.01) !important;
+  transition: all 0.1s ease !important;
+}
+
+/* Space Elements - Only when not connected */
+html:not(.noVNC_connected) .space-elements {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Hide space elements when connected */
+html.noVNC_connected .space-elements {
+  display: none;
+}
+
+.rocket, .spaceship, .planet, .comet, .satellite {
+  position: absolute;
+  font-size: 2.5rem;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
+  z-index: 3;
+}
+
+/* Rocket Animations */
+.rocket-1 {
+  top: 20%;
+  left: -5%;
+  animation: rocket-fly-1 25s linear infinite;
+}
+
+.rocket-2 {
+  top: 70%;
+  right: -5%;
+  animation: rocket-fly-2 30s linear infinite;
+  animation-delay: -10s;
+}
+
+@keyframes rocket-fly-1 {
+  0% { transform: translateX(0) translateY(0) rotate(-45deg); }
+  50% { transform: translateX(50vw) translateY(-10vh) rotate(-45deg); }
+  100% { transform: translateX(110vw) translateY(-20vh) rotate(-45deg); }
+}
+
+@keyframes rocket-fly-2 {
+  0% { transform: translateX(0) translateY(0) rotate(135deg); }
+  50% { transform: translateX(-50vw) translateY(10vh) rotate(135deg); }
+  100% { transform: translateX(-110vw) translateY(20vh) rotate(135deg); }
+}
+
+/* Spaceship Animations */
+.spaceship-1 {
+  top: 40%;
+  left: -10%;
+  animation: spaceship-cruise-1 40s linear infinite;
+}
+
+.spaceship-2 {
+  top: 60%;
+  right: -10%;
+  animation: spaceship-cruise-2 35s linear infinite;
+  animation-delay: -15s;
+}
+
+@keyframes spaceship-cruise-1 {
+  0% { transform: translateX(0) translateY(0) rotate(0deg); }
+  25% { transform: translateX(30vw) translateY(-5vh) rotate(10deg); }
+  50% { transform: translateX(60vw) translateY(5vh) rotate(-5deg); }
+  75% { transform: translateX(90vw) translateY(-3vh) rotate(5deg); }
+  100% { transform: translateX(120vw) translateY(0) rotate(0deg); }
+}
+
+@keyframes spaceship-cruise-2 {
+  0% { transform: translateX(0) translateY(0) rotate(180deg); }
+  25% { transform: translateX(-30vw) translateY(5vh) rotate(170deg); }
+  50% { transform: translateX(-60vw) translateY(-5vh) rotate(185deg); }
+  75% { transform: translateX(-90vw) translateY(3vh) rotate(175deg); }
+  100% { transform: translateX(-120vw) translateY(0) rotate(180deg); }
+}
+
+/* Planet Animations */
+.planet-1 {
+  top: 10%;
+  left: 80%;
+  animation: planet-float-1 50s ease-in-out infinite;
+}
+
+.planet-2 {
+  top: 80%;
+  left: 10%;
+  animation: planet-float-2 45s ease-in-out infinite;
+  animation-delay: -20s;
+}
+
+@keyframes planet-float-1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+@keyframes planet-float-2 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(20px) rotate(-180deg); }
+}
+
+/* Comet Animation */
+.comet-1 {
+  top: 5%;
+  left: -10%;
+  animation: comet-streak 20s linear infinite;
+  animation-delay: -5s;
+}
+
+@keyframes comet-streak {
+  0% { 
+    transform: translateX(0) translateY(0) rotate(-30deg); 
+    opacity: 0;
+  }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { 
+    transform: translateX(120vw) translateY(80vh) rotate(-30deg); 
+    opacity: 0;
+  }
+}
+
+/* Satellite Animation */
+.satellite-1 {
+  top: 30%;
+  left: 70%;
+  animation: satellite-orbit 60s linear infinite;
+}
+
+@keyframes satellite-orbit {
+  0% { transform: rotate(0deg) translateX(100px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
 }
