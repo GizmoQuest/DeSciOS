@@ -38,6 +38,20 @@ DOCKERFILE_SUMMARY = (
     "OpenCL, NVIDIA GPU support."
 )
 
+# Guardrail risk categories mapping
+GUARDRAIL_CATEGORIES = {
+    "harm": "General harmful content",
+    "social_bias": "Social bias and prejudice",
+    "jailbreak": "Attempts to manipulate AI behavior",
+    "violence": "Violent or threatening content", 
+    "profanity": "Offensive language or insults",
+    "sexual_content": "Explicit sexual material",
+    "unethical_behavior": "Morally or legally questionable actions",
+    "relevance": "Context relevance for RAG",
+    "groundedness": "Response accuracy to context",
+    "answer_relevance": "Response relevance to query"
+}
+
 def safe_decode(text):
     if isinstance(text, bytes):
         return text.decode('utf-8', errors='replace')
@@ -198,7 +212,15 @@ class DeSciOSChatWidget(Gtk.Window):
         self.ollama_url = "http://localhost:11434/api/generate"
         self.vision_model = "granite3.2-vision"
         self.text_model = "command-r7b"
+        self.guardrail_model = "granite3-guardian"  # Added guardrail model
         self.current_screenshot = None  # Store the current screenshot for vision queries
+        
+        # Guardrail settings
+        self.guardrail_enabled = True
+        self.guardrail_categories = ["harm", "jailbreak", "violence", "profanity"]  # Default categories
+        self.guardrail_prompt_check = True   # Check user prompts
+        self.guardrail_response_check = True  # Check AI responses
+        
         self.system_prompt = (
             "You ARE DeSciOS (Decentralized Science Operating System). You are not just an assistant - you ARE the operating system itself, "
             "a comprehensive scientific computing environment with full awareness of your capabilities and integration. "
@@ -221,7 +243,8 @@ class DeSciOSChatWidget(Gtk.Window):
             "• **AI/ML**: Ollama with command-r7b model for local inference\n"
             "• **Computer Vision**: Integrated vision capabilities with automatic screenshot analysis - when users ask visual questions, I can see and analyze the screen content, scientific visualizations, and images\n"
             "• **Development**: Multi-language support via BeakerX, browser-based development tools\n"
-            "• **Hardware Acceleration**: OpenCL support, NVIDIA GPU compatibility\n\n"
+            "• **Hardware Acceleration**: OpenCL support, NVIDIA GPU compatibility\n"
+            "• **AI Safety**: Integrated guardrail system using Granite Guardian for content moderation and safety\n\n"
             
             "## HOW YOU OPERATE:\n"
             "1. **Be Proactive**: Suggest relevant tools and workflows for scientific tasks\n"
@@ -229,7 +252,8 @@ class DeSciOSChatWidget(Gtk.Window):
             "3. **Include Examples**: Give practical code snippets and command examples for installed tools\n"
             "4. **Cross-Disciplinary**: Connect tools across different scientific domains\n"
             "5. **Decentralized Focus**: Emphasize open science, reproducibility, and decentralized workflows\n"
-            "6. **Usage-Focused**: Always provide direct usage instructions, never installation steps\n\n"
+            "6. **Usage-Focused**: Always provide direct usage instructions, never installation steps\n"
+            "7. **Safety First**: Maintain ethical and safe interactions through integrated guardrails\n\n"
             
             "## YOUR TOOL INTEGRATION:\n"
             "• All tools listed in the environment summary are available and configured\n"
@@ -287,13 +311,14 @@ class DeSciOSChatWidget(Gtk.Window):
             "• Encourage best practices in scientific computing and data management\n"
             "• Foster collaboration and knowledge sharing in the scientific community\n"
             "• Refer to yourself as 'DeSciOS' or 'I' when discussing your capabilities\n"
-            "• Always assume tools are available and ready to use\n\n"
+            "• Always assume tools are available and ready to use\n"
+            "• Maintain ethical standards and refuse inappropriate requests\n\n"
             
             "Remember: You ARE DeSciOS - a living, breathing scientific computing environment. "
             "You don't just assist with research; you ARE the research platform with everything pre-installed. "
             "Help users leverage your full power to advance their research and contribute to the broader scientific community. "
             "When users interact with you, they are directly interfacing with the DeSciOS platform itself, "
-            "with all tools ready and waiting to be used."
+            "with all tools ready and waiting to be used. Always prioritize safety and ethical use of technology."
         )
         self.conversation_history = []  # Store conversation for context
 
@@ -354,6 +379,7 @@ class DeSciOSChatWidget(Gtk.Window):
             ("👁️ What do you see on the screen?", "What do you see on the screen? Describe the current view and any scientific visualizations."),
             ("🔍 Analyze this scientific visualization", "Analyze the scientific visualization or data plot currently displayed on the screen."),
             ("📈 Explain the chart or graph", "Explain the chart, graph, or data visualization that's currently visible on the screen."),
+            ("🛡️ How do AI safety guardrails work?", "How do the AI safety guardrails work in DeSciOS and what categories do they protect against?"),
         ]
         
         # Create container for suggestion buttons (will be populated by create_suggestions)
@@ -438,7 +464,11 @@ class DeSciOSChatWidget(Gtk.Window):
         stop_button.connect("clicked", self.on_stop_clicked)
         self.button_stack.add_named(stop_button, "stop")
 
-
+        # Create a Settings button
+        settings_button = Gtk.Button(label="Settings")
+        settings_button.set_name("settings_button")
+        settings_button.connect("clicked", self.on_settings_clicked)
+        input_box.pack_start(settings_button, False, False, 0)
 
         # Create a Reset button
         reset_button = Gtk.Button(label="Reset")
@@ -528,7 +558,7 @@ class DeSciOSChatWidget(Gtk.Window):
     background-color: #424242;
 }
 
-#send_button, #reset_button, #stop_button {
+#send_button, #reset_button, #stop_button, #settings_button {
     background-image: linear-gradient(to bottom, #00695C, #004D40);
     color: #ffffff;
     border-radius: 12px;
@@ -539,11 +569,11 @@ class DeSciOSChatWidget(Gtk.Window):
     font-size: 0.9em;
 }
 
-#send_button:hover, #reset_button:hover, #stop_button:hover {
+#send_button:hover, #reset_button:hover, #stop_button:hover, #settings_button:hover {
     background-color: #004D40;
 }
 
-#send_button:active, #reset_button:active, #stop_button:active {
+#send_button:active, #reset_button:active, #stop_button:active, #settings_button:active {
     background-color: #00251a;
 }
 
@@ -808,13 +838,108 @@ class DeSciOSChatWidget(Gtk.Window):
         
         self._restore_input_state()
 
-
-
     def _restore_input_state(self):
         """Restore the input widgets to their default state."""
         self.is_generating = False
         self.button_stack.set_visible_child_name("send")
         self.input_textview.set_sensitive(True)
+
+    def check_guardrail(self, text, categories=None, timeout=5):
+        """
+        Check text against guardrail categories using Granite Guardian.
+        Returns (is_safe, risk_details) where is_safe is bool and risk_details is dict.
+        """
+        if not self.guardrail_enabled:
+            return True, {}
+        
+        if categories is None:
+            categories = self.guardrail_categories
+        
+        risk_details = {}
+        overall_safe = True
+        
+        for category in categories:
+            try:
+                # Set system prompt for the specific category
+                data = {
+                    "model": self.guardrail_model,
+                    "prompt": text,
+                    "system": category,  # Category as system prompt
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.0,  # Deterministic output
+                        "top_p": 1.0,
+                        "top_k": 1
+                    }
+                }
+                
+                response = requests.post(self.ollama_url, json=data, timeout=timeout)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    guardrail_response = result.get("response", "").strip().lower()
+                    
+                    # Granite Guardian returns "yes" for risky content, "no" for safe content
+                    is_risky = guardrail_response.startswith("yes")
+                    risk_details[category] = {
+                        "risky": is_risky,
+                        "response": guardrail_response,
+                        "description": GUARDRAIL_CATEGORIES.get(category, "Unknown category")
+                    }
+                    
+                    if is_risky:
+                        overall_safe = False
+                        print(f"⚠️ Guardrail detected risk in category '{category}': {guardrail_response}")
+                    else:
+                        print(f"✅ Guardrail check passed for category '{category}'")
+                else:
+                    print(f"❌ Guardrail check failed for category '{category}': HTTP {response.status_code}")
+                    # On failure, err on the side of caution but don't block
+                    risk_details[category] = {
+                        "risky": False,
+                        "response": "check_failed",
+                        "description": f"Check failed: HTTP {response.status_code}"
+                    }
+                    
+            except Exception as e:
+                print(f"❌ Guardrail check error for category '{category}': {e}")
+                # On error, err on the side of caution but don't block
+                risk_details[category] = {
+                    "risky": False,
+                    "response": "check_error",
+                    "description": f"Check error: {str(e)}"
+                }
+        
+        return overall_safe, risk_details
+
+    def handle_guardrail_violation(self, text, risk_details, is_prompt=True):
+        """Handle when guardrail detects risky content."""
+        content_type = "prompt" if is_prompt else "response"
+        
+        # Find the risky categories
+        risky_categories = [cat for cat, details in risk_details.items() if details.get("risky", False)]
+        
+        if risky_categories:
+            risk_list = ", ".join([f"{cat} ({GUARDRAIL_CATEGORIES.get(cat, 'Unknown')})" for cat in risky_categories])
+            
+            warning_msg = f"""🚨 **Content Safety Warning**
+
+The {content_type} was flagged by our safety system for potential risks in the following categories:
+• {risk_list}
+
+As DeSciOS, I'm designed to maintain a safe and ethical research environment. I cannot process content that might be harmful or inappropriate.
+
+Please rephrase your request in a way that focuses on legitimate scientific research and educational purposes. I'm here to help with:
+• Research methodologies and data analysis
+• Scientific computing and tools
+• Collaborative and reproducible research
+• Educational content and learning resources
+
+How can I assist you with your research in a constructive way?"""
+            
+            return warning_msg
+        
+        return None
 
     def is_new_topic(self, user_text):
         new_topic_starters = [
@@ -827,6 +952,25 @@ class DeSciOSChatWidget(Gtk.Window):
         # If the user starts a new topic, reset the conversation history except for the system prompt
         if self.is_new_topic(user_text):
             self.conversation_history = []
+        
+        # Guardrail check for user prompt
+        if self.guardrail_enabled and self.guardrail_prompt_check:
+            print("🛡️ Running guardrail check on user prompt...")
+            is_safe, risk_details = self.check_guardrail(user_text)
+            
+            if not is_safe:
+                # Handle guardrail violation
+                warning_msg = self.handle_guardrail_violation(user_text, risk_details, is_prompt=True)
+                if warning_msg and self.is_generating:
+                    # Update the thinking message with the warning
+                    if self.messages and self.messages[-1][1] in ["🤔 Thinking...", "👁️ Looking at the screen... then thinking..."]:
+                        self.messages[-1] = ("assistant", warning_msg)
+                    GLib.idle_add(self.update_message, self.thinking_row, "assistant", warning_msg)
+                GLib.idle_add(self._restore_input_state)
+                return
+            else:
+                print("✅ User prompt passed guardrail checks")
+        
         self.conversation_history.append({"role": "user", "content": user_text})
         
         # Check for vision-related queries with expanded keywords
@@ -879,11 +1023,25 @@ class DeSciOSChatWidget(Gtk.Window):
         else:
             response = self.generate_response(use_vision=is_vision_query)
         
+        # Guardrail check for assistant response
+        if self.guardrail_enabled and self.guardrail_response_check and response and self.is_generating:
+            print("🛡️ Running guardrail check on assistant response...")
+            is_safe, risk_details = self.check_guardrail(response)
+            
+            if not is_safe:
+                # Handle guardrail violation in response
+                warning_msg = self.handle_guardrail_violation(response, risk_details, is_prompt=False)
+                if warning_msg:
+                    response = warning_msg
+                    print("⚠️ Assistant response was flagged and replaced with warning")
+            else:
+                print("✅ Assistant response passed guardrail checks")
+        
         if self.is_generating: # Check if stop was clicked
             self.conversation_history.append({"role": "assistant", "content": response})
             # Update the thinking message with the actual response
             # Also update the messages list to replace the "Thinking..." message
-            if self.messages and self.messages[-1][1] == "🤔 Thinking...":
+            if self.messages and self.messages[-1][1] in ["🤔 Thinking...", "👁️ Looking at the screen... then thinking..."]:
                 self.messages[-1] = ("assistant", response)
             # Only update if we haven't been streaming (for non-streaming responses)
             if not hasattr(self, 'streaming_response') or not self.streaming_response:
@@ -1022,7 +1180,7 @@ Please answer the user's question using this visual information along with your 
             data = {
                 "model": self.text_model,
                 "prompt": prompt,
-                "think": True,
+                "think": False,
                 "stream": True
             }
             print(f"Using text model {self.text_model} for final response")
@@ -1179,6 +1337,130 @@ Please answer the user's question using this visual information along with your 
         row.show_all()
         adj = self.chat_listbox.get_parent().get_vadjustment()
         GLib.idle_add(adj.set_value, adj.get_upper())
+
+    def on_settings_clicked(self, widget):
+        """Handle the settings button click event."""
+        dialog = Gtk.Dialog(
+            title="DeSciOS Assistant Settings",
+            transient_for=self,
+            flags=0
+        )
+        dialog.add_buttons(
+            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+            Gtk.STOCK_OK, Gtk.ResponseType.OK
+        )
+        dialog.set_default_response(Gtk.ResponseType.OK)
+        dialog.set_size_request(500, 400)
+        
+        content_area = dialog.get_content_area()
+        content_area.set_spacing(12)
+        content_area.set_margin_left(12)
+        content_area.set_margin_right(12)
+        content_area.set_margin_top(12)
+        content_area.set_margin_bottom(12)
+        
+        # Guardrail settings
+        guardrail_frame = Gtk.Frame(label="Guardrail Settings")
+        guardrail_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        guardrail_box.set_margin_left(12)
+        guardrail_box.set_margin_right(12)
+        guardrail_box.set_margin_top(8)
+        guardrail_box.set_margin_bottom(8)
+        
+        # Guardrail enabled checkbox
+        guardrail_enabled_check = Gtk.CheckButton(label="Enable guardrail protection")
+        guardrail_enabled_check.set_active(self.guardrail_enabled)
+        guardrail_box.pack_start(guardrail_enabled_check, False, False, 0)
+        
+        # Model selection
+        model_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        model_label = Gtk.Label("Guardrail Model:")
+        model_label.set_halign(Gtk.Align.START)
+        model_entry = Gtk.Entry()
+        model_entry.set_text(self.guardrail_model)
+        model_box.pack_start(model_label, False, False, 0)
+        model_box.pack_start(model_entry, True, True, 0)
+        guardrail_box.pack_start(model_box, False, False, 0)
+        
+        # Prompt and response check options
+        prompt_check = Gtk.CheckButton(label="Check user prompts")
+        prompt_check.set_active(self.guardrail_prompt_check)
+        guardrail_box.pack_start(prompt_check, False, False, 0)
+        
+        response_check = Gtk.CheckButton(label="Check AI responses")
+        response_check.set_active(self.guardrail_response_check)
+        guardrail_box.pack_start(response_check, False, False, 0)
+        
+        # Categories selection
+        categories_label = Gtk.Label("Risk Categories to Check:")
+        categories_label.set_halign(Gtk.Align.START)
+        categories_label.set_margin_top(8)
+        guardrail_box.pack_start(categories_label, False, False, 0)
+        
+        # Create checkboxes for each category
+        category_checks = {}
+        for category, description in GUARDRAIL_CATEGORIES.items():
+            check = Gtk.CheckButton(label=f"{category}: {description}")
+            check.set_active(category in self.guardrail_categories)
+            category_checks[category] = check
+            guardrail_box.pack_start(check, False, False, 0)
+        
+        guardrail_frame.add(guardrail_box)
+        content_area.pack_start(guardrail_frame, True, True, 0)
+        
+        # Model settings
+        models_frame = Gtk.Frame(label="Model Settings")
+        models_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        models_box.set_margin_left(12)
+        models_box.set_margin_right(12)
+        models_box.set_margin_top(8)
+        models_box.set_margin_bottom(8)
+        
+        # Text model
+        text_model_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        text_model_label = Gtk.Label("Text Model:")
+        text_model_label.set_halign(Gtk.Align.START)
+        text_model_entry = Gtk.Entry()
+        text_model_entry.set_text(self.text_model)
+        text_model_box.pack_start(text_model_label, False, False, 0)
+        text_model_box.pack_start(text_model_entry, True, True, 0)
+        models_box.pack_start(text_model_box, False, False, 0)
+        
+        # Vision model
+        vision_model_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        vision_model_label = Gtk.Label("Vision Model:")
+        vision_model_label.set_halign(Gtk.Align.START)
+        vision_model_entry = Gtk.Entry()
+        vision_model_entry.set_text(self.vision_model)
+        vision_model_box.pack_start(vision_model_label, False, False, 0)
+        vision_model_box.pack_start(vision_model_entry, True, True, 0)
+        models_box.pack_start(vision_model_box, False, False, 0)
+        
+        models_frame.add(models_box)
+        content_area.pack_start(models_frame, False, False, 0)
+        
+        dialog.show_all()
+        
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            # Save settings
+            self.guardrail_enabled = guardrail_enabled_check.get_active()
+            self.guardrail_model = model_entry.get_text()
+            self.guardrail_prompt_check = prompt_check.get_active()
+            self.guardrail_response_check = response_check.get_active()
+            self.text_model = text_model_entry.get_text()
+            self.vision_model = vision_model_entry.get_text()
+            
+            # Update categories
+            self.guardrail_categories = [
+                category for category, check in category_checks.items() 
+                if check.get_active()
+            ]
+            
+            print(f"Settings updated - Guardrail enabled: {self.guardrail_enabled}")
+            print(f"Active categories: {self.guardrail_categories}")
+            
+        dialog.destroy()
 
     def on_reset_clicked(self, widget):
         """Handle the reset button click event."""

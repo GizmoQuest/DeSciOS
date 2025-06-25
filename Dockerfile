@@ -67,7 +67,7 @@ BUG_REPORT_URL="https://github.com/GizmoQuest/DeSciOS/issues"' > /etc/os-release
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # Pull the command-r7b model
-RUN ollama serve & sleep 5 && ollama pull command-r7b && ollama pull granite3.2-vision
+RUN ollama serve & sleep 5 && ollama pull granite3-guardian && ollama pull command-r7b && ollama pull granite3.2-vision
 
 # Create user and set password
 RUN useradd -ms /bin/bash $USER && echo "$USER:$PASSWORD" | chpasswd && adduser $USER sudo
