@@ -913,7 +913,7 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
                                    relief='solid', borderwidth=1,
                                    font=('TkDefaultFont', 13))  # 11 * 1.2 = 13
         self.ollama_models.pack(fill='x', padx=15, pady=(0, 15))
-        self.ollama_models.insert('1.0', 'deepseek-r1:8b\nminicpm-v:8b')
+        self.ollama_models.insert('1.0', 'command-r7b\ngranite3.2-vision')
         self.ollama_models.bind('<KeyRelease>', lambda e: self.update_config_status())
         
         # User settings
@@ -1104,7 +1104,7 @@ docker start descios
         )
         
         # Check if default models and user settings
-        default_models = self.ollama_models.get('1.0', tk.END).strip() == 'deepseek-r1:8b\nminicpm-v:8b'
+        default_models = self.ollama_models.get('1.0', tk.END).strip() == 'command-r7b\ngranite3.2-vision'
         default_user = self.username_var.get() == 'deScier'
         default_password = self.password_var.get() == 'vncpassword'
         

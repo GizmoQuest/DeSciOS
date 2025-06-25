@@ -196,8 +196,8 @@ class DeSciOSChatWidget(Gtk.Window):
         self.connect("button-press-event", self.on_window_button_press)
         self.messages = []  # Store (sender, message) tuples for re-rendering
         self.ollama_url = "http://localhost:11434/api/generate"
-        self.vision_model = "minicpm-v:8b"
-        self.text_model = "deepseek-r1:8b"
+        self.vision_model = "granite3.2-vision"
+        self.text_model = "command-r7b"
         self.current_screenshot = None  # Store the current screenshot for vision queries
         self.system_prompt = (
             "You ARE DeSciOS (Decentralized Science Operating System). You are not just an assistant - you ARE the operating system itself, "
@@ -218,7 +218,7 @@ class DeSciOSChatWidget(Gtk.Window):
             "• **Data Visualization**: Fiji (ImageJ), QGIS for geospatial analysis, GRASS GIS\n"
             "• **Molecular Modeling**: Web-based NGL Viewer for computational chemistry\n"
             "• **Decentralized Tools**: IPFS Desktop, Syncthing, EtherCalc, Remix IDE, Nault wallet(nault.cc)\n"
-            "• **AI/ML**: Ollama with DeepSeek-R1:8B model for local inference\n"
+            "• **AI/ML**: Ollama with command-r7b model for local inference\n"
             "• **Computer Vision**: Integrated vision capabilities with automatic screenshot analysis - when users ask visual questions, I can see and analyze the screen content, scientific visualizations, and images\n"
             "• **Development**: Multi-language support via BeakerX, browser-based development tools\n"
             "• **Hardware Acceleration**: OpenCL support, NVIDIA GPU compatibility\n\n"

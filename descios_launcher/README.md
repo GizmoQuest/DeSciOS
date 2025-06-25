@@ -48,7 +48,7 @@ python3 descios_launcher/main.py
    - Configure Ollama AI models (one per line)
    - Set username and VNC password
    - Enable/disable GPU support for deployment
-   - Default models: deepseek-r1:8b, minicpm-v:8b
+   - Default models: command-r7b, granite3.2-vision
 
 4. **Build & Deploy Tab**
    - Set custom Docker image tag
