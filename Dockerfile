@@ -193,6 +193,14 @@ RUN cd /opt/descios_assistant && \
     cp descios-assistant.desktop /usr/share/applications/ && \
     chown -R $USER:$USER /opt/descios_assistant
 
+# Install Talk to K Assistant
+COPY talk_to_k /opt/talk_to_k
+RUN cd /opt/talk_to_k && \
+    /usr/bin/python3 -m pip install --break-system-packages -r requirements.txt && \
+    chmod +x main.py && \
+    cp talk-to-k.desktop /usr/share/applications/ && \
+    chown -R $USER:$USER /opt/talk_to_k
+
 # Install DeSci Assistant font
 RUN apt-get update && apt-get install -y wget fontconfig && \
     mkdir -p /usr/share/fonts/truetype/orbitron && \

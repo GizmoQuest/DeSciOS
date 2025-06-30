@@ -14,8 +14,10 @@
       <value type="int" value="3"/> <!-- Separator (stretch) -->
       <value type="int" value="4"/> <!-- Notification Area -->
       <value type="int" value="6"/> <!-- Separator (non-expand) -->
-      <value type="int" value="7"/> <!-- DeSciOS Assistant Launcher -->
+      <value type="int" value="9"/> <!-- Talk to K Launcher -->
       <value type="int" value="8"/> <!-- Separator (non-expand) -->
+      <value type="int" value="7"/> <!-- DeSciOS Assistant Launcher -->
+      <value type="int" value="10"/> <!-- Separator (non-expand) -->
       <value type="int" value="5"/> <!-- Clock -->
     </property>
   </property>
@@ -44,6 +46,17 @@
       <property name="button-title" type="string" value="DeSciOS Assistant"/>
     </property>
     <property name="plugin-8" type="string" value="separator">
+      <property name="expand" type="bool" value="false"/>
+    </property>
+    <property name="plugin-9" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="talk-to-k.desktop"/>
+      </property>
+      <property name="show-label" type="bool" value="true"/>
+      <property name="names-visible" type="bool" value="true"/>
+      <property name="button-title" type="string" value="Talk to K"/>
+    </property>
+    <property name="plugin-10" type="string" value="separator">
       <property name="expand" type="bool" value="false"/>
     </property>
   </property>

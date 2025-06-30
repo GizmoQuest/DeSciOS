@@ -1176,11 +1176,11 @@ Please answer the user's question using this visual information along with your 
                 else:
                     print("Vision description failed, proceeding with text-only")
             
-            # Always use text model for final response (with thinking capability)
+            # Always use text model for final response
             data = {
                 "model": self.text_model,
                 "prompt": prompt,
-                "think": False,
+                "think": False, # Set this to true if the model supports thinking on Ollama
                 "stream": True
             }
             print(f"Using text model {self.text_model} for final response")

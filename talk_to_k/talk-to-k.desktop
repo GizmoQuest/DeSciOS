@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Talk to K
+Comment=Dialogue with Krishnamurti on consciousness and freedom
+Exec=/usr/bin/python3 /opt/talk_to_k/main.py
+Icon=applications-education
+Terminal=false
+Type=Application
+Categories=Education
+StartupNotify=true
+X-GNOME-UsesNotifications=true 
