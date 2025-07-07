@@ -184,9 +184,17 @@ RUN apt update && apt install -y qgis qgis-plugin-grass grass && \\
                 "enabled": True
             },
             "ipfs": {
-                "name": "IPFS Desktop",
-                "description": "Decentralized file system GUI",
-                "dockerfile_section": '''# Install IPFS Desktop (GUI)
+                "name": "IPFS CLI & Desktop",
+                "description": "Decentralized file system CLI and GUI",
+                "dockerfile_section": '''# Install IPFS CLI
+RUN wget https://dist.ipfs.tech/kubo/v0.24.0/kubo_v0.24.0_linux-amd64.tar.gz && \\
+    tar -xzf kubo_v0.24.0_linux-amd64.tar.gz && \\
+    cd kubo && \\
+    bash install.sh && \\
+    cd .. && \\
+    rm -rf kubo kubo_v0.24.0_linux-amd64.tar.gz
+
+# Install IPFS Desktop (GUI)
 RUN wget https://github.com/ipfs/ipfs-desktop/releases/download/v0.30.2/ipfs-desktop-0.30.2-linux-amd64.deb && \\
     apt install -y ./ipfs-desktop-0.30.2-linux-amd64.deb && \\
     rm ipfs-desktop-0.30.2-linux-amd64.deb''',
