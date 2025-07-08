@@ -183,23 +183,7 @@ RUN apt update && apt install -y qgis qgis-plugin-grass grass && \\
     update-desktop-database /usr/share/applications''',
                 "enabled": True
             },
-            "ipfs": {
-                "name": "IPFS CLI & Desktop",
-                "description": "Decentralized file system CLI and GUI",
-                "dockerfile_section": '''# Install IPFS CLI
-RUN wget https://dist.ipfs.tech/kubo/v0.24.0/kubo_v0.24.0_linux-amd64.tar.gz && \\
-    tar -xzf kubo_v0.24.0_linux-amd64.tar.gz && \\
-    cd kubo && \\
-    bash install.sh && \\
-    cd .. && \\
-    rm -rf kubo kubo_v0.24.0_linux-amd64.tar.gz
 
-# Install IPFS Desktop (GUI)
-RUN wget https://github.com/ipfs/ipfs-desktop/releases/download/v0.30.2/ipfs-desktop-0.30.2-linux-amd64.deb && \\
-    apt install -y ./ipfs-desktop-0.30.2-linux-amd64.deb && \\
-    rm ipfs-desktop-0.30.2-linux-amd64.deb''',
-                "enabled": True
-            },
             "syncthing": {
                 "name": "Syncthing",
                 "description": "Continuous file synchronization",
@@ -806,7 +790,8 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
             "✅ DeSciOS Assistant",
             "✅ Talk to K (Krishnamurti dialogue)",
             "✅ DeSciOS Assistant Font", 
-            "✅ Python3-pip (System Python package manager)"
+            "✅ Python3-pip (System Python package manager)",
+            "✅ IPFS CLI & Desktop (Decentralized file system)"
         ]
         
         for item in mandatory_items:
@@ -1080,12 +1065,21 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
         
         basic_cmd = f"docker run -p 6080:6080 {gpu_flag}{image_tag}"
         advanced_cmd = f"docker run -d -p 6080:6080 -p 5901:5901 {gpu_flag}--name descios {image_tag}"
+        ipfs_cmd = f"docker run -d -p 6080:6080 -p 5901:5901 -p 4001:4001 -p 4001:4001/udp -p 5001:5001 -p 8080:8080 -p 9090:9090 {gpu_flag}--name descios {image_tag}"
         
-        command_text = f"""# Basic command (web access via http://localhost:6080):
-{basic_cmd}
+        command_text = f"""# MAIN COMMAND (used by Deploy! button):
+{ipfs_cmd}
+
+# Basic command (web access via http://localhost:6080):
+docker run -p 6080:6080 {image_tag}
 
 # Advanced command (background mode with VNC):
-{advanced_cmd}
+docker run -d -p 6080:6080 -p 5901:5901 {gpu_flag}--name descios {image_tag}
+
+# IPFS Access URLs:
+# - IPFS Gateway: http://localhost:8080
+# - IPFS API: http://localhost:5001
+# - IPFS Web UI: http://localhost:5001/webui
 
 # To stop the container:
 docker stop descios
@@ -1277,7 +1271,33 @@ RUN cd /opt/talk_to_k && \\
 RUN apt-get update && apt-get install -y wget fontconfig && \\
     mkdir -p /usr/share/fonts/truetype/orbitron && \\
     wget -O /usr/share/fonts/truetype/orbitron/Orbitron.ttf https://github.com/google/fonts/raw/main/ofl/orbitron/Orbitron%5Bwght%5D.ttf && \\
-    fc-cache -f -v''')
+    fc-cache -f -v
+
+# Install IPFS CLI & Desktop (Mandatory)
+RUN wget https://dist.ipfs.tech/kubo/v0.24.0/kubo_v0.24.0_linux-amd64.tar.gz && \\
+    tar -xzf kubo_v0.24.0_linux-amd64.tar.gz && \\
+    cd kubo && \\
+    bash install.sh && \\
+    cd .. && \\
+    rm -rf kubo kubo_v0.24.0_linux-amd64.tar.gz
+
+# Install IPFS Desktop (GUI)
+RUN wget https://github.com/ipfs/ipfs-desktop/releases/download/v0.30.2/ipfs-desktop-0.30.2-linux-amd64.deb && \\
+    apt install -y ./ipfs-desktop-0.30.2-linux-amd64.deb && \\
+    rm ipfs-desktop-0.30.2-linux-amd64.deb
+
+# Configure IPFS for automatic startup
+RUN mkdir -p /home/$USER/.ipfs && \\
+    chown -R $USER:$USER /home/$USER/.ipfs && \\
+    echo 'export IPFS_PATH=/home/deScier/.ipfs' >> /home/$USER/.bashrc && \\
+    echo 'export IPFS_PATH=/home/deScier/.ipfs' >> /root/.bashrc
+
+# Copy IPFS status checker script
+COPY check_ipfs.sh /usr/local/bin/check_ipfs.sh
+RUN chmod +x /usr/local/bin/check_ipfs.sh
+
+# Add IPFS status checker desktop entry
+COPY ipfs-status.desktop /usr/share/applications/ipfs-status.desktop''')
             
             # Add the rest of the Dockerfile (OpenCL, user setup, etc.)
             # Find where the end section starts
@@ -1433,22 +1453,29 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
             remove_cmd = ['docker', 'rm', 'descios']
             subprocess.run(remove_cmd, capture_output=True)
             
-            # Build the docker run command
+            # Build the docker run command with IPFS ports
             if gpu_enabled:
                 docker_cmd = [
                     'docker', 'run', '-d', '--gpus', 'all', 
-                    '-p', '6080:6080', '--name', 'descios', image_tag
+                    '-p', '6080:6080', '-p', '5901:5901',
+                    '-p', '4001:4001', '-p', '4001:4001/udp',
+                    '-p', '5001:5001', '-p', '8080:8080', '-p', '9090:9090',
+                    '--name', 'descios', image_tag
                 ]
-                self.log_message("🚀 Deploying with GPU support...")
+                self.log_message("🚀 Deploying with GPU support and IPFS ports...")
             else:
                 docker_cmd = [
                     'docker', 'run', '-d', 
-                    '-p', '6080:6080', '--name', 'descios', image_tag
+                    '-p', '6080:6080', '-p', '5901:5901',
+                    '-p', '4001:4001', '-p', '4001:4001/udp',
+                    '-p', '5001:5001', '-p', '8080:8080', '-p', '9090:9090',
+                    '--name', 'descios', image_tag
                 ]
-                self.log_message("🚀 Deploying without GPU support...")
+                self.log_message("🚀 Deploying with IPFS ports...")
             
             # Run the container
-            self.log_message(f"Running: {' '.join(docker_cmd)}")
+            self.log_message(f"\n🚀 [Deploy] Running this command:")
+            self.log_message(' '.join(docker_cmd))
             result = subprocess.run(docker_cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
@@ -1480,6 +1507,9 @@ RUN apt-get update && apt-get install -y wget fontconfig && \\
                 threading.Thread(target=open_browser, daemon=True).start()
                 
                 self.log_message(f"🎉 DeSciOS is now running at: http://localhost:6080/vnc.html")
+                self.log_message("🌐 IPFS Gateway: http://localhost:8080")
+                self.log_message("🔧 IPFS API: http://localhost:5001")
+                self.log_message("📁 IPFS Web UI: http://localhost:5001/webui")
                 self.log_message("💡 To stop: docker stop descios")
                 
                 # Show info about custom apps if any

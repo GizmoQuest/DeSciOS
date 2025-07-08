@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=IPFS Status Checker
+Comment=Check IPFS daemon status and node information
+Exec=xterm -e "check_ipfs.sh; echo 'Press Enter to close...'; read"
+Icon=applications-internet
+Type=Application
+Categories=Network;System;
+Terminal=false 

@@ -6,6 +6,19 @@ if ! grep -q "DeSciOS" /etc/hosts; then
     echo "127.0.0.1 DeSciOS" >> /etc/hosts
 fi
 
+# Initialize IPFS for deScier user
+echo "Initializing IPFS..."
+su - deScier -c 'ipfs init --profile=server' || echo "IPFS already initialized or failed to initialize"
+
+# Start IPFS daemon in background
+echo "Starting IPFS daemon..."
+su - deScier -c 'ipfs daemon --enable-gc --routing=dht' &
+
+# Wait a moment for IPFS to start and check status
+sleep 3
+echo "Checking IPFS status..."
+su - deScier -c 'ipfs id' || echo "IPFS still starting up..."
+
 # Start supervisord
 /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
 

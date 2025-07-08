@@ -157,6 +157,19 @@ RUN wget https://github.com/ipfs/ipfs-desktop/releases/download/v0.30.2/ipfs-des
     apt install -y ./ipfs-desktop-0.30.2-linux-amd64.deb && \
     rm ipfs-desktop-0.30.2-linux-amd64.deb
 
+# Configure IPFS for automatic startup
+RUN mkdir -p /home/$USER/.ipfs && \
+    chown -R $USER:$USER /home/$USER/.ipfs && \
+    echo 'export IPFS_PATH=/home/deScier/.ipfs' >> /home/$USER/.bashrc && \
+    echo 'export IPFS_PATH=/home/deScier/.ipfs' >> /root/.bashrc
+
+# Copy IPFS status checker script
+COPY check_ipfs.sh /usr/local/bin/check_ipfs.sh
+RUN chmod +x /usr/local/bin/check_ipfs.sh
+
+# Add IPFS status checker desktop entry
+COPY ipfs-status.desktop /usr/share/applications/ipfs-status.desktop
+
 # Syncthing (GUI)
 RUN apt update && apt install -y syncthing
 
@@ -252,8 +265,19 @@ COPY os.svg /usr/share/desktop-base/active-theme/wallpaper/contents/images/1920x
 # Set clean default XFCE panel layout (no power manager plugin)
 COPY xfce4-panel.xml /etc/xdg/xfce4/panel/default.xml
 
-# Expose ports for noVNC
+# Expose ports for noVNC and IPFS
 EXPOSE 6080
+
+# Expose IPFS swarm port
+EXPOSE 4001/tcp
+# Expose IPFS swarm port (UDP)
+EXPOSE 4001/udp
+# Expose IPFS API port
+EXPOSE 5001/tcp
+# Expose IPFS Gateway port
+EXPOSE 8080/tcp
+# Expose IPFS Web UI port
+EXPOSE 9090/tcp
 
 # Apply DeSciOS noVNC Theme
 COPY novnc-theme/descios-theme.css /usr/share/novnc/app/styles/
