@@ -10,6 +10,11 @@ fi
 echo "Initializing IPFS..."
 su - deScier -c 'ipfs init --profile=server' || echo "IPFS already initialized or failed to initialize"
 
+# Configure IPFS to bind to all interfaces for external access
+echo "Configuring IPFS for external access..."
+su - deScier -c 'ipfs config Addresses.API "/ip4/0.0.0.0/tcp/5001"'
+su - deScier -c 'ipfs config Addresses.Gateway "/ip4/0.0.0.0/tcp/8080"'
+
 # Start IPFS daemon in background
 echo "Starting IPFS daemon..."
 su - deScier -c 'ipfs daemon --enable-gc --routing=dht' &
