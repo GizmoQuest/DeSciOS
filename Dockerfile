@@ -173,6 +173,9 @@ COPY ipfs-status.desktop /usr/share/applications/ipfs-status.desktop
 # Syncthing (GUI)
 RUN apt update && apt install -y syncthing
 
+# Install Node.js and npm for Academic Platform
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt install -y nodejs
 
 # EtherCalc (via Browser)
 RUN echo '[Desktop Entry]\nName=EtherCalc\nExec=firefox https://calc.domainepublic.net\nIcon=applications-office\nType=Application\nCategories=Office;' \
@@ -221,6 +224,20 @@ RUN cd /opt/talk_to_k && \
     chmod +x main.py && \
     cp talk-to-k.desktop /usr/share/applications/ && \
     chown -R $USER:$USER /opt/talk_to_k
+
+# Install DeSciOS Academic Platform
+COPY node /home/$USER/DeSciOS/node
+RUN chown -R $USER:$USER /home/$USER/DeSciOS && \
+    mkdir -p /home/$USER/.academic/uploads /home/$USER/.academic/logs && \
+    chown -R $USER:$USER /home/$USER/.academic && \
+    cd /home/$USER/DeSciOS/node && \
+    npm install && \
+    cd frontend && \
+    npm install && \
+    npm run build && \
+    chown -R $USER:$USER /home/$USER/DeSciOS && \
+    echo '[Desktop Entry]\nName=Academic Platform\nExec=firefox http://localhost:8000\nIcon=applications-science\nType=Application\nCategories=Education;' \
+    > /usr/share/applications/academic-platform.desktop
 
 # Install DeSci Assistant font
 RUN apt-get update && apt-get install -y wget fontconfig && \
@@ -278,6 +295,9 @@ EXPOSE 5001/tcp
 EXPOSE 8080/tcp
 # Expose IPFS Web UI port
 EXPOSE 9090/tcp
+
+# Expose Academic Platform port
+EXPOSE 8000/tcp
 
 # Apply DeSciOS noVNC Theme
 COPY novnc-theme/descios-theme.css /usr/share/novnc/app/styles/
