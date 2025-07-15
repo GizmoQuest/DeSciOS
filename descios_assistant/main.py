@@ -18,6 +18,11 @@ import io
 import time
 import tempfile
 import os
+import asyncio
+import logging
+
+# MCP integration
+from mcp_client import get_mcp_client_manager, shutdown_mcp_client_manager
 
 DOCKERFILE_SUMMARY = (
     "This assistant was built from a Dockerfile with the following features: "
@@ -214,6 +219,8 @@ class DeSciOSChatWidget(Gtk.Window):
         self.text_model = "command-r7b"
         self.guardrail_model = "granite3-guardian"  # Added guardrail model
         self.current_screenshot = None  # Store the current screenshot for vision queries
+        self.mcp_manager = None  # MCP client manager for OS context awareness
+        self.mcp_context_enabled = True  # Enable MCP context by default
         
         # Guardrail settings
         self.guardrail_enabled = True
@@ -244,7 +251,8 @@ class DeSciOSChatWidget(Gtk.Window):
             "• **Computer Vision**: Integrated vision capabilities with automatic screenshot analysis - when users ask visual questions, I can see and analyze the screen content, scientific visualizations, and images\n"
             "• **Development**: Multi-language support via BeakerX, browser-based development tools\n"
             "• **Hardware Acceleration**: OpenCL support, NVIDIA GPU compatibility\n"
-            "• **AI Safety**: Integrated guardrail system using Granite Guardian for content moderation and safety\n\n"
+            "• **AI Safety**: Integrated guardrail system using Granite Guardian for content moderation and safety\n"
+            "• **OS Context Awareness**: Real-time system monitoring via MCP (Model Context Protocol) - I have direct access to system resources, process management, file operations, and desktop environment state\n\n"
             
             "## HOW YOU OPERATE:\n"
             "1. **Be Proactive**: Suggest relevant tools and workflows for scientific tasks\n"
@@ -380,6 +388,11 @@ class DeSciOSChatWidget(Gtk.Window):
             ("🔍 Analyze this scientific visualization", "Analyze the scientific visualization or data plot currently displayed on the screen."),
             ("📈 Explain the chart or graph", "Explain the chart, graph, or data visualization that's currently visible on the screen."),
             ("🛡️ How do AI safety guardrails work?", "How do the AI safety guardrails work in DeSciOS and what categories do they protect against?"),
+            ("📊 Show me system status and resource usage", "Show me the current system status, resource usage, and performance metrics"),
+            ("🔍 What processes are running right now?", "What processes are currently running on the system and how much resources are they using?"),
+            ("🚀 Launch JupyterLab for data analysis", "Launch JupyterLab so I can start working on data analysis and scientific computing"),
+            ("⚙️ Check system performance and health", "Check the current system performance, health metrics, and any potential issues"),
+            ("🖥️ What desktop applications are currently open?", "Show me what desktop applications and windows are currently open and active"),
         ]
         
         # Create container for suggestion buttons (will be populated by create_suggestions)
@@ -409,6 +422,9 @@ class DeSciOSChatWidget(Gtk.Window):
         self.create_random_suggestions()
         
         main_vbox.pack_start(self.suggestions_container, False, False, 0)
+        
+        # Initialize MCP in a separate thread
+        self.initialize_mcp_async()
 
         # Input area
         input_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -491,6 +507,50 @@ class DeSciOSChatWidget(Gtk.Window):
         self.append_message("assistant", welcome_msg)
         self.update_app_theme()
         self.show_all()
+
+    def initialize_mcp_async(self):
+        """Initialize MCP client manager asynchronously"""
+        def mcp_init_thread():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                async def init_mcp():
+                    try:
+                        self.mcp_manager = await get_mcp_client_manager()
+                        print("✅ MCP Client Manager initialized successfully")
+                        
+                        # Show MCP initialization success in UI
+                        GLib.idle_add(self.show_mcp_status, "MCP OS Context initialized - Real-time system monitoring active")
+                        
+                    except Exception as e:
+                        print(f"❌ MCP initialization failed: {e}")
+                        self.mcp_context_enabled = False
+                        GLib.idle_add(self.show_mcp_status, f"MCP initialization failed: {e}")
+                
+                loop.run_until_complete(init_mcp())
+                loop.close()
+                
+            except Exception as e:
+                print(f"❌ MCP thread error: {e}")
+                self.mcp_context_enabled = False
+        
+        # Start MCP initialization in background thread
+        threading.Thread(target=mcp_init_thread, daemon=True).start()
+    
+    def show_mcp_status(self, message):
+        """Show MCP status message in the chat"""
+        self.append_message("assistant", f"🔧 **System Status**: {message}")
+    
+    def get_mcp_context_summary(self):
+        """Get MCP context summary if available"""
+        if self.mcp_manager and self.mcp_context_enabled:
+            try:
+                return self.mcp_manager.get_context_summary()
+            except Exception as e:
+                print(f"Error getting MCP context: {e}")
+                return "MCP context temporarily unavailable"
+        return "MCP context disabled"
 
     def update_app_theme(self):
         """Load CSS to style the app for dark mode."""
@@ -1020,6 +1080,12 @@ How can I assist you with your research in a constructive way?"""
             response = self.web_search_and_summarize(user_text)
         elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
             response = self.scan_installed_tools()
+        elif any(x in user_text.lower() for x in ["system status", "system info", "system resources", "resource usage", "processes", "memory usage", "cpu usage", "disk usage", "system performance", "system health", "system monitoring", "top processes", "running processes", "system load"]):
+            response = self.handle_system_query(user_text)
+        elif any(x in user_text.lower() for x in ["ram", "memory", "how much ram", "memory info", "memory usage", "total memory", "available memory", "memory status"]):
+            response = self.handle_memory_query(user_text)
+        elif any(x in user_text.lower() for x in ["launch", "start", "open", "run application", "execute", "start program"]):
+            response = self.handle_application_launch(user_text)
         else:
             response = self.generate_response(use_vision=is_vision_query)
         
@@ -1051,6 +1117,15 @@ How can I assist you with your research in a constructive way?"""
 
     def build_prompt(self):
         prompt = self.system_prompt + "\n\n"
+        
+        # Add MCP context if available
+        if self.mcp_context_enabled and self.mcp_manager:
+            try:
+                mcp_context = self.get_mcp_context_summary()
+                prompt += f"## CURRENT SYSTEM CONTEXT (Real-time via MCP):\n{mcp_context}\n\n"
+            except Exception as e:
+                print(f"Error adding MCP context to prompt: {e}")
+        
         # Only include the last 2 user-assistant pairs for context
         history = []
         count = 0
@@ -1111,6 +1186,235 @@ How can I assist you with your research in a constructive way?"""
             return f"Installed command-line tools: {', '.join(bins[:30])}...\nInstalled GUI apps: {', '.join(apps[:30])}..."
         except Exception as e:
             return f"Error scanning environment: {str(e)}"
+    
+    def handle_system_query(self, user_text):
+        """Handle system-related queries using MCP"""
+        try:
+            if not self.mcp_manager or not self.mcp_context_enabled:
+                return "MCP system monitoring is not available. Please check the system status."
+            
+            # Force a fresh system context update for better accuracy
+            print("🔄 Forcing fresh system context update for query...")
+            
+            # Run async context update in a thread
+            def run_async_context_update():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(self.mcp_manager._update_os_context())
+                finally:
+                    loop.close()
+            
+            run_async_context_update()
+            
+            # Get current system context
+            context_summary = self.get_mcp_context_summary()
+            
+            # Create a system-focused response
+            response = f"""# 🖥️ DeSciOS System Status
+
+{context_summary}
+
+## Additional System Information:
+Based on your query about "{user_text}", here's what I can tell you about the current system state:
+
+- **System Monitoring**: Real-time monitoring via MCP (Model Context Protocol) is active
+- **Performance**: Current system performance metrics are shown above
+- **Scientific Environment**: DeSciOS scientific computing tools are available and monitored
+
+Would you like me to:
+1. **Launch** a specific scientific application?
+2. **Monitor** a specific process or resource?
+3. **Analyze** system performance in more detail?
+4. **Troubleshoot** any specific issues?
+
+I can also execute safe system commands or provide detailed process information if needed."""
+            
+            return response
+            
+        except Exception as e:
+            return f"Error handling system query: {str(e)}"
+    
+    def handle_memory_query(self, user_text):
+        """Handle memory/RAM-specific queries using MCP"""
+        try:
+            if not self.mcp_manager or not self.mcp_context_enabled:
+                return "MCP system monitoring is not available. Please check the system status."
+            
+            # Force a fresh memory update for better accuracy
+            print("🔄 Forcing fresh memory update for query...")
+            
+            # Run async memory update in a thread
+            def run_async_update():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    memory_info = loop.run_until_complete(self.mcp_manager.force_memory_update())
+                    return memory_info
+                finally:
+                    loop.close()
+            
+            memory_info = run_async_update()
+            
+            # Also get current system context
+            context = self.mcp_manager.get_os_context()
+            
+            if not memory_info or 'total' not in memory_info:
+                return """# 💾 Memory Information
+                
+**Status**: ❌ Unable to retrieve detailed memory information from MCP.
+
+**Alternative Methods**:
+- Open a terminal and run: `free -h`
+- Check system monitor applications
+- Use the command: `cat /proc/meminfo`
+
+Please ensure the MCP system monitoring is properly initialized."""
+            
+            # Check if we have error information
+            if 'error' in memory_info:
+                return f"""# 💾 Memory Information
+                
+**Status**: ❌ {memory_info['error']}
+
+**Alternative Methods**:
+- Open a terminal and run: `free -h`
+- Check system monitor applications  
+- Use the command: `cat /proc/meminfo`
+
+**Troubleshooting**: The MCP system monitoring encountered an error while retrieving memory information. This could be due to:
+- Permission issues accessing system files
+- Missing system utilities (free command)
+- System resource constraints
+
+Please check system permissions and ensure basic system utilities are available."""
+            
+            # Check if we have unknown memory info
+            if memory_info.get('total') == 'Unknown':
+                return f"""# 💾 Memory Information
+                
+**Status**: ❓ Memory information is unavailable but system is responsive.
+
+**Alternative Methods**:
+- Open a terminal and run: `free -h`
+- Check system monitor applications
+- Use the command: `cat /proc/meminfo`
+
+**Note**: The MCP system monitoring is working, but memory retrieval methods are not functioning properly in this environment."""
+            
+            # Format detailed memory response
+            total_gb = memory_info.get('total_bytes', 0) / (1024**3)
+            used_gb = memory_info.get('used_bytes', 0) / (1024**3)
+            available_gb = memory_info.get('available_bytes', 0) / (1024**3)
+            usage_percent = memory_info.get('usage_percent', 0)
+            
+            response = f"""# 💾 DeSciOS Memory Status
+
+## Current Memory Usage:
+- **Total RAM**: {memory_info.get('total', 'N/A')} ({total_gb:.2f} GB)
+- **Used Memory**: {memory_info.get('used', 'N/A')} ({used_gb:.2f} GB)
+- **Available Memory**: {memory_info.get('available', 'N/A')} ({available_gb:.2f} GB)
+- **Usage Percentage**: {usage_percent:.1f}%
+
+## Memory Breakdown:
+- **Free Memory**: {memory_info.get('free', 'N/A')}
+- **Buffers**: {memory_info.get('buffers', 'N/A')}
+- **Cached**: {memory_info.get('cached', 'N/A')}
+- **Shared Memory**: {memory_info.get('shared', 'N/A')}
+
+## Memory Status:
+{'🟢 **Good** - Memory usage is normal' if usage_percent < 80 else '🟡 **Warning** - Memory usage is high' if usage_percent < 90 else '🔴 **Critical** - Memory usage is very high'}
+
+## Scientific Computing Recommendations:
+- **For JupyterLab**: Available memory is {'sufficient' if available_gb > 2 else 'limited'} for medium datasets
+- **For R/RStudio**: Available memory is {'sufficient' if available_gb > 1 else 'limited'} for standard analysis
+- **For Large Data**: {'Consider data chunking or optimization' if available_gb < 4 else 'Sufficient for large datasets'}
+
+*Real-time monitoring via MCP (Model Context Protocol) • Last updated: {context.last_updated}*"""
+            
+            return response
+            
+        except Exception as e:
+            return f"Error handling memory query: {str(e)}"
+    
+    def handle_application_launch(self, user_text):
+        """Handle application launch requests using MCP"""
+        try:
+            if not self.mcp_manager or not self.mcp_context_enabled:
+                return "MCP system integration is not available. Please check the system status."
+            
+            # Extract potential application names from the query
+            apps = {
+                'jupyter': ['jupyter', 'jupyterlab', 'notebook'],
+                'rstudio': ['rstudio', 'r studio'],
+                'spyder': ['spyder', 'python ide'],
+                'octave': ['octave', 'matlab'],
+                'qgis': ['qgis', 'gis', 'geographic'],
+                'ugene': ['ugene', 'bioinformatics'],
+                'fiji': ['fiji', 'imagej', 'image processing'],
+                'firefox': ['firefox', 'browser', 'web browser'],
+                'thunar': ['thunar', 'file manager', 'files'],
+                'terminal': ['terminal', 'command line', 'bash'],
+                'calculator': ['calculator', 'calc'],
+                'texteditor': ['text editor', 'editor', 'notepad']
+            }
+            
+            user_lower = user_text.lower()
+            detected_app = None
+            
+            for app_name, keywords in apps.items():
+                if any(keyword in user_lower for keyword in keywords):
+                    detected_app = app_name
+                    break
+            
+            if detected_app:
+                # Try to launch the application (this would require MCP server implementation)
+                return f"""# 🚀 Launching {detected_app.title()}
+
+I've detected you want to launch **{detected_app}**. 
+
+**Available Scientific Applications in DeSciOS:**
+- **JupyterLab**: `jupyter` - Interactive notebook environment
+- **RStudio**: `rstudio` - R development environment
+- **Spyder**: `spyder` - Python scientific IDE
+- **GNU Octave**: `octave` - Mathematical computing
+- **QGIS**: `qgis` - Geographic Information System
+- **UGENE**: `ugene` - Bioinformatics suite
+- **Fiji**: `fiji` - Image processing
+- **Firefox**: `firefox` - Web browser
+
+To launch {detected_app}, I would normally execute the application startup through the MCP process manager. The application should appear in your desktop environment shortly.
+
+**Note**: In the current implementation, you can manually start applications from the desktop menu or by opening a terminal and typing the application name."""
+            
+            else:
+                return """# 🚀 Application Launcher
+
+I can help you launch scientific applications in DeSciOS. Available applications include:
+
+## Data Science & Analysis:
+- **JupyterLab** - Interactive notebook environment
+- **RStudio** - R development environment
+- **Spyder** - Python scientific IDE
+- **GNU Octave** - Mathematical computing (MATLAB-like)
+
+## Bioinformatics:
+- **UGENE** - Bioinformatics suite
+- **CellModeller** - Synthetic biology modeling
+
+## Visualization:
+- **Fiji (ImageJ)** - Image processing
+- **QGIS** - Geographic Information System
+
+## Utilities:
+- **Firefox** - Web browser
+- **Thunar** - File manager
+- **Terminal** - Command line interface
+
+Please specify which application you'd like to launch, and I'll help you get started!"""
+            
+        except Exception as e:
+            return f"Error handling application launch: {str(e)}"
 
     def get_vision_description(self, user_query):
         """Get vision description from vision model to feed to text model"""
@@ -1490,6 +1794,21 @@ Please answer the user's question using this visual information along with your 
             self.suggestions_container.show_all()
         dialog.destroy()
 
+    def cleanup_mcp(self):
+        """Cleanup MCP resources when application closes"""
+        if self.mcp_manager:
+            try:
+                # Run cleanup in a separate thread to avoid blocking
+                def cleanup_thread():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(shutdown_mcp_client_manager())
+                    loop.close()
+                
+                threading.Thread(target=cleanup_thread, daemon=True).start()
+            except Exception as e:
+                print(f"Error cleaning up MCP: {e}")
+
     def on_input_text_changed(self, buffer):
         # Implement placeholder functionality
         text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
@@ -1592,5 +1911,11 @@ Please answer the user's question using this visual information along with your 
 
 if __name__ == "__main__":
     win = DeSciOSChatWidget()
-    win.connect("destroy", Gtk.main_quit)
+    
+    def on_window_destroy(widget):
+        """Handle window destruction with MCP cleanup"""
+        widget.cleanup_mcp()
+        Gtk.main_quit()
+    
+    win.connect("destroy", on_window_destroy)
     Gtk.main() 

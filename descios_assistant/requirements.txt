@@ -1,10 +1,9 @@
-requests>=2.31.0
-pathlib>=1.0.1
-python-dotenv>=1.0.0
-watchdog>=3.0.0
-markdown
-beautifulsoup4
 requests
-Pillow>=10.0.0
-python-xlib>=0.33
-imageio>=2.34.0
+beautifulsoup4
+markdown
+Pillow
+# MCP (Model Context Protocol) dependencies for OS-aware context management
+mcp>=1.0.0
+pydantic>=2.0.0
+# System monitoring dependencies
+psutil>=5.9.0
