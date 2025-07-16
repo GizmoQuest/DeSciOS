@@ -9,6 +9,7 @@ from tkinter import ttk, messagebox, filedialog, scrolledtext
 import os
 import subprocess
 import threading
+import shutil
 from pathlib import Path
 import yaml
 import json
@@ -1560,11 +1561,56 @@ Visit: https://github.com/GizmoQuest/DeSciOS
         print("Command-line mode not implemented yet. Use GUI mode.")
         return 1
     
-    # Check if we're in the right directory
-    if not os.path.exists('Dockerfile'):
-        print("Error: Dockerfile not found.")
-        print("Please run from the DeSciOS directory, or use 'cd' to navigate there first.")
-        return 1
+    # Check if we're in the right directory or find DeSciOS
+    descios_dir = None
+    current_dir = os.getcwd()
+    
+    # First check current directory
+    if os.path.exists('Dockerfile'):
+        descios_dir = current_dir
+    else:
+        # Look for DeSciOS in common locations
+        search_paths = [
+            os.path.expanduser('~/DeSciOS'),
+            os.path.expanduser('~/Desktop/DeSciOS'),
+            os.path.expanduser('~/Downloads/DeSciOS'),
+            '/opt/DeSciOS',
+            '/usr/local/share/DeSciOS'
+        ]
+        
+        for path in search_paths:
+            if os.path.exists(os.path.join(path, 'Dockerfile')):
+                descios_dir = path
+                break
+    
+    if not descios_dir:
+        print("DeSciOS directory not found. Cloning from GitHub...")
+        clone_dir = os.path.expanduser('~/DeSciOS')
+        
+        # Check if git is available
+        if shutil.which('git') is None:
+            print("Error: Git is not installed. Please install git first:")
+            print("  sudo apt install git")
+            return 1
+        
+        # Clone the repository
+        clone_cmd = ['git', 'clone', 'https://github.com/GizmoQuest/DeSciOS.git', clone_dir]
+        result = subprocess.run(clone_cmd, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            print(f"✅ Successfully cloned DeSciOS to: {clone_dir}")
+            descios_dir = clone_dir
+        else:
+            print(f"❌ Failed to clone DeSciOS: {result.stderr}")
+            print("Please clone manually:")
+            print("  git clone https://github.com/GizmoQuest/DeSciOS.git ~/DeSciOS")
+            return 1
+    
+    # Change to DeSciOS directory
+    if descios_dir != current_dir:
+        print(f"Found DeSciOS at: {descios_dir}")
+        print("Changing to DeSciOS directory...")
+        os.chdir(descios_dir)
         
     root = tk.Tk()
     app = DeSciOSLauncher(root)
