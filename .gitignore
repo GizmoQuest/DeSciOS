@@ -4,9 +4,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -20,6 +18,25 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Build artifacts and release packages
+build/build/
+build/dist/
+build/*.spec
+build/*.log
+build/*.toc
+build/*.pyz
+build/*.pkg
+build/*.txt
+build/*.html
+build/build_env/
+build/descios_launcher/
+build/descios_launcher_*/
+dist/
+*.zip
+*.deb
+*.dmg
+*.exe
 
 # PyInstaller
 *.manifest
