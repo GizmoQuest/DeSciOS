@@ -215,7 +215,7 @@ def create_package(target_platform):
     
     if target_platform == "macos":
         import zipfile
-        zip_name = "DeSciOS-Launcher-0.1.0-macOS.zip"
+        zip_name = "DeSciOS-Launcher-0.1.0-macOS-x86_64.zip"
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
             # Add the binary with macOS-style naming
             zipf.write(binary_path, "DeSciOS Launcher")
@@ -242,7 +242,7 @@ For best results, build natively on macOS.
     
     elif target_platform == "windows":
         import zipfile
-        zip_name = "DeSciOS-Launcher-0.1.0-Windows.zip"
+        zip_name = "DeSciOS-Launcher-0.1.0-Windows-x86_64.zip"
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
             # Add the binary with Windows-style naming
             zipf.write(binary_path, "DeSciOS Launcher.exe")

@@ -129,7 +129,7 @@ def create_dmg():
     print("Creating DMG package...")
     
     app_path = "dist/DeSciOS Launcher.app"
-    dmg_name = "DeSciOS-Launcher-0.1.0-macOS.dmg"
+    dmg_name = "DeSciOS-Launcher-0.1.0-macOS-x86_64.dmg"
     
     if not os.path.exists(app_path):
         print(f"✗ App bundle not found at {app_path}")

@@ -233,17 +233,19 @@ def copy_binary(pkg_dir):
 
 def build_package(pkg_dir):
     """Build the .deb package"""
-    pkg_name = f"{PACKAGE_NAME}_{PACKAGE_VERSION}_{PACKAGE_ARCH}.deb"
+    # Use the new naming convention
+    pkg_name = f"DeSciOS-Launcher-{PACKAGE_VERSION}-Linux-{PACKAGE_ARCH}.deb"
     
-    # Build the package
-    cmd = ["dpkg-deb", "--build", str(pkg_dir), pkg_name]
+    # Build the package with temporary name
+    temp_pkg_name = f"{PACKAGE_NAME}_{PACKAGE_VERSION}_{PACKAGE_ARCH}.deb"
+    cmd = ["dpkg-deb", "--build", str(pkg_dir), temp_pkg_name]
     
     try:
         subprocess.run(cmd, check=True, cwd=pkg_dir.parent)
-        print(f"✓ Package built successfully: {pkg_name}")
+        print(f"✓ Package built successfully")
         
-        # Move to current directory
-        shutil.move(str(pkg_dir.parent / pkg_name), pkg_name)
+        # Move to current directory and rename
+        shutil.move(str(pkg_dir.parent / temp_pkg_name), pkg_name)
         print(f"✓ Package available: {pkg_name}")
         
         return pkg_name

@@ -110,7 +110,7 @@ def create_installer():
     print("Creating Windows installer...")
     
     exe_path = "dist/DeSciOS Launcher.exe"
-    installer_name = "DeSciOS-Launcher-0.1.0-Windows.exe"
+    installer_name = "DeSciOS-Launcher-0.1.0-Windows-x86_64.exe"
     
     if not os.path.exists(exe_path):
         print(f"✗ EXE not found at {exe_path}")
@@ -120,7 +120,7 @@ def create_installer():
     # In a full implementation, you'd use NSIS or Inno Setup
     import zipfile
     
-    zip_name = "DeSciOS-Launcher-0.1.0-Windows.zip"
+    zip_name = "DeSciOS-Launcher-0.1.0-Windows-x86_64.zip"
     
     with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
         # Add the EXE
