@@ -1352,6 +1352,7 @@ Please check system permissions and ensure basic system utilities are available.
                 'qgis': ['qgis', 'gis', 'geographic'],
                 'ugene': ['ugene', 'bioinformatics'],
                 'fiji': ['fiji', 'imagej', 'image processing'],
+                'cellmodeller': ['cellmodeller', 'cell modeller', 'synthetic biology'],
                 'firefox': ['firefox', 'browser', 'web browser'],
                 'thunar': ['thunar', 'file manager', 'files'],
                 'terminal': ['terminal', 'command line', 'bash'],
@@ -1368,10 +1369,49 @@ Please check system permissions and ensure basic system utilities are available.
                     break
             
             if detected_app:
-                # Try to launch the application (this would require MCP server implementation)
-                return f"""# 🚀 Launching {detected_app.title()}
+                # Actually launch the application using subprocess
+                try:
+                    import subprocess
+                    
+                    # Map application names to actual commands
+                    app_commands = {
+                        'jupyter': ['jupyter', 'lab'],
+                        'jupyterlab': ['jupyter', 'lab'],
+                        'rstudio': ['rstudio', '--no-sandbox'],  # RStudio needs --no-sandbox flag
+                        'spyder': ['spyder'],
+                        'octave': ['octave', '--gui'],
+                        'qgis': ['qgis'],
+                        'ugene': ['ugene', '-ui'],  # UGENE needs -ui flag for GUI
+                        'fiji': ['bash', '-c', 'cd /opt/Fiji && ./fiji'],  # Fiji needs to run from its directory
+                        'imagej': ['bash', '-c', 'cd /opt/Fiji && ./fiji'],  # ImageJ is the same as Fiji
+                        'cellmodeller': ['bash', '-c', 'cd /opt && python CellModeller/Scripts/CellModellerGUI.py'],  # CellModeller from Dockerfile
+                        'firefox': ['firefox'],
+                        'thunar': ['thunar'],
+                        'terminal': ['xfce4-terminal'],
+                        'calculator': ['qalculate-gtk'],
+                        'texteditor': ['mousepad']
+                    }
+                    
+                    if detected_app.lower() in app_commands:
+                        command = app_commands[detected_app.lower()]
+                        
+                        # Launch application in background
+                        process = subprocess.Popen(
+                            command, 
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            start_new_session=True
+                        )
+                        
+                        return f"""# 🚀 Successfully Launched {detected_app.title()}
 
-I've detected you want to launch **{detected_app}**. 
+✅ **{detected_app.title()}** has been launched successfully!
+
+**Process Details:**
+- **PID**: {process.pid}
+- **Command**: {' '.join(command)}
+
+The application should appear in your desktop environment shortly. If it doesn't appear immediately, check your desktop or taskbar.
 
 **Available Scientific Applications in DeSciOS:**
 - **JupyterLab**: `jupyter` - Interactive notebook environment
@@ -1383,9 +1423,29 @@ I've detected you want to launch **{detected_app}**.
 - **Fiji**: `fiji` - Image processing
 - **Firefox**: `firefox` - Web browser
 
-To launch {detected_app}, I would normally execute the application startup through the MCP process manager. The application should appear in your desktop environment shortly.
+You can also manually start applications from the desktop menu or by opening a terminal and typing the application name."""
+                    else:
+                        return f"❌ Application '{detected_app}' is not supported for automatic launching."
+                        
+                except Exception as launch_error:
+                    return f"""# 🚀 Application Launch Attempt
 
-**Note**: In the current implementation, you can manually start applications from the desktop menu or by opening a terminal and typing the application name."""
+I attempted to launch **{detected_app}** but encountered an error: {str(launch_error)}
+
+**Troubleshooting:**
+1. Try launching the application manually from the desktop menu
+2. Open a terminal and run: `{detected_app}`
+3. Check if the application is properly installed
+
+**Available Scientific Applications in DeSciOS:**
+- **JupyterLab**: `jupyter` - Interactive notebook environment
+- **RStudio**: `rstudio` - R development environment
+- **Spyder**: `spyder` - Python scientific IDE
+- **GNU Octave**: `octave` - Mathematical computing
+- **QGIS**: `qgis` - Geographic Information System
+- **UGENE**: `ugene` - Bioinformatics suite
+- **Fiji**: `fiji` - Image processing
+- **Firefox**: `firefox` - Web browser"""
             
             else:
                 return """# 🚀 Application Launcher

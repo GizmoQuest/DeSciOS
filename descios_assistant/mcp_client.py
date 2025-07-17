@@ -64,29 +64,56 @@ class MCPClientManager:
     
     def _setup_default_servers(self):
         """Setup default OS-aware MCP servers"""
-        self.servers = {
-            "os_context": MCPServerConfig(
+        # Try multiple possible paths for the server files
+        possible_paths = [
+            os.path.dirname(__file__),  # Current directory
+            "/opt/descios_assistant",   # Container path
+            "/home/avi/DeSciOS/descios_assistant"  # Host path
+        ]
+        
+        def find_server_file(filename):
+            for path in possible_paths:
+                full_path = os.path.join(path, filename)
+                if os.path.exists(full_path):
+                    return full_path
+            return None
+        
+        self.servers = {}
+        
+        # OS Context Server
+        os_server_path = find_server_file("mcp_os_server.py")
+        if os_server_path:
+            self.servers["os_context"] = MCPServerConfig(
                 name="OS Context Server",
                 command="python3",
-                args=[os.path.join(os.path.dirname(__file__), "mcp_os_server.py")],
+                args=[os_server_path],
                 description="Provides real-time OS context and system monitoring",
-                env={"PYTHONPATH": os.path.dirname(__file__)}
-            ),
-            "filesystem": MCPServerConfig(
+                env={"PYTHONPATH": os.path.dirname(os_server_path)}
+            )
+        
+        # Filesystem Server
+        fs_server_path = find_server_file("mcp_filesystem_server.py")
+        if fs_server_path:
+            self.servers["filesystem"] = MCPServerConfig(
                 name="Filesystem Server", 
                 command="python3",
-                args=[os.path.join(os.path.dirname(__file__), "mcp_filesystem_server.py")],
+                args=[fs_server_path],
                 description="Provides filesystem operations and file context",
-                env={"PYTHONPATH": os.path.dirname(__file__)}
-            ),
-            "process_manager": MCPServerConfig(
+                env={"PYTHONPATH": os.path.dirname(fs_server_path)}
+            )
+        
+        # Process Manager Server
+        proc_server_path = find_server_file("mcp_process_server.py")
+        if proc_server_path:
+            self.servers["process_manager"] = MCPServerConfig(
                 name="Process Manager Server",
                 command="python3", 
-                args=[os.path.join(os.path.dirname(__file__), "mcp_process_server.py")],
+                args=[proc_server_path],
                 description="Provides process management and monitoring tools",
-                env={"PYTHONPATH": os.path.dirname(__file__)}
+                env={"PYTHONPATH": os.path.dirname(proc_server_path)}
             )
-        }
+        
+        logger.info(f"Found {len(self.servers)} MCP servers: {list(self.servers.keys())}")
     
     async def start(self):
         """Start the MCP client manager"""
@@ -124,19 +151,28 @@ class MCPClientManager:
     async def _connect_to_server(self, server_id: str, config: MCPServerConfig):
         """Connect to an MCP server"""
         try:
+            # Check if the server file exists
+            if config.args and len(config.args) > 0:
+                server_file = config.args[0]
+                if not os.path.exists(server_file):
+                    logger.warning(f"MCP server file not found: {server_file}")
+                    return
+            
             server_params = StdioServerParameters(
                 command=config.command,
                 args=config.args,
                 env=config.env or {}
             )
             
-            # This would normally be kept alive, but for now we'll handle it differently
-            # In a real implementation, you'd want to maintain the connection
-            logger.info(f"Connecting to MCP server: {config.name}")
+            # For now, we'll just log the connection attempt
+            # In a full implementation, you'd establish and maintain the connection
+            logger.info(f"Would connect to MCP server: {config.name}")
+            logger.info(f"Command: {config.command} {' '.join(config.args)}")
             
         except Exception as e:
             logger.error(f"Failed to connect to server {server_id}: {e}")
-            raise
+            # Don't raise the exception, just log it and continue
+            logger.warning(f"Continuing without MCP server {server_id}")
     
     async def _context_update_loop(self):
         """Background loop to update OS context"""
