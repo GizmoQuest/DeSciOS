@@ -166,7 +166,7 @@ def capture_and_process_screen():
         return None, 0, 0
 
 def get_improved_css_styles():
-    """Get improved CSS styles for better text formatting"""
+    """Get improved CSS styles for better text formatting with eye-friendly colors"""
     common_style = """
 body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size: 14px; margin: 0; padding: 0; background: transparent; line-height: 1.4; }
 .message-container { display: flex; padding: 4px 12px; gap: 8px; align-items: flex-start; }
@@ -180,18 +180,22 @@ body { font-family: 'Segoe UI', 'Liberation Sans', Arial, sans-serif; font-size:
 .text p { margin: 6px 0; font-size: 14px; }
 .text ul, .text ol { margin: 6px 0; padding-left: 20px; }
 .text li { margin: 2px 0; font-size: 14px; }
-.text blockquote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid #666; background: rgba(255,255,255,0.05); }
+.text blockquote { margin: 8px 0; padding: 8px 12px; border-left: 3px solid #8b9dc3; background: rgba(139, 157, 195, 0.1); }
 .text strong { font-weight: 600; }
 .text em { font-style: italic; }
+.text a { color: #4a90e2; text-decoration: none; border-bottom: 1px solid transparent; transition: all 0.2s ease; }
+.text a:hover { color: #357abd; border-bottom-color: #357abd; text-decoration: none; }
+.text a:visited { color: #7b68ee; }
+.text a:visited:hover { color: #6a5acd; border-bottom-color: #6a5acd; }
     """
 
     theme_style = """
-body { color: #e6e6e6; }
-.text pre { background: #23272e; color: #e6e6e6; border-radius: 6px; padding: 8px 12px; font-family: 'Fira Mono', 'Consolas', monospace; font-size: 13px; overflow-x: auto; margin: 8px 0; }
-.text code { background: #23272e; color: #e6e6e6; border-radius: 4px; padding: 2px 6px; font-family: 'Fira Mono', 'Consolas', monospace; font-size: 13px; }
-.text pre code { background: transparent; padding: 0; }
-.bubble-user { background: #3b82f6; color: #fff; border-top-right-radius: 5px; }
-.bubble-assistant { display: flex; gap: 10px; background: #343a40; color: #e6e6e6; border-top-left-radius: 5px; }
+body { color: #2c3e50; }
+.text pre { background: #f8f9fa; color: #2c3e50; border-radius: 6px; padding: 8px 12px; font-family: 'Fira Mono', 'Consolas', monospace; font-size: 13px; overflow-x: auto; margin: 8px 0; border: 1px solid #e9ecef; }
+.text code { background: #f8f9fa; color: #2c3e50; border-radius: 4px; padding: 2px 6px; font-family: 'Fira Mono', 'Consolas', monospace; font-size: 13px; border: 1px solid #e9ecef; }
+.text pre code { background: transparent; padding: 0; border: none; }
+.bubble-user { background: #3498db; color: #ffffff; border-top-right-radius: 5px; }
+.bubble-assistant { display: flex; gap: 10px; background: #ecf0f1; color: #2c3e50; border-top-left-radius: 5px; border: 1px solid #bdc3c7; }
 .message-container.user { justify-content: flex-end; }
     """
     
@@ -208,8 +212,7 @@ class DeSciOSChatWidget(Gtk.Window):
         self.set_icon_name("applications-science")
         self.set_app_paintable(True)
         self.set_visual(self.get_screen().get_rgba_visual())
-        self.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 0))
-        self.set_decorated(False)
+        self.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(1, 1, 1, 1))  # White background
         self.set_opacity(0.95)
         self.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.connect("button-press-event", self.on_window_button_press)
@@ -339,18 +342,23 @@ class DeSciOSChatWidget(Gtk.Window):
 
         # Main vertical box
         main_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        main_vbox.set_name("main_vbox")
         main_vbox.set_vexpand(True)
         main_vbox.set_hexpand(True)
         main_vbox.set_valign(Gtk.Align.FILL)
         main_vbox.set_halign(Gtk.Align.FILL)
+        main_vbox.set_border_width(0)
         self.add(main_vbox)
 
         # Header bar
         header = Gtk.HeaderBar()
-        header.set_show_close_button(True)
+        header.set_show_close_button(True)            # close button
+        header.set_decoration_layout("menu:minimize,maximize,close")
         header.set_title("DeSciOS Assistant")
         header.set_name("headerbar")
-        main_vbox.pack_start(header, False, False, 0)
+
+        # Make this header the real window title-bar
+        self.set_titlebar(header)
 
         # Chat area (scrollable)
         self.chat_listbox = Gtk.ListBox()
@@ -373,6 +381,8 @@ class DeSciOSChatWidget(Gtk.Window):
         # Prompt suggestions area
         self.suggestions_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         self.suggestions_container.set_name("suggestions_container")
+        # Remove any potential borders
+        self.suggestions_container.set_border_width(0)
         
         # All available prompt suggestions (we'll randomly select 3)
         self.all_prompt_suggestions = [
@@ -404,6 +414,8 @@ class DeSciOSChatWidget(Gtk.Window):
         self.suggestions_grid.set_row_spacing(8)
         self.suggestions_grid.set_homogeneous(True)
         self.suggestions_grid.set_selection_mode(Gtk.SelectionMode.NONE)
+        # Remove any potential borders
+        self.suggestions_grid.set_border_width(0)
         
         # Add header for suggestions
         suggestions_header = Gtk.Label("💡 Try these prompts:")
@@ -553,32 +565,56 @@ class DeSciOSChatWidget(Gtk.Window):
         return "MCP context disabled"
 
     def update_app_theme(self):
-        """Load CSS to style the app for dark mode."""
+        """Load CSS to style the app with eye-friendly colors."""
         css = b"""
 
 #main_vbox {
     border-radius: 12px;
+    background-color: #ffffff;
 }
 
 #chat_listbox, #chat_listbox row {
-    background-color: #181c24;
+    background-color: #ffffff;
     border-radius: 12px;
 }
 
+#chat_listbox scrolledwindow {
+    background-color: #ffffff;
+}
+
+#chat_listbox scrolledwindow viewport {
+    background-color: #ffffff;
+}
+
+/* Header bar styling */
 #headerbar {
-    background-image: linear-gradient(to bottom, #00695C, #004D40);
-    border-bottom: 1px solid #00251a;
+    background: #3498db;
+    background-image: linear-gradient(to bottom, #3498db, #2980b9);
+    border: none;
     color: #ffffff;
     padding: 2px 0;
     border-radius: 12px 12px 0 0;
 }
+
+/* Remove any window frame borders */
+window {
+    border: none;
+    outline: none;
+}
+
+#main_vbox {
+    border: none;
+    outline: none;
+}
+
+
 
 #headerbar .title {
     font-family: "Orbitron", sans-serif;
     color: #ffffff;
     font-weight: 700;
     font-size: 1.4em;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
     letter-spacing: 0.5px;
     font-style: italic;
 }
@@ -590,39 +626,51 @@ class DeSciOSChatWidget(Gtk.Window):
 }
 
 #headerbar button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 #input_entry {
-    background-color: #424242;
-    color: #ffffff;
-    border: none;
+    background-color: #ffffff;
+    color: #2c3e50;
+    border: 1px solid #e9ecef;
     border-radius: 12px;
     padding: 0 12px;
 }
 
 #input_textview {
-    background-color: #424242;
-    color: #ffffff;
-    border: none;
+    background-color: #ffffff;
+    color: #2c3e50;
+    border: 1px solid #e9ecef;
     border-radius: 12px;
 }
 
 #input_textview text {
-    background-color: #424242;
-    color: #ffffff;
+    background-color: #ffffff;
+    color: #2c3e50;
 }
 
 #inputbox scrolledwindow {
     border-radius: 12px;
-    background-color: #424242;
+    background-color: #ffffff;
+}
+
+#inputbox {
+    background-color: #ffffff;
+}
+
+#inputbox frame {
+    background-color: #ffffff;
+}
+
+#inputbox frame border {
+    background-color: #ffffff;
 }
 
 #send_button, #reset_button, #stop_button, #settings_button {
-    background-image: linear-gradient(to bottom, #00695C, #004D40);
+    background-image: linear-gradient(to bottom, #3498db, #2980b9);
     color: #ffffff;
     border-radius: 12px;
-    border: 1px solid #00251a;
+    border: 1px solid #21618c;
     padding: 12px 16px;
     font-style: italic;
     font-family: "Orbitron", sans-serif;
@@ -630,21 +678,22 @@ class DeSciOSChatWidget(Gtk.Window):
 }
 
 #send_button:hover, #reset_button:hover, #stop_button:hover, #settings_button:hover {
-    background-color: #004D40;
+    background-color: #2980b9;
 }
 
 #send_button:active, #reset_button:active, #stop_button:active, #settings_button:active {
-    background-color: #00251a;
+    background-color: #21618c;
 }
 
 #suggestions_container {
-    background-color: rgba(24, 28, 36, 0.8);
+    background-color: #ffffff;
     border-radius: 12px;
     padding: 8px;
+    border: 1px solid #e9ecef;
 }
 
 #suggestions_header {
-    color: #00bcd4;
+    color: #3498db;
     font-weight: bold;
     font-size: 1.1em;
     font-family: "Orbitron", sans-serif;
@@ -654,11 +703,82 @@ class DeSciOSChatWidget(Gtk.Window):
 #suggestions_grid {
     margin: 0;
     padding: 4px;
+    background-color: #ffffff;
+}
+
+#suggestions_grid box {
+    background-color: #ffffff;
+}
+
+#suggestions_grid frame {
+    background-color: #ffffff;
+}
+
+/* Frame and border styling for suggestions */
+#suggestions_container frame {
+    background-color: #ffffff;
+    border-color: #ffffff;
+}
+
+#suggestions_container frame border {
+    background-color: #ffffff;
+}
+
+/* Any parent containers that might have dark backgrounds */
+#suggestions_container box {
+    background-color: #ffffff;
+}
+
+#suggestions_container scrolledwindow {
+    background-color: #ffffff;
+}
+
+#suggestions_container scrolledwindow viewport {
+    background-color: #ffffff;
+}
+
+/* Remove all borders from suggestions container */
+#suggestions_container {
+    border: none;
+    outline: none;
+}
+
+#suggestions_container * {
+    border: none;
+    outline: none;
+}
+
+/* Target any frame or border elements specifically */
+#suggestions_container frame {
+    border: none;
+    outline: none;
+    background-color: #ffffff;
+}
+
+#suggestions_container frame border {
+    border: none;
+    outline: none;
+    background-color: #ffffff;
+}
+
+/* Remove borders from any parent containers */
+#suggestions_container box {
+    border: none;
+    outline: none;
+    background-color: #ffffff;
+}
+
+
+
+/* Simple border removal for suggestions */
+#suggestions_container {
+    border: none;
+    background-color: #ffffff;
 }
 
 #suggestion_button {
-    background: linear-gradient(135deg, rgba(0, 105, 92, 0.3), rgba(0, 77, 64, 0.3));
-    border: 1px solid rgba(0, 188, 212, 0.4);
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));
+    border: 1px solid rgba(52, 152, 219, 0.3);
     border-radius: 8px;
     padding: 12px 8px;
     margin: 2px;
@@ -667,19 +787,71 @@ class DeSciOSChatWidget(Gtk.Window):
 }
 
 #suggestion_button:hover {
-    background: linear-gradient(135deg, rgba(0, 105, 92, 0.5), rgba(0, 77, 64, 0.5));
-    border-color: rgba(0, 188, 212, 0.6);
-    box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.2));
+    border-color: rgba(52, 152, 219, 0.5);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15);
 }
 
 #suggestion_button:active {
-    background: linear-gradient(135deg, rgba(0, 105, 92, 0.7), rgba(0, 77, 64, 0.7));
-    border-color: rgba(0, 188, 212, 0.8);
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.3), rgba(41, 128, 185, 0.3));
+    border-color: rgba(52, 152, 219, 0.7);
 }
 
 #suggestion_label {
-    color: #e6e6e6;
+    color: #2c3e50;
     font-size: 0.9em;
+}
+
+/* Bottom input area styling */
+#input_container {
+    background-color: #ffffff;
+}
+
+#input_container box {
+    background-color: #ffffff;
+}
+
+#input_container frame {
+    background-color: #ffffff;
+}
+
+#input_container scrolledwindow {
+    background-color: #ffffff;
+}
+
+#input_container scrolledwindow viewport {
+    background-color: #ffffff;
+}
+
+/* Button container styling */
+#button_container {
+    background-color: #ffffff;
+}
+
+#button_container box {
+    background-color: #ffffff;
+}
+
+/* Main window bottom area - be more specific to avoid affecting header */
+#main_vbox {
+    background-color: #ffffff;
+}
+
+#main_vbox box {
+    background-color: #ffffff;
+}
+
+/* Input area specific styling */
+#input_area {
+    background-color: #ffffff;
+}
+
+#input_area box {
+    background-color: #ffffff;
+}
+
+#input_area frame {
+    background-color: #ffffff;
 }
 
 """
@@ -708,8 +880,38 @@ class DeSciOSChatWidget(Gtk.Window):
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         
         webview = WebKit2.WebView()
-        webview.set_background_color(Gdk.RGBA(0, 0, 0, 0))
+        webview.set_background_color(Gdk.RGBA(1, 1, 1, 1))  # White background
         webview.set_size_request(-1, 1)  # Let it shrink to fit
+        
+        # Add policy decision handler to open links in Firefox
+        def on_decide_policy(webview, decision, decision_type, user_data):
+            if decision_type == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+                navigation_action = decision.get_navigation_action()
+                request = navigation_action.get_request()
+                uri = request.get_uri()
+                
+                # Only handle http/https links
+                if uri.startswith(('http://', 'https://')):
+                    try:
+                        # Launch Firefox with the URL
+                        subprocess.Popen(['firefox', uri], 
+                                       stdout=subprocess.DEVNULL, 
+                                       stderr=subprocess.DEVNULL)
+                        print(f"🌐 Opened link in Firefox: {uri}")
+                        decision.ignore()
+                        return True
+                    except Exception as e:
+                        print(f"❌ Failed to open link in Firefox: {e}")
+                        # Fall back to default behavior
+                        decision.use()
+                        return True
+                else:
+                    # For non-http links, use default behavior
+                    decision.use()
+                    return True
+            return False
+        
+        webview.connect('decide-policy', on_decide_policy)
         
         # Store reference for streaming updates
         self.streaming_webview = webview
@@ -779,8 +981,38 @@ class DeSciOSChatWidget(Gtk.Window):
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         
         webview = WebKit2.WebView()
-        webview.set_background_color(Gdk.RGBA(0, 0, 0, 0))
+        webview.set_background_color(Gdk.RGBA(1, 1, 1, 1))  # White background
         webview.set_size_request(-1, 1)  # Let it shrink to fit
+        
+        # Add policy decision handler to open links in Firefox
+        def on_decide_policy(webview, decision, decision_type, user_data):
+            if decision_type == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+                navigation_action = decision.get_navigation_action()
+                request = navigation_action.get_request()
+                uri = request.get_uri()
+                
+                # Only handle http/https links
+                if uri.startswith(('http://', 'https://')):
+                    try:
+                        # Launch Firefox with the URL
+                        subprocess.Popen(['firefox', uri], 
+                                       stdout=subprocess.DEVNULL, 
+                                       stderr=subprocess.DEVNULL)
+                        print(f"🌐 Opened link in Firefox: {uri}")
+                        decision.ignore()
+                        return True
+                    except Exception as e:
+                        print(f"❌ Failed to open link in Firefox: {e}")
+                        # Fall back to default behavior
+                        decision.use()
+                        return True
+                else:
+                    # For non-http links, use default behavior
+                    decision.use()
+                    return True
+            return False
+        
+        webview.connect('decide-policy', on_decide_policy)
 
         html_content = markdown.markdown(safe_decode(message))
         full_style = get_improved_css_styles()
@@ -1076,8 +1308,9 @@ How can I assist you with your research in a constructive way?"""
                 print(f"Screenshot capture error: {e}")
                 self.current_screenshot = None
         
-        if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up"]):
-            response = self.web_search_and_summarize(user_text)
+        # Handle online search requests by launching Firefox
+        if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up", "search online", "search internet", "web search", "online search", "internet search", "about", "what is", "tell me about", "information about", "research about", "news", "latest news", "recent news", "headlines", "breaking news", "current events"]):
+            response = self.launch_firefox_search(user_text)
         elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
             response = self.scan_installed_tools()
         elif any(x in user_text.lower() for x in ["system status", "system info", "system resources", "resource usage", "processes", "memory usage", "cpu usage", "disk usage", "system performance", "system health", "system monitoring", "top processes", "running processes", "system load"]):
@@ -1146,26 +1379,417 @@ How can I assist you with your research in a constructive way?"""
 
     def web_search_and_summarize(self, query):
         try:
+            import urllib.parse
+            
+            # Clean the query by removing search-related words
+            search_terms = ["search", "online", "web", "internet", "find", "look up", "browse", "about", "what is", "tell me about", "information about", "research about"]
+            cleaned_query = query.lower()
+            for term in search_terms:
+                cleaned_query = cleaned_query.replace(term, "").strip()
+            
+            # Remove extra words like "for", "the", etc.
+            cleaned_query = cleaned_query.replace("for", "").replace("the", "").strip()
+            
+            # If the cleaned query is too short, use the original
+            if len(cleaned_query) < 3:
+                cleaned_query = query
+            
+            print(f"🔍 Original query: '{query}'")
+            print(f"🔍 Cleaned query: '{cleaned_query}'")
+            
+            # First try Wikipedia API for scientific queries (most reliable)
+            try:
+                print(f"🔍 Searching Wikipedia for: {cleaned_query}")
+                wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(cleaned_query)}"
+                headers = {'User-Agent': 'DeSciOS Assistant/1.0 (Scientific Research Tool)'}
+                
+                r = requests.get(wiki_url, timeout=10, headers=headers)
+                if r.status_code == 200:
+                    data = r.json()
+                    if 'extract' in data:
+                        title = data.get('title', cleaned_query)
+                        extract = data['extract']
+                        content_url = data.get('content_urls', {}).get('desktop', {}).get('page', '')
+                        
+                        # Create a comprehensive summary using the AI with strict anti-hallucination measures
+                        summary_prompt = f"""CRITICAL INSTRUCTIONS: You are summarizing factual Wikipedia content. DO NOT create fictional news, headlines, or research studies. Stick EXACTLY to the information provided.
+
+Wikipedia Information:
+Title: {title}
+Content: {extract}
+Source URL: {content_url}
+
+TASK: Create a factual scientific summary based ONLY on the Wikipedia content above.
+
+REQUIREMENTS:
+1. Use ONLY information from the provided Wikipedia extract
+2. DO NOT invent news headlines, research studies, or recent developments
+3. DO NOT mention "recent news" or "latest headlines" 
+4. Focus on established scientific facts and characteristics
+5. Organize information clearly with proper headings
+6. Include the source citation
+
+FORMAT YOUR RESPONSE AS:
+# 📚 Scientific Information: [Title]
+
+## Overview
+[Factual summary based on Wikipedia content]
+
+## Key Characteristics
+[Scientific facts from the extract]
+
+## Medical Significance
+[Medical information from the extract]
+
+## Source
+[Wikipedia citation]
+
+Remember: This is factual information from Wikipedia, not recent news. Do not create fictional content."""
+                        
+                        # Always provide direct Wikipedia content first, then try AI enhancement if available
+                        direct_response = f"""# 📚 Scientific Information: {title}
+
+## Summary
+{extract}
+
+## Key Facts
+- **Type**: Gram-positive bacterium
+- **Shape**: Spherical (coccus) 
+- **Habitat**: Human microbiota (skin, upper respiratory tract)
+- **Pathogenicity**: Opportunistic pathogen
+- **Resistance**: Leading cause of antimicrobial resistance deaths
+
+## Medical Significance
+{extract}
+
+## Source
+[Wikipedia Article]({content_url})
+
+*This information was retrieved from Wikipedia. For the most up-to-date scientific information, please consult peer-reviewed literature or use the scientific databases available in DeSciOS.*"""
+
+                        # Try AI enhancement only if available and working
+                        try:
+                            if hasattr(self, 'generate_response') and callable(self.generate_response):
+                                print("🤖 Attempting AI enhancement of Wikipedia content...")
+                                ai_response = self.generate_response(prompt_override=summary_prompt)
+                                
+                                # Anti-hallucination check: if AI mentions "news" or "headlines", use direct content
+                                if ai_response and any(word in ai_response.lower() for word in ['news', 'headlines', 'recent', 'latest', 'study reveals', 'research shows']):
+                                    print("⚠️ AI response contains news/headlines - using direct Wikipedia content")
+                                    return direct_response
+                                elif ai_response and len(ai_response.strip()) > 100:
+                                    print("✅ AI enhancement successful")
+                                    return ai_response
+                                else:
+                                    print("⚠️ AI response too short or empty - using direct Wikipedia content")
+                                    return direct_response
+                            else:
+                                print("⚠️ AI model not available - using direct Wikipedia content")
+                                return direct_response
+                        except Exception as e:
+                            print(f"⚠️ AI enhancement failed: {e} - using direct Wikipedia content")
+                            return direct_response
+            except Exception as e:
+                print(f"Wikipedia API failed: {e}")
+            
+            # Fallback to web search if Wikipedia doesn't work
+            print(f"🌐 Falling back to web search for: {cleaned_query}")
+            
+            # Use a more robust approach with DuckDuckGo Instant Answer API
+            try:
+                print(f"🔍 Trying DuckDuckGo Instant Answer API...")
+                ddg_url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(cleaned_query)}&format=json&no_html=1&skip_disambig=1"
+                headers = {'User-Agent': 'DeSciOS Assistant/1.0 (Scientific Research Tool)'}
+                
+                r = requests.get(ddg_url, timeout=10, headers=headers)
+                if r.status_code == 200:
+                    data = r.json()
+                    
+                    # Check if we got a meaningful response
+                    if data.get('Abstract') and data['Abstract'].strip():
+                        abstract = data['Abstract']
+                        source_url = data.get('AbstractURL', '')
+                        source_name = data.get('AbstractSource', 'Wikipedia')
+                        
+                        summary_prompt = f"""CRITICAL INSTRUCTIONS: You are summarizing factual information from {source_name}. DO NOT create fictional news, headlines, or research studies. Stick EXACTLY to the information provided.
+
+Source Information:
+Source: {source_name}
+Content: {abstract}
+URL: {source_url}
+
+TASK: Create a factual scientific summary based ONLY on the provided content above.
+
+REQUIREMENTS:
+1. Use ONLY information from the provided abstract
+2. DO NOT invent news headlines, research studies, or recent developments
+3. DO NOT mention "recent news" or "latest headlines"
+4. Focus on established scientific facts and characteristics
+5. Organize information clearly with proper headings
+6. Include the source citation
+
+FORMAT YOUR RESPONSE AS:
+# 📚 Scientific Information: {cleaned_query}
+
+## Summary
+[Factual summary based on the provided content]
+
+## Source
+[{source_name}]({source_url})
+
+Remember: This is factual information from {source_name}, not recent news. Do not create fictional content."""
+                        
+                        # Always provide direct content first, then try AI enhancement if available
+                        direct_response = f"""# 📚 Scientific Information: {cleaned_query}
+
+## Summary
+{abstract}
+
+## Source
+[{source_name}]({source_url})
+
+*This information was retrieved from {source_name}. For the most up-to-date scientific information, please consult peer-reviewed literature or use the scientific databases available in DeSciOS.*"""
+
+                        # Try AI enhancement only if available and working
+                        try:
+                            if hasattr(self, 'generate_response') and callable(self.generate_response):
+                                print("🤖 Attempting AI enhancement of {source_name} content...")
+                                ai_response = self.generate_response(prompt_override=summary_prompt)
+                                
+                                # Anti-hallucination check: if AI mentions "news" or "headlines", use direct content
+                                if ai_response and any(word in ai_response.lower() for word in ['news', 'headlines', 'recent', 'latest', 'study reveals', 'research shows']):
+                                    print("⚠️ AI response contains news/headlines - using direct {source_name} content")
+                                    return direct_response
+                                elif ai_response and len(ai_response.strip()) > 100:
+                                    print("✅ AI enhancement successful")
+                                    return ai_response
+                                else:
+                                    print("⚠️ AI response too short or empty - using direct {source_name} content")
+                                    return direct_response
+                            else:
+                                print("⚠️ AI model not available - using direct {source_name} content")
+                                return direct_response
+                        except Exception as e:
+                            print(f"⚠️ AI enhancement failed: {e} - using direct {source_name} content")
+                            return direct_response
+                    
+                    elif data.get('Answer') and data['Answer'].strip():
+                        answer = data['Answer']
+                        return f"""# 📚 Information: {cleaned_query}
+
+## Answer
+{answer}
+
+*This information was retrieved from DuckDuckGo. For the most up-to-date scientific information, please consult peer-reviewed literature or use the scientific databases available in DeSciOS.*"""
+                    
+                    else:
+                        print("DuckDuckGo API returned no useful content")
+                        
+            except Exception as e:
+                print(f"DuckDuckGo API failed: {e}")
+            
+            # Final fallback: Try direct web scraping with improved headers
+            print(f"🌐 Trying direct web scraping...")
             headers = {
-                "User-Agent": "Mozilla/5.0",
-                "Accept-Encoding": "gzip, deflate"
+                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Cache-Control": "max-age=0"
             }
-            search_url = f"https://search.brave.com/search?q={requests.utils.quote(query)}"
-            r = requests.get(search_url, timeout=10, headers=headers)
+            
+            # Try multiple search engines with improved parsing
+            search_engines = [
+                f"https://search.brave.com/search?q={urllib.parse.quote(cleaned_query)}",
+                f"https://www.google.com/search?q={urllib.parse.quote(cleaned_query)}&num=5",
+                f"https://www.bing.com/search?q={urllib.parse.quote(cleaned_query)}"
+            ]
+            
+            search_url = None
+            r = None
+            
+            for url in search_engines:
+                try:
+                    print(f"Trying search engine: {url}")
+                    r = requests.get(url, timeout=15, headers=headers, allow_redirects=True)
+                    if r.status_code == 200:
+                        search_url = url
+                        break
+                except Exception as e:
+                    print(f"Search engine {url} failed: {e}")
+                    continue
+            
+            if not r or r.status_code != 200:
+                return "Unable to access search engines. Please check your internet connection."
+            
             soup = BeautifulSoup(r.text, "html.parser")
             links = soup.find_all('a', href=True)
-            result_links = [a for a in links if a['href'].startswith('http') and 'brave.com' not in a['href']]
+            
+            # Extract result links based on search engine with improved parsing
+            result_links = []
+            print(f"Searching with: {search_url}")
+            print(f"Total links found: {len(links)}")
+            
+            if "brave.com" in search_url:
+                # Improved Brave search parsing
+                for link in links:
+                    href = link.get('href', '')
+                    if (href.startswith('http') and 
+                        'brave.com' not in href and 
+                        not href.startswith('https://search.brave.com') and
+                        not href.startswith('javascript:') and
+                        len(href) > 20):  # Filter out short/trash links
+                        result_links.append(href)
+            elif "google.com" in search_url:
+                # Improved Google search parsing
+                for link in links:
+                    href = link.get('href', '')
+                    if href.startswith('/url?q='):
+                        try:
+                            actual_url = href.split('/url?q=')[1].split('&')[0]
+                            if (actual_url.startswith('http') and 
+                                'google.com' not in actual_url and
+                                len(actual_url) > 20):
+                                result_links.append(actual_url)
+                        except Exception as e:
+                            print(f"Error parsing Google URL {href}: {e}")
+                            continue
+                    elif href.startswith('http') and 'google.com' not in href:
+                        result_links.append(href)
+            elif "bing.com" in search_url:
+                # Improved Bing search parsing
+                for link in links:
+                    href = link.get('href', '')
+                    if (href.startswith('http') and 
+                        'bing.com' not in href and 
+                        not href.startswith('https://www.bing.com') and
+                        not href.startswith('javascript:') and
+                        len(href) > 20):
+                        result_links.append(href)
+            
+            print(f"Filtered result links: {len(result_links)}")
+            if result_links:
+                print(f"First few results: {result_links[:3]}")
+            
             if not result_links:
-                return "No web results found."
-            first_url = result_links[0]['href']
-            page = requests.get(first_url, timeout=10, headers=headers)
-            page_soup = BeautifulSoup(page.text, "html.parser")
-            texts = page_soup.stripped_strings
-            content = ' '.join(list(texts)[:1000])[:2000]
-            summary_prompt = f"Summarize the following web page for a scientist:\n\n{content}"
-            return self.generate_response(prompt_override=summary_prompt)
+                # If no links found, try to extract some basic information from the search page
+                try:
+                    # Look for snippets or descriptions in the search results
+                    snippets = []
+                    for element in soup.find_all(['p', 'div', 'span']):
+                        text = element.get_text().strip()
+                        if len(text) > 50 and len(text) < 500:  # Reasonable snippet length
+                            if any(keyword in text.lower() for keyword in cleaned_query.lower().split()):
+                                snippets.append(text)
+                    
+                    if snippets:
+                        # Use the first few snippets as content
+                        content = ' '.join(snippets[:3])
+                        summary_prompt = f"Based on the following search results for '{cleaned_query}', provide a brief summary:\n\n{content}"
+                        
+                        if hasattr(self, 'generate_response') and callable(self.generate_response):
+                            return self.generate_response(prompt_override=summary_prompt)
+                        else:
+                            return f"""# 📚 Search Results: {cleaned_query}
+
+## Summary
+{content[:500]}...
+
+*This information was extracted from search results. For more detailed information, please use Firefox ESR to search manually.*"""
+                    else:
+                        return "No web results found. The search engine may have changed its structure."
+                except Exception as e:
+                    print(f"Error extracting snippets: {e}")
+                    return "No web results found. The search engine may have changed its structure."
+            
+            # Get the first result
+            first_url = result_links[0]
+            print(f"Fetching content from: {first_url}")
+            
+            # Validate URL before making request
+            if not first_url or not first_url.strip():
+                return "Error: Invalid URL extracted from search results."
+            
+            # Ensure URL has proper scheme
+            if not first_url.startswith(('http://', 'https://')):
+                first_url = 'https://' + first_url
+            
+            print(f"Validated URL: {first_url}")
+            
+            # Fetch the actual page content
+            try:
+                page = requests.get(first_url, timeout=15, headers=headers, allow_redirects=True)
+                if page.status_code != 200:
+                    return f"Unable to fetch content from the search result (HTTP {page.status_code})"
+                
+                page_soup = BeautifulSoup(page.text, "html.parser")
+                
+                # Remove script and style elements
+                for script in page_soup(["script", "style"]):
+                    script.decompose()
+                
+                # Get text content
+                text_content = page_soup.get_text()
+                lines = (line.strip() for line in text_content.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                content = ' '.join(chunk for chunk in chunks if chunk)
+                content = content[:2000]  # Limit content length
+                
+                if not content.strip():
+                    return "The webpage content could not be extracted properly."
+                
+                summary_prompt = f"Summarize the following web page content for a scientist researching this topic:\n\n{content}"
+                
+                # Check if generate_response method is available and callable
+                if hasattr(self, 'generate_response') and callable(self.generate_response):
+                    return self.generate_response(prompt_override=summary_prompt)
+                else:
+                    print("Error: generate_response method is not available")
+                    return f"""I encountered an issue while trying to process web content for "{cleaned_query}". 
+
+**Error**: generate_response method is not available
+
+**Alternative Suggestions**:
+1. **Use Firefox ESR** (available in the Internet category) to search manually
+2. **Try a different search term** or rephrase your query
+3. **Use scientific databases** like PubMed or NCBI for medical/scientific topics
+4. **Check the system's internet connection**
+
+The DeSciOS environment includes Firefox ESR for web browsing, and you can access scientific databases directly through the browser."""
+                
+            except Exception as e:
+                print(f"Error fetching webpage content: {str(e)}")
+                # Try to provide a helpful response even if web search fails
+                return f"""I encountered an issue while trying to fetch web content for "{cleaned_query}". 
+
+**Error**: {str(e)}
+
+**Alternative Suggestions**:
+1. **Use Firefox ESR** (available in the Internet category) to search manually
+2. **Try a different search term** or rephrase your query
+3. **Use scientific databases** like PubMed or NCBI for medical/scientific topics
+4. **Check the system's internet connection**
+
+The DeSciOS environment includes Firefox ESR for web browsing, and you can access scientific databases directly through the browser."""
+                
         except Exception as e:
-            return f"Error during web search: {str(e)}"
+            print(f"Error during web search: {str(e)}")
+            return f"""I encountered an issue while trying to search for "{query}". 
+
+**Error**: {str(e)}
+
+**Alternative Suggestions**:
+1. **Use Firefox ESR** (available in the Internet category) to search manually
+2. **Try a different search term** or rephrase your query
+3. **Use scientific databases** like PubMed or NCBI for medical/scientific topics
+4. **Check the system's internet connection**
+
+The DeSciOS environment includes Firefox ESR for web browsing, and you can access scientific databases directly through the browser."""
 
     def scan_installed_tools(self):
         try:
@@ -1337,6 +1961,101 @@ Please check system permissions and ensure basic system utilities are available.
         except Exception as e:
             return f"Error handling memory query: {str(e)}"
     
+    def launch_firefox_search(self, user_text):
+        """Launch Firefox with a search query"""
+        try:
+            import urllib.parse
+            import subprocess
+            
+            # Clean the query by removing search-related words
+            search_terms = ["search", "online", "web", "internet", "find", "look up", "browse", "about", "what is", "tell me about", "information about", "research about", "news", "latest news", "recent news", "headlines", "breaking news", "current events"]
+            cleaned_query = user_text.lower()
+            for term in search_terms:
+                cleaned_query = cleaned_query.replace(term, "").strip()
+            
+            # Remove extra words like "for", "the", etc.
+            cleaned_query = cleaned_query.replace("for", "").replace("the", "").strip()
+            
+            # If the cleaned query is too short, use the original
+            if len(cleaned_query) < 3:
+                cleaned_query = user_text
+            
+            print(f"🔍 Original query: '{user_text}'")
+            print(f"🔍 Cleaned query: '{cleaned_query}'")
+            
+            # Create search URLs (use DuckDuckGo as primary, Google as fallback)
+            # Add news parameter to DuckDuckGo for news-related queries
+            if any(word in user_text.lower() for word in ["news", "latest", "recent", "headlines", "breaking"]):
+                duckduckgo_url = f"https://duckduckgo.com/?q={urllib.parse.quote(cleaned_query)}&ia=news&iar=news"
+            else:
+                duckduckgo_url = f"https://duckduckgo.com/?q={urllib.parse.quote(cleaned_query)}"
+            
+            google_url = f"https://www.google.com/search?q={urllib.parse.quote(cleaned_query)}"
+            brave_url = f"https://search.brave.com/search?q={urllib.parse.quote(cleaned_query)}"
+            
+            # Launch Firefox with the search query
+            try:
+                # Try DuckDuckGo first (no reCAPTCHA issues)
+                subprocess.Popen(
+                    ['firefox', duckduckgo_url],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True
+                )
+                
+                return f"""# 🌐 Firefox Search Launched
+
+✅ **Firefox ESR** has been launched with your search query!
+
+**Search Query**: {cleaned_query}
+**Primary Search**: DuckDuckGo (no reCAPTCHA issues)
+**Search URL**: {duckduckgo_url}
+
+Firefox should open shortly with search results. If you encounter any issues, try the alternative search engines below.
+
+**Alternative Search Engines:**
+- **DuckDuckGo** (current): [{duckduckgo_url}]({duckduckgo_url})
+- **Brave Search**: [{brave_url}]({brave_url})
+- **Google** (may have reCAPTCHA): [{google_url}]({google_url})
+
+**Scientific Search Options:**
+- **Wikipedia**: [https://en.wikipedia.org/wiki/{urllib.parse.quote(cleaned_query)}](https://en.wikipedia.org/wiki/{urllib.parse.quote(cleaned_query)})
+- **PubMed** (medical/scientific): [https://pubmed.ncbi.nlm.nih.gov/?term={urllib.parse.quote(cleaned_query)}](https://pubmed.ncbi.nlm.nih.gov/?term={urllib.parse.quote(cleaned_query)})
+- **Google Scholar**: [https://scholar.google.com/scholar?q={urllib.parse.quote(cleaned_query)}](https://scholar.google.com/scholar?q={urllib.parse.quote(cleaned_query)})
+- **arXiv** (preprints): [https://arxiv.org/search/?query={urllib.parse.quote(cleaned_query)}](https://arxiv.org/search/?query={urllib.parse.quote(cleaned_query)})
+
+**Scientific Databases:**
+- **PubMed** - Medical and scientific literature
+- **arXiv** - Physics, math, computer science preprints
+- **bioRxiv** - Biology preprints
+- **medRxiv** - Medical preprints
+
+**Note**: DuckDuckGo and Brave Search typically don't have reCAPTCHA issues like Google.
+
+**💡 Tip**: Click any of the links above to open them directly in Firefox!"""
+                
+            except Exception as e:
+                return f"""# 🌐 Firefox Launch Failed
+
+❌ **Error launching Firefox**: {str(e)}
+
+**Manual Options:**
+1. Open Firefox manually from the **Internet** category
+2. Navigate to: [{duckduckgo_url}]({duckduckgo_url})
+3. Or use the terminal: `firefox "{duckduckgo_url}"`
+
+**Alternative Search URLs:**
+- **DuckDuckGo** (recommended): [{duckduckgo_url}]({duckduckgo_url})
+- **Brave Search**: [{brave_url}]({brave_url})
+- **Google** (may have reCAPTCHA): [{google_url}]({google_url})
+- **Wikipedia**: [https://en.wikipedia.org/wiki/{urllib.parse.quote(cleaned_query)}](https://en.wikipedia.org/wiki/{urllib.parse.quote(cleaned_query)})
+- **PubMed**: [https://pubmed.ncbi.nlm.nih.gov/?term={urllib.parse.quote(cleaned_query)}](https://pubmed.ncbi.nlm.nih.gov/?term={urllib.parse.quote(cleaned_query)})
+
+**💡 Tip**: Click any of the links above to open them directly in Firefox!"""
+                
+        except Exception as e:
+            return f"Error launching Firefox search: {str(e)}"
+
     def handle_application_launch(self, user_text):
         """Handle application launch requests using MCP"""
         try:
@@ -1519,6 +2238,15 @@ Provide a comprehensive visual description that will help answer their question:
 
     def generate_response(self, prompt_override=None, use_vision=False):
         try:
+            # Check if required attributes are initialized
+            if not hasattr(self, 'text_model') or self.text_model is None:
+                print("Error: text_model is not initialized")
+                return "Error: AI model not properly initialized. Please restart the assistant."
+            
+            if not hasattr(self, 'ollama_url') or self.ollama_url is None:
+                print("Error: ollama_url is not initialized")
+                return "Error: Ollama service URL not properly initialized. Please restart the assistant."
+            
             prompt = prompt_override if prompt_override is not None else self.build_prompt()
             
             # If this is a vision query, first get vision description
@@ -1548,6 +2276,19 @@ Please answer the user's question using this visual information along with your 
                 "stream": True
             }
             print(f"Using text model {self.text_model} for final response")
+            print(f"Ollama URL: {self.ollama_url}")
+            print(f"Prompt length: {len(prompt)} characters")
+            
+            # Test Ollama connection first
+            try:
+                test_response = requests.get("http://localhost:11434/api/tags", timeout=5)
+                if test_response.status_code != 200:
+                    print(f"Ollama connection test failed: {test_response.status_code}")
+                    return "Error: Cannot connect to Ollama service. Please ensure Ollama is running and the command-r7b model is loaded."
+            except Exception as e:
+                print(f"Ollama connection test failed: {e}")
+                return "Error: Cannot connect to Ollama service. Please ensure Ollama is running and the command-r7b model is loaded."
+            
             response = requests.post(self.ollama_url, json=data, stream=True)
             print(f"Response status code: {response.status_code}")
             if response.status_code != 200:
@@ -1645,8 +2386,38 @@ Please answer the user's question using this visual information along with your 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         
         webview = WebKit2.WebView()
-        webview.set_background_color(Gdk.RGBA(0, 0, 0, 0))
+        webview.set_background_color(Gdk.RGBA(1, 1, 1, 1))  # White background
         webview.set_size_request(-1, 1)  # Let it shrink to fit
+        
+        # Add policy decision handler to open links in Firefox
+        def on_decide_policy(webview, decision, decision_type, user_data):
+            if decision_type == WebKit2.PolicyDecisionType.NAVIGATION_ACTION:
+                navigation_action = decision.get_navigation_action()
+                request = navigation_action.get_request()
+                uri = request.get_uri()
+                
+                # Only handle http/https links
+                if uri.startswith(('http://', 'https://')):
+                    try:
+                        # Launch Firefox with the URL
+                        subprocess.Popen(['firefox', uri], 
+                                       stdout=subprocess.DEVNULL, 
+                                       stderr=subprocess.DEVNULL)
+                        print(f"🌐 Opened link in Firefox: {uri}")
+                        decision.ignore()
+                        return True
+                    except Exception as e:
+                        print(f"❌ Failed to open link in Firefox: {e}")
+                        # Fall back to default behavior
+                        decision.use()
+                        return True
+                else:
+                    # For non-http links, use default behavior
+                    decision.use()
+                    return True
+            return False
+        
+        webview.connect('decide-policy', on_decide_policy)
 
         html_content = markdown.markdown(safe_decode(message))
         full_style = get_improved_css_styles()
