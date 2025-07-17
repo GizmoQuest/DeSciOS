@@ -204,7 +204,7 @@ body { color: #2c3e50; }
 class DeSciOSChatWidget(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="DeSciOS Assistant")
-        self.set_default_size(440, 680)
+        self.set_default_size(440, 710)
         self.set_keep_above(True)
         self.set_resizable(True)
         self.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
@@ -403,6 +403,7 @@ class DeSciOSChatWidget(Gtk.Window):
             ("🚀 Launch JupyterLab for data analysis", "Launch JupyterLab so I can start working on data analysis and scientific computing"),
             ("⚙️ Check system performance and health", "Check the current system performance, health metrics, and any potential issues"),
             ("🖥️ What desktop applications are currently open?", "Show me what desktop applications and windows are currently open and active"),
+            ("🆘 I need help with what I'm doing", "Help me with what I'm currently working on - analyze my screen and provide guidance"),
         ]
         
         # Create container for suggestion buttons (will be populated by create_suggestions)
@@ -1107,7 +1108,19 @@ window {
         ]
         is_vision_query = any(keyword in user_text.lower() for keyword in vision_keywords)
         
-        if is_vision_query:
+        # Check for help requests
+        help_keywords = [
+            "help", "help me", "i need help", "can you help", "please help", "assist me",
+            "i'm stuck", "what should i do", "how do i", "i don't know", "confused",
+            "trouble", "problem", "issue", "stuck", "lost", "guide me", "show me",
+            "explain", "what next", "next step", "what now", "i need assistance",
+            "support", "tutorial", "walkthrough", "step by step", "guide", "instructions"
+        ]
+        is_help_request = any(keyword in user_text.lower() for keyword in help_keywords)
+        
+        if is_help_request:
+            self.append_streaming_message("assistant", "🆘 Analyzing your screen for contextual help...")
+        elif is_vision_query:
             self.append_streaming_message("assistant", "👁️ Looking at the screen... then thinking...")
         else:
             self.append_streaming_message("assistant", "🤔 Thinking...")
@@ -1265,6 +1278,16 @@ How can I assist you with your research in a constructive way?"""
         
         self.conversation_history.append({"role": "user", "content": user_text})
         
+        # Check for help requests first
+        help_keywords = [
+            "help", "help me", "i need help", "can you help", "please help", "assist me",
+            "i'm stuck", "what should i do", "how do i", "i don't know", "confused",
+            "trouble", "problem", "issue", "stuck", "lost", "guide me", "show me",
+            "explain", "what next", "next step", "what now", "i need assistance",
+            "support", "tutorial", "walkthrough", "step by step", "guide", "instructions"
+        ]
+        is_help_request = any(keyword in user_text.lower() for keyword in help_keywords)
+        
         # Check for vision-related queries with expanded keywords
         vision_keywords = [
             # Direct vision requests
@@ -1288,6 +1311,12 @@ How can I assist you with your research in a constructive way?"""
         ]
         is_vision_query = any(keyword in user_text.lower() for keyword in vision_keywords)
         
+        # For help requests, always capture screen to provide contextual assistance
+        if is_help_request:
+            print(f"🆘 Help request detected: '{user_text}'")
+            print("📸 Capturing screen for contextual help...")
+            is_vision_query = True  # Force vision for help requests
+        
         if is_vision_query:
             print(f"🔍 Vision query detected: '{user_text}'")
             print("📸 Will use two-stage process: Vision model → Text model")
@@ -1308,8 +1337,11 @@ How can I assist you with your research in a constructive way?"""
                 print(f"Screenshot capture error: {e}")
                 self.current_screenshot = None
         
+        # Handle help requests first (with vision)
+        if is_help_request:
+            response = self.handle_help_request(user_text)
         # Handle online search requests by launching Firefox
-        if any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up", "search online", "search internet", "web search", "online search", "internet search", "about", "what is", "tell me about", "information about", "research about", "news", "latest news", "recent news", "headlines", "breaking news", "current events"]):
+        elif any(x in user_text.lower() for x in ["search the web", "browse the web", "find online", "web result", "look up", "search online", "search internet", "web search", "online search", "internet search", "about", "what is", "tell me about", "information about", "research about", "news", "latest news", "recent news", "headlines", "breaking news", "current events"]):
             response = self.launch_firefox_search(user_text)
         elif any(x in user_text.lower() for x in ["what is installed", "what tools", "what software", "what can you do", "available tools", "list apps", "list software"]):
             response = self.scan_installed_tools()
@@ -2055,6 +2087,114 @@ Firefox should open shortly with search results. If you encounter any issues, tr
                 
         except Exception as e:
             return f"Error launching Firefox search: {str(e)}"
+
+    def handle_help_request(self, user_text):
+        """Handle help requests with contextual screen analysis"""
+        try:
+            print(f"🆘 Processing help request: '{user_text}'")
+            
+            # Get vision description of current screen
+            vision_description = None
+            if self.current_screenshot:
+                vision_description = self.get_vision_description(user_text)
+            
+            # Create a comprehensive help prompt
+            help_prompt = f"""You are DeSciOS Assistant, providing contextual help to a user. The user has asked for help with: "{user_text}"
+
+{f"VISUAL CONTEXT: I can see the current screen shows: {vision_description}" if vision_description else "VISUAL CONTEXT: Unable to capture screen content at the moment."}
+
+TASK: Provide comprehensive, contextual help based on what you can see and the user's request. Focus on:
+
+1. **Immediate Assistance**: What specific help does the user need right now?
+2. **Context Analysis**: What applications, tools, or interfaces are visible?
+3. **Step-by-Step Guidance**: Provide clear, actionable steps
+4. **Scientific Workflow**: Suggest relevant DeSciOS tools and workflows
+5. **Troubleshooting**: Address any visible issues or errors
+6. **Next Steps**: Guide the user toward their research goals
+
+RESPONSE FORMAT:
+# 🆘 Contextual Help
+
+## What I Can See
+[Describe the current screen context and visible applications/tools]
+
+## Immediate Assistance
+[Provide specific help for the user's request]
+
+## Recommended Actions
+[Step-by-step guidance with clear instructions]
+
+## Scientific Tools Available
+[Suggest relevant DeSciOS applications and workflows]
+
+## Next Steps
+[Guide the user toward their research objectives]
+
+Remember: Be encouraging, specific, and focus on helping the user achieve their scientific research goals using DeSciOS capabilities."""
+
+            # Generate contextual help response
+            response = self.generate_response(prompt_override=help_prompt, use_vision=True)
+            
+            if not response or response.strip() == "":
+                # Fallback response if AI generation fails
+                response = f"""# 🆘 Help Response
+
+I can see you need help with: **{user_text}**
+
+{f"**Current Screen Context**: {vision_description}" if vision_description else "**Note**: I'm unable to see your current screen, but I can still help you!"}
+
+## How Can I Help?
+
+I'm here to assist you with:
+- **Scientific Computing**: Python, R, JupyterLab, Spyder
+- **Data Analysis**: Statistical analysis, visualization, workflows
+- **Bioinformatics**: UGENE, Nextflow, molecular modeling
+- **Research Tools**: QGIS, Fiji, CellModeller, and more
+- **System Navigation**: Finding and launching applications
+- **Workflow Design**: Setting up reproducible research pipelines
+
+## Quick Actions You Can Try:
+1. **Launch an application**: "Launch JupyterLab" or "Open RStudio"
+2. **Get system info**: "Show system status" or "Check memory usage"
+3. **Find tools**: "What bioinformatics tools are available?"
+4. **Web search**: "Search for [topic]" to open Firefox with search results
+
+Please let me know what specific aspect you need help with, and I'll provide detailed guidance!"""
+
+            return response
+            
+        except Exception as e:
+            print(f"Error handling help request: {e}")
+            return f"""# 🆘 Help Response
+
+I can see you need help with: **{user_text}**
+
+**Error**: I encountered an issue while processing your help request: {str(e)}
+
+## General Help Options:
+
+### Scientific Computing
+- **JupyterLab**: Interactive notebooks for data analysis
+- **RStudio**: R programming and statistics
+- **Spyder**: Python scientific IDE
+- **GNU Octave**: Mathematical computing
+
+### Bioinformatics
+- **UGENE**: Bioinformatics suite
+- **Nextflow**: Workflow management
+- **CellModeller**: Synthetic biology
+
+### Visualization & Analysis
+- **Fiji (ImageJ)**: Image processing
+- **QGIS**: Geographic Information System
+- **GRASS GIS**: Advanced geospatial analysis
+
+### Utilities
+- **Firefox**: Web browser for research
+- **IPFS Desktop**: Decentralized file sharing
+- **Syncthing**: File synchronization
+
+Please try asking for help with a specific tool or task, and I'll provide detailed guidance!"""
 
     def handle_application_launch(self, user_text):
         """Handle application launch requests using MCP"""
