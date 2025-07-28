@@ -16,7 +16,7 @@ class IPFSService {
   // Initialize IPFS connection
   async initialize() {
     try {
-      const response = await axios.get(`${this.apiBase}/id`);
+      const response = await axios.post(`${this.apiBase}/id`);
       if (response.data && response.data.ID) {
         this.isConnected = true;
         console.log('✅ IPFS connection established:', response.data.ID);

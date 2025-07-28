@@ -239,6 +239,12 @@ RUN chown -R $USER:$USER /home/$USER/DeSciOS && \
     echo '[Desktop Entry]\nName=Academic Platform\nExec=firefox http://localhost:8000\nIcon=applications-science\nType=Application\nCategories=Education;' \
     > /usr/share/applications/academic-platform.desktop
 
+# Initialize Academic Platform Database
+RUN cd /home/$USER/DeSciOS/node && \
+    chmod +x start-academic.sh && \
+    chmod +x ensure-admin.js && \
+    chown -R $USER:$USER /home/$USER/.academic
+
 # Install DeSci Assistant font
 RUN apt-get update && apt-get install -y wget fontconfig && \
     mkdir -p /usr/share/fonts/truetype/orbitron && \

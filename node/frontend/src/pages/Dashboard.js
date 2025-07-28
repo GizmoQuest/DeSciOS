@@ -36,7 +36,6 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useSocket } from '../context/SocketContext';
-import axios from 'axios';
 
 function Dashboard() {
   const [stats, setStats] = useState({
@@ -50,7 +49,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  const { user } = useAuth();
+  const { user, api } = useAuth();
   const { connected, onlineUsers } = useSocket();
   const navigate = useNavigate();
 
@@ -61,13 +60,26 @@ function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      if (!user || !user.id) {
+        setError('User not authenticated');
+        return;
+      }
+
       const [statsResponse, activityResponse] = await Promise.all([
-        axios.get('/api/users/stats'),
-        axios.get('/api/users/activity')
+        api.get(`/users/${user.id}/stats`),
+        api.get(`/users/${user.id}/activity`)
       ]);
 
-      setStats(statsResponse.data);
-      setRecentActivity(activityResponse.data.recentActivity || []);
+      // Extract stats from the response structure
+      const statsData = statsResponse.data.stats || {};
+      setStats({
+        courses: (statsData.courses?.created || 0) + (statsData.courses?.enrolled || 0),
+        research: (statsData.research?.led || 0) + (statsData.research?.collaborated || 0),
+        collaborations: (statsData.collaborations?.owned || 0) + (statsData.collaborations?.member || 0),
+        ipfsFiles: statsData.documents?.uploaded || 0
+      });
+      
+      setRecentActivity(activityResponse.data.activities || []);
       setUpcomingTasks(activityResponse.data.upcomingTasks || []);
     } catch (err) {
       setError('Failed to load dashboard data');

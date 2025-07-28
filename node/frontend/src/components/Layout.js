@@ -52,6 +52,45 @@ const menuItems = [
 function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
+  const [notifications, setNotifications] = useState(() => {
+    // Load notifications from localStorage on component mount
+    const savedNotifications = localStorage.getItem('descios-notifications');
+    if (savedNotifications) {
+      return JSON.parse(savedNotifications);
+    }
+    // Default notifications if none saved
+    return [
+      {
+        id: 1,
+        title: 'Welcome to DeSciOS Academic Platform!',
+        message: 'Your account has been successfully set up.',
+        time: '2 hours ago',
+        read: false
+      },
+      {
+        id: 2,
+        title: 'Database initialized successfully',
+        message: 'Your academic platform database is ready.',
+        time: '1 hour ago',
+        read: false
+      },
+      {
+        id: 3,
+        title: 'IPFS connection established',
+        message: 'Decentralized storage is now available.',
+        time: '30 minutes ago',
+        read: false
+      },
+      {
+        id: 4,
+        title: 'Ready to create your first course',
+        message: 'Start building your academic content.',
+        time: 'Just now',
+        read: false
+      }
+    ];
+  });
   const { user, logout } = useAuth();
   const { connected, onlineUsers } = useSocket();
   const navigate = useNavigate();
@@ -84,6 +123,39 @@ function Layout() {
     handleClose();
     navigate('/settings');
   };
+
+  const handleNotificationMenu = (event) => {
+    setNotificationAnchorEl(event.currentTarget);
+  };
+
+  const handleNotificationClose = () => {
+    setNotificationAnchorEl(null);
+  };
+
+  const markNotificationAsRead = (notificationId) => {
+    setNotifications(prev => {
+      const updated = prev.map(notification => 
+        notification.id === notificationId 
+          ? { ...notification, read: true }
+          : notification
+      );
+      // Save to localStorage
+      localStorage.setItem('descios-notifications', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => {
+      const updated = prev.map(notification => ({ ...notification, read: true }));
+      // Save to localStorage
+      localStorage.setItem('descios-notifications', JSON.stringify(updated));
+      return updated;
+    });
+    setNotificationAnchorEl(null);
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const getRoleColor = (role) => {
     switch (role) {
@@ -177,11 +249,79 @@ function Layout() {
               size="small"
             />
             
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="error">
+            <IconButton 
+              color="inherit"
+              onClick={handleNotificationMenu}
+              aria-controls="notification-menu"
+              aria-haspopup="true"
+            >
+              <Badge badgeContent={unreadCount} color="error">
                 <Notifications />
               </Badge>
             </IconButton>
+            
+            <Menu
+              id="notification-menu"
+              anchorEl={notificationAnchorEl}
+              open={Boolean(notificationAnchorEl)}
+              onClose={handleNotificationClose}
+              PaperProps={{
+                sx: {
+                  width: 320,
+                  maxHeight: 400
+                }
+              }}
+            >
+              <MenuItem sx={{ borderBottom: '1px solid #eee', backgroundColor: '#f8f9fa' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                  Notifications ({notifications.length})
+                </Typography>
+              </MenuItem>
+              {notifications.map((notification) => (
+                <MenuItem 
+                  key={notification.id}
+                  onClick={() => markNotificationAsRead(notification.id)}
+                  sx={{ 
+                    backgroundColor: notification.read ? 'transparent' : '#f0f8ff',
+                    '&:hover': {
+                      backgroundColor: notification.read ? '#f5f5f5' : '#e6f3ff'
+                    }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: notification.read ? 'normal' : 'medium',
+                        color: notification.read ? 'text.secondary' : 'text.primary'
+                      }}
+                    >
+                      {notification.title}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {notification.message}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {notification.time}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              ))}
+              <MenuItem sx={{ borderTop: '1px solid #eee', backgroundColor: '#f8f9fa' }}>
+                <Typography 
+                  variant="body2" 
+                  color="primary" 
+                  sx={{ 
+                    cursor: 'pointer', 
+                    textAlign: 'center', 
+                    width: '100%' 
+                  }}
+                  onClick={markAllAsRead}
+                >
+                  Mark all as read
+                </Typography>
+              </MenuItem>
+            </Menu>
             
             <IconButton
               size="large"

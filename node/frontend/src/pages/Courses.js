@@ -60,7 +60,7 @@ function Courses() {
   const [enrollDialog, setEnrollDialog] = useState(false);
   const [enrollingCourse, setEnrollingCourse] = useState(null);
 
-  const { user } = useAuth();
+  const { user, api } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,8 +74,8 @@ function Courses() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/courses');
-      setCourses(response.data);
+      const response = await api.get('/courses');
+      setCourses(response.data.courses || []);
     } catch (err) {
       setError('Failed to fetch courses');
       console.error('Courses error:', err);

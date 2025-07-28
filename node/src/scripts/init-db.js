@@ -421,144 +421,159 @@ async function initializeDatabase() {
   try {
     console.log('🔄 Initializing database...');
     
-    // Create database and tables
-    await sequelize.sync({ force: true });
-    console.log('✅ Database tables created');
+    // Check if database already has users
+    let shouldReinitialize = true;
+    try {
+      await sequelize.authenticate();
+      const userCount = await User.count();
+      if (userCount > 0) {
+        console.log(`✅ Database already contains ${userCount} users, skipping initialization`);
+        shouldReinitialize = false;
+      }
+    } catch (error) {
+      console.log('📊 Database needs initialization');
+    }
     
-    // Create default admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    const adminUser = await User.create({
-      username: 'admin',
-      email: 'admin@descios.org',
-      password: hashedPassword,
-      role: 'admin',
-      profile: {
-        name: 'Admin User',
-        institution: 'DeSciOS',
-        bio: 'System Administrator'
-      },
-      isActive: true
-    });
-    
-    console.log('✅ Default admin user created');
-    console.log('📧 Admin email: admin@descios.org');
-    console.log('🔑 Admin password: admin123');
-    
-    // Create sample instructor
-    const instructorPassword = await bcrypt.hash('instructor123', 10);
-    const instructor = await User.create({
-      username: 'janesmith',
-      email: 'instructor@descios.org',
-      password: instructorPassword,
-      role: 'instructor',
-      profile: {
-        name: 'Dr. Jane Smith',
-        institution: 'DeSciOS University',
-        bio: 'Computer Science Professor'
-      },
-      isActive: true
-    });
-    
-    // Create sample researcher
-    const researcherPassword = await bcrypt.hash('researcher123', 10);
-    const researcher = await User.create({
-      username: 'johndoe',
-      email: 'researcher@descios.org',
-      password: researcherPassword,
-      role: 'researcher',
-      profile: {
-        name: 'Dr. John Doe',
-        institution: 'DeSciOS Research Institute',
-        bio: 'Data Science Researcher'
-      },
-      isActive: true
-    });
-    
-    // Create sample student
-    const studentPassword = await bcrypt.hash('student123', 10);
-    const student = await User.create({
-      username: 'alicejohnson',
-      email: 'student@descios.org',
-      password: studentPassword,
-      role: 'student',
-      profile: {
-        name: 'Alice Johnson',
-        institution: 'DeSciOS University',
-        bio: 'Computer Science Student'
-      },
-      isActive: true
-    });
-    
-    console.log('✅ Sample users created');
-    
-    // Create sample course
-    const course = await Course.create({
-      title: 'Introduction to Decentralized Science',
-      description: 'Learn about decentralized science, IPFS, and collaborative research.',
-      category: 'science',
-      status: 'active',
-      instructorId: instructor.id,
-      content: [
-        {
-          type: 'lesson',
-          title: 'What is DeSci?',
-          content: 'Introduction to decentralized science and its principles.'
+    if (shouldReinitialize) {
+      // Create database and tables
+      await sequelize.sync({ force: true });
+      console.log('✅ Database tables created');
+      
+      // Create default admin user
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      const adminUser = await User.create({
+        username: 'admin',
+        email: 'admin@descios.org',
+        password: hashedPassword,
+        role: 'admin',
+        profile: {
+          name: 'Admin User',
+          institution: 'DeSciOS',
+          bio: 'System Administrator'
         },
-        {
-          type: 'lesson',
-          title: 'IPFS and Distributed Storage',
-          content: 'Understanding IPFS and how it enables decentralized storage.'
+        isActive: true
+      });
+      
+      console.log('✅ Default admin user created');
+      console.log('📧 Admin email: admin@descios.org');
+      console.log('🔑 Admin password: admin123');
+      
+      // Create sample instructor
+      const instructorPassword = await bcrypt.hash('instructor123', 10);
+      const instructor = await User.create({
+        username: 'janesmith',
+        email: 'instructor@descios.org',
+        password: instructorPassword,
+        role: 'instructor',
+        profile: {
+          name: 'Dr. Jane Smith',
+          institution: 'DeSciOS University',
+          bio: 'Computer Science Professor'
+        },
+        isActive: true
+      });
+      
+      // Create sample researcher
+      const researcherPassword = await bcrypt.hash('researcher123', 10);
+      const researcher = await User.create({
+        username: 'johndoe',
+        email: 'researcher@descios.org',
+        password: researcherPassword,
+        role: 'researcher',
+        profile: {
+          name: 'Dr. John Doe',
+          institution: 'DeSciOS Research Institute',
+          bio: 'Data Science Researcher'
+        },
+        isActive: true
+      });
+      
+      // Create sample student
+      const studentPassword = await bcrypt.hash('student123', 10);
+      const student = await User.create({
+        username: 'alicejohnson',
+        email: 'student@descios.org',
+        password: studentPassword,
+        role: 'student',
+        profile: {
+          name: 'Alice Johnson',
+          institution: 'DeSciOS University',
+          bio: 'Computer Science Student'
+        },
+        isActive: true
+      });
+      
+      console.log('✅ Sample users created');
+      
+      // Create sample course
+      const course = await Course.create({
+        title: 'Introduction to Decentralized Science',
+        description: 'Learn about decentralized science, IPFS, and collaborative research.',
+        category: 'science',
+        status: 'active',
+        instructorId: instructor.id,
+        content: [
+          {
+            type: 'lesson',
+            title: 'What is DeSci?',
+            content: 'Introduction to decentralized science and its principles.'
+          },
+          {
+            type: 'lesson',
+            title: 'IPFS and Distributed Storage',
+            content: 'Understanding IPFS and how it enables decentralized storage.'
+          }
+        ],
+        settings: {
+          enrollmentOpen: true,
+          maxStudents: 100
         }
-      ],
-      settings: {
-        enrollmentOpen: true,
-        maxStudents: 100
-      }
-    });
-    
-    // Enroll student in course
-    await course.addStudent(student);
-    
-    console.log('✅ Sample course created');
-    
-    // Create sample research project
-    const research = await ResearchProject.create({
-      title: 'Blockchain in Scientific Publishing',
-      description: 'Exploring the use of blockchain technology in scientific publishing.',
-      category: 'research',
-      status: 'active',
-      visibility: 'public',
-      leaderId: researcher.id,
-      data: {
-        methodology: 'Mixed methods research',
-        timeline: '6 months',
-        budget: 50000
-      }
-    });
-    
-    // Add collaborator to research
-    await research.addCollaborator(instructor);
-    
-    console.log('✅ Sample research project created');
-    
-    // Create sample collaboration
-    const collaboration = await Collaboration.create({
-      name: 'DeSci Development Team',
-      description: 'Collaborative workspace for DeSci platform development.',
-      type: 'project',
-      status: 'active',
-      visibility: 'private',
-      creatorId: adminUser.id,
-      settings: {
-        allowFileSharing: true,
-        allowMessaging: true
-      }
-    });
-    
-    // Add members to collaboration
-    await collaboration.addMembers([instructor, researcher, student]);
-    
-    console.log('✅ Sample collaboration created');
+      });
+      
+      // Enroll student in course
+      await course.addStudent(student);
+      
+      console.log('✅ Sample course created');
+      
+      // Create sample research project
+      const research = await ResearchProject.create({
+        title: 'Blockchain in Scientific Publishing',
+        description: 'Exploring the use of blockchain technology in scientific publishing.',
+        category: 'research',
+        status: 'active',
+        visibility: 'public',
+        leaderId: researcher.id,
+        data: {
+          methodology: 'Mixed methods research',
+          timeline: '6 months',
+          budget: 50000
+        }
+      });
+      
+      // Add collaborator to research
+      await research.addCollaborator(instructor);
+      
+      console.log('✅ Sample research project created');
+      
+      // Create sample collaboration
+      const collaboration = await Collaboration.create({
+        name: 'DeSci Development Team',
+        description: 'Collaborative workspace for DeSci platform development.',
+        type: 'project',
+        status: 'active',
+        visibility: 'private',
+        creatorId: adminUser.id,
+        settings: {
+          allowFileSharing: true,
+          allowMessaging: true
+        }
+      });
+      
+      // Add members to collaboration
+      await collaboration.addMembers([instructor, researcher, student]);
+      
+      console.log('✅ Sample collaboration created');
+    }
     
     console.log('🎉 Database initialization completed successfully!');
     console.log('🚀 You can now start the academic platform');

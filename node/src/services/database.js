@@ -5,7 +5,7 @@ const fs = require('fs');
 // Initialize Sequelize with SQLite
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: path.join(__dirname, '../data/academic_platform.db'),
+  storage: process.env.DATABASE_PATH || path.join(__dirname, '../data/academic_platform.db'),
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
     max: 5,
