@@ -68,7 +68,7 @@ const requireOwnership = (Model, paramName = 'id') => {
 
       // Check if user owns the resource
       const ownerField = Model.name === 'Course' ? 'instructorId' : 
-                        Model.name === 'ResearchProject' ? 'leaderId' : 'ownerId';
+                        Model.name === 'ResearchProject' ? 'leaderId' : 'creatorId';
 
       if (resource[ownerField] !== req.user.userId && req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Access denied' });

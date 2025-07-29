@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -23,13 +23,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
-const CreateCourse = () => {
+const CreateCourse = ({ editing = false, initialData = null }) => {
   const navigate = useNavigate();
   const { api } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(initialData || {
     title: '',
     description: '',
     category: '',
@@ -38,6 +38,15 @@ const CreateCourse = () => {
     syllabus: [{ title: '', description: '', duration: '' }],
     resources: []
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        syllabus: initialData.syllabus?.length ? initialData.syllabus : [{ title: '', description: '', duration: '' }]
+      });
+    }
+  }, [initialData]);
 
   const [files, setFiles] = useState([]);
 
@@ -157,17 +166,17 @@ const CreateCourse = () => {
         resources = await uploadFilesToIPFS();
       }
 
-      // Create course
-      const courseData = {
-        ...formData,
-        resources,
-        status: 'published'
-      };
-
-      const response = await api.post('/courses', courseData);
+      let response;
+      if (editing) {
+        const courseData = { ...formData, resources };
+        response = await api.put(`/courses/${initialData.id}`, courseData);
+      } else {
+        const courseData = { ...formData, resources, status: 'published' };
+        response = await api.post('/courses', courseData);
+      }
       
-      toast.success('Course created successfully!');
-      navigate(`/courses/${response.data.course.id}`);
+      toast.success(`Course ${editing ? 'updated' : 'created'} successfully!`);
+      navigate(`/courses/${editing ? initialData.id : response.data.course.id}`);
       
     } catch (error) {
       console.error('Error creating course:', error);
@@ -182,7 +191,7 @@ const CreateCourse = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Create New Course
+          {editing ? 'Edit Course' : 'Create New Course'}
         </Typography>
         
         {error && (
@@ -387,7 +396,7 @@ const CreateCourse = () => {
                   disabled={loading}
                   startIcon={loading ? <CircularProgress size={20} /> : null}
                 >
-                  {loading ? 'Creating...' : 'Create Course'}
+                  {loading ? (editing ? 'Updating...' : 'Creating...') : (editing ? 'Save Changes' : 'Create Course')}
                 </Button>
               </Box>
             </Grid>

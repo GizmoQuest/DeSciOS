@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -23,19 +23,25 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
-const CreateCollaboration = () => {
+const CreateCollaboration = ({ editing = false, initialData = null }) => {
   const navigate = useNavigate();
   const { api } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(initialData || {
     title: '',
     description: '',
     type: 'study_group',
     isPublic: true,
     documents: []
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({ ...initialData });
+    }
+  }, [initialData]);
 
   const [files, setFiles] = useState([]);
 
@@ -109,17 +115,17 @@ const CreateCollaboration = () => {
         documents = await uploadFilesToIPFS();
       }
 
-      // Create collaboration workspace
-      const workspaceData = {
-        ...formData,
-        documents,
-        status: 'active'
-      };
-
-      const response = await api.post('/collaboration', workspaceData);
+      let response;
+      if (editing) {
+        const workspaceData = { ...formData, documents };
+        response = await api.put(`/collaboration/${initialData.id}`, workspaceData);
+      } else {
+        const workspaceData = { ...formData, documents, status: 'active' };
+        response = await api.post('/collaboration', workspaceData);
+      }
       
-      toast.success('Collaboration workspace created successfully!');
-      navigate(`/collaboration/${response.data.collaboration.id}`);
+      toast.success(`Collaboration workspace ${editing ? 'updated' : 'created'} successfully!`);
+      navigate(`/collaboration/${editing ? initialData.id : response.data.collaboration.id}`);
       
     } catch (error) {
       console.error('Error creating collaboration workspace:', error);
@@ -134,7 +140,7 @@ const CreateCollaboration = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Create New Collaboration Workspace
+          {editing ? 'Edit Collaboration Workspace' : 'Create New Collaboration Workspace'}
         </Typography>
         
         {error && (
@@ -296,7 +302,7 @@ const CreateCollaboration = () => {
                   disabled={loading}
                   startIcon={loading ? <CircularProgress size={20} /> : null}
                 >
-                  {loading ? 'Creating...' : 'Create Workspace'}
+                  {loading ? (editing ? 'Updating...' : 'Creating...') : (editing ? 'Save Changes' : 'Create Workspace')}
                 </Button>
               </Box>
             </Grid>

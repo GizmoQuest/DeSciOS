@@ -18,6 +18,7 @@ import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
 import CreateCourse from './pages/CreateCourse';
+import EditCourse from './pages/EditCourse';
 import Research from './pages/Research';
 import ResearchDetail from './pages/ResearchDetail';
 import CreateResearch from './pages/CreateResearch';
@@ -25,6 +26,7 @@ import EditResearch from './pages/EditResearch';
 import Collaboration from './pages/Collaboration';
 import CollaborationDetail from './pages/CollaborationDetail';
 import CreateCollaboration from './pages/CreateCollaboration';
+import EditCollaboration from './pages/EditCollaboration';
 import Profile from './pages/Profile';
 import IPFSManager from './pages/IPFSManager';
 import Users from './pages/Users';
@@ -113,6 +115,7 @@ function AppContent() {
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:id" element={<CourseDetail />} />
             <Route path="/courses/create" element={<CreateCourse />} />
+            <Route path="/courses/:id/edit" element={<EditCourse />} />
             
             {/* Research */}
             <Route path="/research" element={<Research />} />
@@ -124,6 +127,7 @@ function AppContent() {
             <Route path="/collaboration" element={<Collaboration />} />
             <Route path="/collaboration/:id" element={<CollaborationDetail />} />
             <Route path="/collaboration/create" element={<CreateCollaboration />} />
+            <Route path="/collaboration/:id/edit" element={<EditCollaboration />} />
             
             {/* User Management */}
             <Route path="/users" element={<Users />} />
