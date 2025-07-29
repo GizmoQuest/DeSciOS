@@ -57,16 +57,21 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       const response = await api.get(`/users/${user.id}/profile`);
-      setProfile(response.data.profile || response.data);
+      const profileData = response.data.user || response.data;
+      setProfile({
+        ...profileData,
+        stats: response.data.stats || {},
+        recentActivity: response.data.recentActivity || {}
+      });
       setEditForm({
-        username: (response.data.profile || response.data).username,
-        email: (response.data.profile || response.data).email,
+        username: profileData.username,
+        email: profileData.email,
         profile: {
-          name: (response.data.profile || response.data).profile?.name || '',
-          institution: (response.data.profile || response.data).profile?.institution || '',
-          bio: (response.data.profile || response.data).profile?.bio || '',
-          website: (response.data.profile || response.data).profile?.website || '',
-          location: (response.data.profile || response.data).profile?.location || ''
+          name: profileData.profile?.name || profileData.profile?.firstName || '',
+          institution: profileData.profile?.institution || '',
+          bio: profileData.profile?.bio || '',
+          website: profileData.profile?.website || '',
+          location: profileData.profile?.location || ''
         }
       });
     } catch (error) {
@@ -79,7 +84,11 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      await api.put(`/users/${user.id}/profile`, editForm);
+      await api.put('/auth/profile', {
+        username: editForm.username,
+        email: editForm.email,
+        profile: editForm.profile
+      });
       toast.success('Profile updated successfully');
       setEditing(false);
       fetchProfile();
@@ -510,9 +519,108 @@ const Profile = () => {
             <Typography variant="h6" gutterBottom>
               Recent Activity
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Activity tracking features coming soon...
-            </Typography>
+            
+            {profile.recentActivity && (
+              <Grid container spacing={3}>
+                {/* Courses */}
+                {profile.recentActivity.courses && profile.recentActivity.courses.length > 0 && (
+                  <Grid item xs={12} md={6}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          <SchoolIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                          Recent Courses
+                        </Typography>
+                        <List dense>
+                          {profile.recentActivity.courses.map((course) => (
+                            <ListItem key={course.id}>
+                              <ListItemText
+                                primary={course.title}
+                                secondary={`${course.category} • ${new Date(course.createdAt).toLocaleDateString()}`}
+                              />
+                              <Chip
+                                label={course.status}
+                                size="small"
+                                color={course.status === 'published' ? 'success' : 'warning'}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+
+                {/* Research Projects */}
+                {profile.recentActivity.researchProjects && profile.recentActivity.researchProjects.length > 0 && (
+                  <Grid item xs={12} md={6}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          <ScienceIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                          Recent Research Projects
+                        </Typography>
+                        <List dense>
+                          {profile.recentActivity.researchProjects.map((project) => (
+                            <ListItem key={project.id}>
+                              <ListItemText
+                                primary={project.title}
+                                secondary={`${project.field} • ${new Date(project.createdAt).toLocaleDateString()}`}
+                              />
+                              <Chip
+                                label={project.status}
+                                size="small"
+                                color={project.status === 'active' ? 'success' : 'warning'}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+
+                {/* Collaborations */}
+                {profile.recentActivity.collaborations && profile.recentActivity.collaborations.length > 0 && (
+                  <Grid item xs={12} md={6}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          <GroupIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                          Recent Collaborations
+                        </Typography>
+                        <List dense>
+                          {profile.recentActivity.collaborations.map((collab) => (
+                            <ListItem key={collab.id}>
+                              <ListItemText
+                                primary={collab.title}
+                                secondary={`${collab.type} • ${new Date(collab.createdAt).toLocaleDateString()}`}
+                              />
+                              <Chip
+                                label={collab.status}
+                                size="small"
+                                color={collab.status === 'active' ? 'success' : 'warning'}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+              </Grid>
+            )}
+
+            {(!profile.recentActivity || 
+              (!profile.recentActivity.courses?.length && 
+               !profile.recentActivity.researchProjects?.length && 
+               !profile.recentActivity.collaborations?.length)) && (
+              <Box textAlign="center" py={4}>
+                <Typography variant="body2" color="text.secondary">
+                  No recent activity to display. Start creating courses, research projects, or collaborations to see your activity here.
+                </Typography>
+              </Box>
+            )}
           </Box>
         )}
 
@@ -522,9 +630,136 @@ const Profile = () => {
             <Typography variant="h6" gutterBottom>
               Account Settings
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Account settings features coming soon...
-            </Typography>
+            
+            <Grid container spacing={3}>
+              {/* Notification Settings */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Notification Preferences
+                    </Typography>
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Email Notifications</InputLabel>
+                      <Select
+                        value="all"
+                        label="Email Notifications"
+                      >
+                        <MenuItem value="all">All notifications</MenuItem>
+                        <MenuItem value="important">Important only</MenuItem>
+                        <MenuItem value="none">No notifications</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Course Updates</InputLabel>
+                      <Select
+                        value="enrolled"
+                        label="Course Updates"
+                      >
+                        <MenuItem value="enrolled">Enrolled courses only</MenuItem>
+                        <MenuItem value="all">All courses</MenuItem>
+                        <MenuItem value="none">No updates</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <FormControl fullWidth>
+                      <InputLabel>Research Updates</InputLabel>
+                      <Select
+                        value="collaborating"
+                        label="Research Updates"
+                      >
+                        <MenuItem value="collaborating">Collaborating projects</MenuItem>
+                        <MenuItem value="all">All projects</MenuItem>
+                        <MenuItem value="none">No updates</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Privacy Settings */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Privacy Settings
+                    </Typography>
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Profile Visibility</InputLabel>
+                      <Select
+                        value="public"
+                        label="Profile Visibility"
+                      >
+                        <MenuItem value="public">Public</MenuItem>
+                        <MenuItem value="registered">Registered users only</MenuItem>
+                        <MenuItem value="private">Private</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Activity Visibility</InputLabel>
+                      <Select
+                        value="public"
+                        label="Activity Visibility"
+                      >
+                        <MenuItem value="public">Public</MenuItem>
+                        <MenuItem value="registered">Registered users only</MenuItem>
+                        <MenuItem value="private">Private</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <FormControl fullWidth>
+                      <InputLabel>Search Visibility</InputLabel>
+                      <Select
+                        value="public"
+                        label="Search Visibility"
+                      >
+                        <MenuItem value="public">Searchable</MenuItem>
+                        <MenuItem value="private">Not searchable</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Account Management */}
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Account Management
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => toast.info('Password change feature coming soon')}
+                      >
+                        Change Password
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => toast.info('Two-factor authentication coming soon')}
+                      >
+                        Enable 2FA
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="warning"
+                        onClick={() => toast.info('Account export feature coming soon')}
+                      >
+                        Export Data
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => toast.error('Account deletion is not available')}
+                      >
+                        Delete Account
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
           </Box>
         )}
       </Paper>

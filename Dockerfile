@@ -235,15 +235,16 @@ RUN chown -R $USER:$USER /home/$USER/DeSciOS && \
     cd frontend && \
     npm install && \
     npm run build && \
-    chown -R $USER:$USER /home/$USER/DeSciOS && \
-    echo '[Desktop Entry]\nName=Academic Platform\nExec=firefox http://localhost:8000\nIcon=applications-science\nType=Application\nCategories=Education;' \
-    > /usr/share/applications/academic-platform.desktop
-
-# Initialize Academic Platform Database
-RUN cd /home/$USER/DeSciOS/node && \
+    cd .. && \
     chmod +x start-academic.sh && \
     chmod +x ensure-admin.js && \
-    chown -R $USER:$USER /home/$USER/.academic
+    chown -R $USER:$USER /home/$USER/DeSciOS && \
+    echo '[Desktop Entry]\nName=Academic Platform\nExec=firefox http://localhost:8000\nIcon=applications-science\nType=Application\nCategories=Education;' \
+    > /usr/share/applications/academic-platform.desktop && \
+    mkdir -p /var/log/supervisor && \
+    chown -R $USER:$USER /var/log/supervisor
+
+# Academic Platform Database will be initialized at runtime via start-academic.sh
 
 # Install DeSci Assistant font
 RUN apt-get update && apt-get install -y wget fontconfig && \

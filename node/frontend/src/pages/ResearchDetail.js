@@ -62,11 +62,45 @@ const ResearchDetail = () => {
 
   const fetchProject = async () => {
     try {
+      console.log('Fetching research project with ID:', id);
+      
+      // Check if we have the project data in sessionStorage (for newly created projects)
+      const cachedProject = sessionStorage.getItem(`research_${id}`);
+      if (cachedProject) {
+        console.log('Found project in sessionStorage, using cached data');
+        const projectData = JSON.parse(cachedProject);
+        setProject(projectData);
+        console.log('Project loaded from cache:', projectData.title);
+        // Clear the cached data after use
+        sessionStorage.removeItem(`research_${id}`);
+        return;
+      }
+      
+      // Fallback to API call
       const response = await api.get(`/research/${id}`);
-      setProject(response.data);
+      console.log('API response:', response.data);
+      
+      const projectData = response.data.project || response.data;
+      if (!projectData) {
+        throw new Error('No project data received from API');
+      }
+      
+      setProject(projectData);
+      console.log('Project loaded successfully from API:', projectData.title);
     } catch (error) {
       console.error('Error fetching research project:', error);
-      setError('Failed to load research project details');
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      if (error.response?.status === 404) {
+        setError('Research project not found. It may have been deleted or the link is invalid.');
+      } else if (error.response?.status === 403) {
+        setError('You do not have permission to view this research project.');
+      } else if (error.response?.status === 401) {
+        setError('Please log in to view this research project.');
+      } else {
+        setError(`Failed to load research project details: ${error.response?.data?.error || error.message}`);
+      }
     } finally {
       setLoading(false);
     }

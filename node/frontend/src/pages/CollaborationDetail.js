@@ -67,7 +67,7 @@ const CollaborationDetail = () => {
   const fetchWorkspace = async () => {
     try {
       const response = await api.get(`/collaboration/${id}`);
-      setWorkspace(response.data);
+      setWorkspace(response.data.collaboration || response.data);
     } catch (error) {
       console.error('Error fetching collaboration workspace:', error);
       setError('Failed to load collaboration workspace details');
@@ -197,9 +197,9 @@ const CollaborationDetail = () => {
     );
   }
 
-  const isOwner = user && workspace.ownerId === user.id;
+  const isOwner = user && workspace.creatorId === user.id;
   const canEdit = isOwner || user?.role === 'admin';
-  const isMember = workspace.members?.some(member => member.userId === user?.id) || isOwner;
+  const isMember = workspace.Users?.some(member => member.id === user?.id) || isOwner;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -302,7 +302,7 @@ const CollaborationDetail = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <GroupIcon sx={{ mr: 1, color: 'primary.main' }} />
                   <Typography variant="body2">
-                    Members: {workspace.members?.length || 0}
+                    Members: {workspace.Users?.length || 0}
                   </Typography>
                 </Box>
               </CardContent>
@@ -338,9 +338,9 @@ const CollaborationDetail = () => {
               )}
             </Box>
             
-            {workspace.members && workspace.members.length > 0 ? (
+            {workspace.Users && workspace.Users.length > 0 ? (
               <List>
-                {workspace.members.map((member, index) => (
+                {workspace.Users.map((member, index) => (
                   <ListItem key={index}>
                     <Avatar sx={{ mr: 2 }}>
                       {member.user?.username?.charAt(0)?.toUpperCase() || 'U'}

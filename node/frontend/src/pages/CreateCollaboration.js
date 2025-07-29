@@ -119,7 +119,7 @@ const CreateCollaboration = () => {
       const response = await api.post('/collaboration', workspaceData);
       
       toast.success('Collaboration workspace created successfully!');
-      navigate(`/collaboration/${response.data.id}`);
+      navigate(`/collaboration/${response.data.collaboration.id}`);
       
     } catch (error) {
       console.error('Error creating collaboration workspace:', error);

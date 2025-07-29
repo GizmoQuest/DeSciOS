@@ -64,10 +64,10 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.get('/:id/profile', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id, {
-      attributes: ['id', 'username', 'role', 'profile', 'createdAt']
+      attributes: ['id', 'username', 'role', 'profile', 'createdAt', 'isActive']
     });
 
-    if (!user || !user.isActive) {
+    if (!user || user.isActive === false) {
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -97,7 +97,7 @@ router.get('/:id/profile', async (req, res) => {
     // Get user's public collaborations
     const collaborations = await Collaboration.findAll({
       where: { 
-        ownerId: user.id,
+        creatorId: user.id,
         status: 'active'
       },
       attributes: ['id', 'title', 'description', 'type', 'createdAt'],

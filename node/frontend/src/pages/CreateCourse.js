@@ -146,6 +146,10 @@ const CreateCourse = () => {
       if (!formData.title || !formData.description || !formData.category) {
         throw new Error('Please fill in all required fields');
       }
+      
+      if (formData.description.length < 10) {
+        throw new Error('Description must be at least 10 characters long');
+      }
 
       // Upload files to IPFS
       let resources = [];
@@ -157,13 +161,13 @@ const CreateCourse = () => {
       const courseData = {
         ...formData,
         resources,
-        status: 'draft'
+        status: 'published'
       };
 
       const response = await api.post('/courses', courseData);
       
       toast.success('Course created successfully!');
-      navigate(`/courses/${response.data.id}`);
+      navigate(`/courses/${response.data.course.id}`);
       
     } catch (error) {
       console.error('Error creating course:', error);

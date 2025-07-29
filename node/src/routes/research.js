@@ -46,6 +46,48 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get authenticated user's research projects (leader or collaborator)
+router.get('/my-projects', authenticateToken, async (req, res) => {
+  try {
+    // Projects where the user is the leader
+    const leaderProjects = await ResearchProject.findAll({
+      where: { leaderId: req.user.userId },
+      include: [{
+        model: User,
+        as: 'leader',
+        attributes: ['id', 'username', 'profile']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Projects where the user is a collaborator (but not the leader)
+    const collaborations = await ResearchCollaborator.findAll({
+      where: { UserId: req.user.userId },
+      include: [{
+        model: ResearchProject,
+        include: [{
+          model: User,
+          as: 'leader',
+          attributes: ['id', 'username', 'profile']
+        }]
+      }]
+    });
+
+    // Map collaborator records to the associated projects
+    const collaboratorProjects = collaborations.map(c => c.ResearchProject);
+
+    // Merge and deduplicate projects by id
+    const projectsMap = new Map();
+    [...leaderProjects, ...collaboratorProjects].forEach(p => projectsMap.set(p.id, p));
+    const projects = Array.from(projectsMap.values());
+
+    res.json({ projects });
+  } catch (error) {
+    console.error('Error fetching user research projects:', error);
+    res.status(500).json({ error: 'Failed to fetch user research projects' });
+  }
+});
+
 // Get research project by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -132,13 +174,13 @@ router.post('/', authenticateToken, requireResearcher, [
       description,
       field,
       keywords: keywords || [],
-      isPublic: isPublic !== undefined ? isPublic : false,
+      isPublic: isPublic !== undefined ? isPublic : true,
       methodology: methodology || '',
       datasets: datasets || [],
       publications: publications || [],
       leaderId: req.user.userId,
       ipfsHash: ipfsResult.hash,
-      status: 'proposal'
+      status: 'active'
     });
 
     const projectWithLeader = await ResearchProject.findByPk(project.id, {

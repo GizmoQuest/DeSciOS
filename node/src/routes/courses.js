@@ -74,6 +74,16 @@ router.get('/:id', async (req, res) => {
           CourseId: course.id
         }
       });
+      
+      // If enrollment exists, return it as an object
+      if (enrollment) {
+        enrollment = {
+          enrolled: true,
+          progress: enrollment.progress,
+          enrolledAt: enrollment.enrolledAt || enrollment.createdAt,
+          completedAt: enrollment.completedAt
+        };
+      }
     }
 
     res.json({
@@ -132,7 +142,7 @@ router.post('/', authenticateToken, requireInstructor, [
       resources: resources || [],
       instructorId: req.user.userId,
       ipfsHash: ipfsResult.hash,
-      status: 'draft'
+      status: 'published'
     });
 
     const courseWithInstructor = await Course.findByPk(course.id, {

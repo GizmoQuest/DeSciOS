@@ -342,7 +342,7 @@ const Collaboration = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
                     <GroupIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
                     <Typography variant="body2" color="text.secondary">
-                      {workspace.members?.length || 0} members
+                      {workspace.Users?.length || 0} members
                     </Typography>
                   </Box>
                   
@@ -365,7 +365,7 @@ const Collaboration = () => {
                     View Details
                   </Button>
                   
-                  {(user?.id === workspace.ownerId || user?.role === 'admin') && (
+                  {(user?.id === workspace.creatorId || user?.role === 'admin') && (
                     <Box>
                       <Button
                         size="small"

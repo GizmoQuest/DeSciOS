@@ -240,9 +240,9 @@ class IPFSService {
       }
 
       const [id, version, stats] = await Promise.all([
-        axios.get(`${this.apiBase}/id`),
-        axios.get(`${this.apiBase}/version`),
-        axios.get(`${this.apiBase}/stats/repo`)
+        axios.post(`${this.apiBase}/id`),
+        axios.post(`${this.apiBase}/version`),
+        axios.post(`${this.apiBase}/stats/repo`)
       ]);
 
       return {

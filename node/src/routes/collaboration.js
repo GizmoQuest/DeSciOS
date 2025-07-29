@@ -6,11 +6,89 @@ const { ipfsService } = require('../services/ipfs');
 
 const router = express.Router();
 
-// Get user's collaborations
+// Public endpoint to list collaborations with optional filters
+router.get('/', async (req, res) => {
+  try {
+    const { type, status, search, limit = 20, offset = 0 } = req.query;
+
+    const where = {};
+    if (type) where.type = type;
+    if (status) where.status = status;
+    if (search) {
+      where.$or = [
+        { title: { $like: `%${search}%` } },
+        { description: { $like: `%${search}%` } }
+      ];
+    }
+
+    const collaborations = await Collaboration.findAndCountAll({
+      where,
+      include: [{
+        model: User,
+        as: 'owner',
+        attributes: ['id', 'username', 'profile']
+      }],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      workspaces: collaborations.rows,
+      total: collaborations.count,
+      hasMore: collaborations.count > parseInt(offset) + parseInt(limit)
+    });
+  } catch (error) {
+    console.error('Error fetching collaborations:', error);
+    res.status(500).json({ error: 'Failed to fetch collaborations' });
+  }
+});
+
+// Get collaborations the authenticated user owns or is a member of
+router.get('/my-workspaces', authenticateToken, async (req, res) => {
+  try {
+    // Owned collaborations
+    const owned = await Collaboration.findAll({
+      where: { creatorId: req.user.userId },
+      include: [{
+        model: User,
+        as: 'owner',
+        attributes: ['id', 'username', 'profile']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Member collaborations (excluding owned)
+    const memberships = await CollaborationMember.findAll({
+      where: { UserId: req.user.userId },
+      include: [{
+        model: Collaboration,
+        include: [{
+          model: User,
+          as: 'owner',
+          attributes: ['id', 'username', 'profile']
+        }]
+      }]
+    });
+
+    const memberCollabs = memberships.map(m => m.Collaboration);
+
+    const collabMap = new Map();
+    [...owned, ...memberCollabs].forEach(c => collabMap.set(c.id, c));
+    const workspaces = Array.from(collabMap.values());
+
+    res.json({ workspaces });
+  } catch (error) {
+    console.error('Error fetching user collaborations:', error);
+    res.status(500).json({ error: 'Failed to fetch user collaborations' });
+  }
+});
+
+// Get collaborations that the authenticated user is a member of (legacy endpoint)
 router.get('/user', authenticateToken, async (req, res) => {
   try {
     const { type } = req.query;
-    
+
     const where = {};
     if (type) where.type = type;
 
@@ -65,7 +143,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
       }
     });
 
-    if (!membership && collaboration.ownerId !== req.user.userId) {
+    if (!membership && collaboration.creatorId !== req.user.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -112,7 +190,7 @@ router.post('/', authenticateToken, [
       description: description || '',
       type,
       documents: documents || [],
-      ownerId: req.user.userId,
+      creatorId: req.user.userId,
       ipfsHash: ipfsResult.hash
     });
 
@@ -169,7 +247,7 @@ router.put('/:id', authenticateToken, requireOwnership(Collaboration), [
         type: collaboration.type,
         documents: updates.documents || collaboration.documents,
         updatedAt: new Date().toISOString(),
-        owner: collaboration.ownerId
+        owner: collaboration.creatorId
       };
 
       const ipfsResult = await ipfsService.storeAcademicData(collaborationContent, {

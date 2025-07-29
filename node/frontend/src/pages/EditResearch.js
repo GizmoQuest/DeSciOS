@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -20,14 +20,16 @@ import {
   OutlinedInput
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, CloudUpload as CloudUploadIcon } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
-const CreateResearch = () => {
+const EditResearch = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { api } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   
   const [formData, setFormData] = useState({
@@ -35,8 +37,8 @@ const CreateResearch = () => {
     description: '',
     field: '',
     keywords: [],
-    isPublic: true,
-    status: 'active',
+    status: 'proposal',
+    isPublic: false,
     methodology: '',
     findings: '',
     datasets: [],
@@ -69,6 +71,35 @@ const CreateResearch = () => {
     { value: 'completed', label: 'Completed' },
     { value: 'archived', label: 'Archived' }
   ];
+
+  useEffect(() => {
+    fetchProject();
+  }, [id]);
+
+  const fetchProject = async () => {
+    try {
+      const response = await api.get(`/research/${id}`);
+      const project = response.data.project;
+      
+      setFormData({
+        title: project.title || '',
+        description: project.description || '',
+        field: project.field || '',
+        keywords: project.keywords || [],
+        status: project.status || 'proposal',
+        isPublic: project.isPublic || false,
+        methodology: project.methodology || '',
+        findings: project.findings || '',
+        datasets: project.datasets || [],
+        publications: project.publications || []
+      });
+    } catch (error) {
+      console.error('Error fetching project:', error);
+      setError('Failed to load research project');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -142,7 +173,7 @@ const CreateResearch = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setError('');
 
     try {
@@ -150,54 +181,51 @@ const CreateResearch = () => {
       if (!formData.title || !formData.description || !formData.field) {
         throw new Error('Please fill in all required fields');
       }
-      
-      if (formData.description.length < 10) {
-        throw new Error('Description must be at least 10 characters long');
-      }
 
-      // Upload files to IPFS
-      let datasets = [];
+      // Upload new files to IPFS
+      let newDatasets = [];
       if (files.length > 0) {
-        datasets = await uploadFilesToIPFS();
+        newDatasets = await uploadFilesToIPFS();
       }
 
-      // Create research project
+      // Combine existing datasets with new ones
+      const allDatasets = [...formData.datasets, ...newDatasets];
+
+      // Update research project
       const projectData = {
         ...formData,
-        datasets
+        datasets: allDatasets
       };
 
-      const response = await api.post('/research', projectData);
+      const response = await api.put(`/research/${id}`, projectData);
       
-      console.log('Research project created:', response.data);
-      toast.success('Research project created successfully!');
-      
-      // Store the project data in sessionStorage for immediate access
-      const projectId = response.data.project?.id;
-      if (projectId) {
-        sessionStorage.setItem(`research_${projectId}`, JSON.stringify(response.data.project));
-        console.log('Project data stored, redirecting to:', projectId);
-        navigate(`/research/${projectId}`);
-      } else {
-        console.error('No project ID in response:', response.data);
-        toast.error('Project created but could not redirect to details page');
-        navigate('/research');
-      }
+      toast.success('Research project updated successfully!');
+      navigate(`/research/${id}`);
       
     } catch (error) {
-      console.error('Error creating research project:', error);
-      setError(error.response?.data?.message || error.message || 'Failed to create research project');
-      toast.error('Failed to create research project');
+      console.error('Error updating research project:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to update research project');
+      toast.error('Failed to update research project');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Create New Research Project
+          Edit Research Project
         </Typography>
         
         {error && (
@@ -370,10 +398,29 @@ const CreateResearch = () => {
               />
             </Grid>
 
+            {/* Existing Datasets */}
+            {formData.datasets && formData.datasets.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Existing Datasets
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {formData.datasets.map((dataset, index) => (
+                    <Chip
+                      key={index}
+                      label={`${dataset.name} (${(dataset.size / 1024 / 1024).toFixed(2)} MB)`}
+                      color="secondary"
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </Grid>
+            )}
+
             {/* File Upload */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Research Data & Files
+                Add New Files
               </Typography>
               
               <Box sx={{ mb: 2 }}>
@@ -399,7 +446,7 @@ const CreateResearch = () => {
               {files.length > 0 && (
                 <Box>
                   <Typography variant="subtitle2" gutterBottom>
-                    Selected Files:
+                    New Files to Upload:
                   </Typography>
                   {files.map((file, index) => (
                     <Chip
@@ -418,18 +465,18 @@ const CreateResearch = () => {
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate('/research')}
-                  disabled={loading}
+                  onClick={() => navigate(`/research/${id}`)}
+                  disabled={saving}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={loading}
-                  startIcon={loading ? <CircularProgress size={20} /> : null}
+                  disabled={saving}
+                  startIcon={saving ? <CircularProgress size={20} /> : null}
                 >
-                  {loading ? 'Creating...' : 'Create Research Project'}
+                  {saving ? 'Updating...' : 'Update Research Project'}
                 </Button>
               </Box>
             </Grid>
@@ -440,4 +487,4 @@ const CreateResearch = () => {
   );
 };
 
-export default CreateResearch; 
+export default EditResearch; 

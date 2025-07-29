@@ -105,6 +105,34 @@ async function startServer() {
     await initializeDatabase();
     console.log('✅ Database initialized');
     
+    // Create admin user if it doesn't exist
+    try {
+      const { User } = require('./services/database');
+      const bcrypt = require('bcryptjs');
+      
+      const adminExists = await User.findOne({ where: { email: 'admin@descios.org' } });
+      if (!adminExists) {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        await User.create({
+          username: 'admin',
+          email: 'admin@descios.org',
+          password: hashedPassword,
+          role: 'admin',
+          profile: {
+            firstName: 'Admin',
+            lastName: 'User',
+            institution: 'DeSciOS',
+            bio: 'System Administrator'
+          }
+        });
+        console.log('✅ Admin user created');
+      } else {
+        console.log('✅ Admin user already exists');
+      }
+    } catch (error) {
+      console.log('⚠️  Admin user creation failed:', error.message);
+    }
+    
     // Initialize IPFS connection
     try {
       await initializeIPFS();

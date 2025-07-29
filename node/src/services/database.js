@@ -97,6 +97,10 @@ const Course = sequelize.define('Course', {
     type: DataTypes.JSON,
     defaultValue: []
   },
+  instructorId: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
   ipfsHash: {
     type: DataTypes.STRING // Store IPFS hash for course content
   }
@@ -146,6 +150,10 @@ const ResearchProject = sequelize.define('ResearchProject', {
     type: DataTypes.JSON,
     defaultValue: []
   },
+  leaderId: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
   ipfsHash: {
     type: DataTypes.STRING // Store IPFS hash for research data
   }
@@ -177,6 +185,10 @@ const Collaboration = sequelize.define('Collaboration', {
     type: DataTypes.JSON,
     defaultValue: []
   },
+  creatorId: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
   ipfsHash: {
     type: DataTypes.STRING // Store IPFS hash for collaboration files
   }
@@ -202,6 +214,10 @@ const Document = sequelize.define('Document', {
   },
   mimeType: {
     type: DataTypes.STRING
+  },
+  uploaderId: {
+    type: DataTypes.UUID,
+    allowNull: false
   },
   ipfsHash: {
     type: DataTypes.STRING,
@@ -245,6 +261,10 @@ const PeerReview = sequelize.define('PeerReview', {
   criteria: {
     type: DataTypes.JSON,
     defaultValue: {}
+  },
+  reviewerId: {
+    type: DataTypes.UUID,
+    allowNull: false
   }
 });
 
@@ -266,6 +286,10 @@ const Message = sequelize.define('Message', {
   parentId: {
     type: DataTypes.UUID // For threaded conversations
   },
+  senderId: {
+    type: DataTypes.UUID,
+    allowNull: false
+  },
   metadata: {
     type: DataTypes.JSON,
     defaultValue: {}
@@ -286,8 +310,8 @@ Course.belongsTo(User, { foreignKey: 'instructorId', as: 'instructor' });
 User.hasMany(ResearchProject, { foreignKey: 'leaderId' });
 ResearchProject.belongsTo(User, { foreignKey: 'leaderId', as: 'leader' });
 
-User.hasMany(Collaboration, { foreignKey: 'ownerId' });
-Collaboration.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
+User.hasMany(Collaboration, { foreignKey: 'creatorId' });
+Collaboration.belongsTo(User, { foreignKey: 'creatorId', as: 'owner' });
 
 User.hasMany(Document, { foreignKey: 'uploaderId' });
 Document.belongsTo(User, { foreignKey: 'uploaderId', as: 'uploader' });

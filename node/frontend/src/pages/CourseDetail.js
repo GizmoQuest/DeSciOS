@@ -57,12 +57,11 @@ const CourseDetail = () => {
   const fetchCourse = async () => {
     try {
       const response = await api.get(`/courses/${id}`);
-      setCourse(response.data);
+      setCourse(response.data.course || response.data);
       
       // Check if user is enrolled
-      if (user) {
-        const enrollmentResponse = await api.get(`/courses/${id}/enrollment`);
-        setEnrolled(enrollmentResponse.data.enrolled);
+      if (user && response.data.enrollment) {
+        setEnrolled(true);
       }
     } catch (error) {
       console.error('Error fetching course:', error);

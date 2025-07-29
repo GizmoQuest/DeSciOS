@@ -21,6 +21,7 @@ import CreateCourse from './pages/CreateCourse';
 import Research from './pages/Research';
 import ResearchDetail from './pages/ResearchDetail';
 import CreateResearch from './pages/CreateResearch';
+import EditResearch from './pages/EditResearch';
 import Collaboration from './pages/Collaboration';
 import CollaborationDetail from './pages/CollaborationDetail';
 import CreateCollaboration from './pages/CreateCollaboration';
@@ -117,6 +118,7 @@ function AppContent() {
             <Route path="/research" element={<Research />} />
             <Route path="/research/:id" element={<ResearchDetail />} />
             <Route path="/research/create" element={<CreateResearch />} />
+            <Route path="/research/:id/edit" element={<EditResearch />} />
             
             {/* Collaboration */}
             <Route path="/collaboration" element={<Collaboration />} />
