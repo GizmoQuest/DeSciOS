@@ -86,7 +86,7 @@ const CreateCollaboration = ({ editing = false, initialData = null }) => {
           name: file.name,
           size: file.size,
           type: file.type,
-          ipfsHash: response.data.hash,
+          ipfsHash: response.data.ipfs.hash,
           uploadedAt: new Date().toISOString()
         });
       } catch (error) {

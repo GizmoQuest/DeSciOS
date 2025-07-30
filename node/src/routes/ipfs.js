@@ -170,28 +170,38 @@ router.get('/get/:hash', async (req, res) => {
 router.get('/download/:hash', authenticateToken, async (req, res) => {
   try {
     const { hash } = req.params;
-    
-    // Find the document in database
-    const document = await Document.findOne({
-      where: { 
-        ipfsHash: hash,
-        uploaderId: req.user.userId
-      }
-    });
 
-    if (!document) {
-      return res.status(404).json({ error: 'File not found' });
-    }
+    // Try to find the document in the database
+    let document = await Document.findOne({ where: { ipfsHash: hash } });
+
+    // If not found, use generic headers
+    let filename = document ? document.filename : `${hash}`;
+    let mimeType = document ? document.mimeType : 'application/octet-stream';
 
     // Get file data from IPFS
     const fileData = await ipfsService.getData(hash);
-    
-    // Set headers for file download
-    res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${document.filename}"`);
-    res.setHeader('Content-Length', fileData.length);
-    
-    res.send(fileData);
+
+    // Check if the data is a JSON document with base64 content (old format) or raw binary (new format)
+    let binaryData;
+    try {
+      const jsonData = JSON.parse(fileData.toString());
+      if (jsonData.content) {
+        // Old format: JSON document with base64 content
+        binaryData = Buffer.from(jsonData.content, 'base64');
+      } else {
+        // Raw binary data
+        binaryData = fileData;
+      }
+    } catch (error) {
+      // Not JSON, treat as raw binary data (new format)
+      binaryData = fileData;
+    }
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', binaryData.length);
+
+    res.send(binaryData);
   } catch (error) {
     console.error('Error downloading file:', error);
     res.status(500).json({ error: 'Failed to download file' });
@@ -208,10 +218,10 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     const { buffer, originalname, mimetype, size } = req.file;
     const { pin = true, metadata = {} } = req.body;
 
-    // Create versioned document
-    const result = await ipfsService.createVersionedDocument(
+    // Store binary file directly
+    const result = await ipfsService.storeBinaryFile(
       originalname,
-      buffer.toString('base64'),
+      buffer,
       {
         author: req.user.userId,
         mimeType: mimetype,
@@ -498,9 +508,9 @@ router.post('/batch-upload', authenticateToken, upload.array('files', 10), async
 
     for (const file of req.files) {
       try {
-        const result = await ipfsService.createVersionedDocument(
+        const result = await ipfsService.storeBinaryFile(
           file.originalname,
-          file.buffer.toString('base64'),
+          file.buffer,
           {
             author: req.user.userId,
             mimeType: file.mimetype,

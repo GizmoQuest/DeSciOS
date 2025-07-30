@@ -78,7 +78,7 @@ class IPFSService {
         throw new Error('IPFS not connected');
       }
 
-      const response = await axios.get(`${this.apiBase}/cat?arg=${hash}`, {
+      const response = await axios.post(`${this.apiBase}/cat?arg=${hash}`, null, {
         responseType: 'arraybuffer'
       });
 
@@ -303,7 +303,7 @@ class IPFSService {
     }
   }
 
-  // Create a versioned document system
+  // Create a versioned document system (for JSON documents)
   async createVersionedDocument(filename, content, metadata = {}) {
     try {
       const document = {
@@ -326,6 +326,53 @@ class IPFSService {
       };
     } catch (error) {
       console.error('❌ Failed to create versioned document:', error);
+      throw error;
+    }
+  }
+
+  // Store binary file directly in IPFS
+  async storeBinaryFile(filename, content, metadata = {}) {
+    try {
+      // Handle binary data properly
+      let binaryContent;
+      
+      if (typeof content === 'string') {
+        // Check if it's base64 encoded binary data
+        if (metadata.mimeType && !metadata.mimeType.startsWith('text/')) {
+          // This is binary data encoded as base64
+          binaryContent = Buffer.from(content, 'base64');
+        } else {
+          // This is text content
+          binaryContent = Buffer.from(content, 'utf8');
+        }
+      } else if (Buffer.isBuffer(content)) {
+        binaryContent = content;
+      } else {
+        throw new Error('Invalid content type for binary file storage');
+      }
+
+      // Store the binary content directly in IPFS
+      const FormData = require('form-data');
+      const formData = new FormData();
+      formData.append('file', binaryContent, { filename });
+
+      const response = await axios.post(`${this.apiBase}/add`, formData, {
+        headers: {
+          ...formData.getHeaders(),
+        },
+      });
+
+      const hash = response.data.Hash;
+      await this.pinContent(hash);
+
+      return {
+        hash,
+        version: metadata.version || 1,
+        timestamp: new Date().toISOString(),
+        gateway_url: this.getGatewayURL(hash)
+      };
+    } catch (error) {
+      console.error('❌ Failed to store binary file:', error);
       throw error;
     }
   }
