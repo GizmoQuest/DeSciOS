@@ -176,6 +176,13 @@ const CreateCourse = ({ editing = false, initialData = null }) => {
       }
       
       toast.success(`Course ${editing ? 'updated' : 'created'} successfully!`);
+      
+      // Cache the course data for immediate access on the detail page
+      if (!editing) {
+        const courseId = response.data.course.id;
+        sessionStorage.setItem(`course_${courseId}`, JSON.stringify(response.data.course));
+      }
+      
       navigate(`/courses/${editing ? initialData.id : response.data.course.id}`);
       
     } catch (error) {

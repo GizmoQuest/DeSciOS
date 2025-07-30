@@ -32,6 +32,85 @@ router.get('/status', async (req, res) => {
   }
 });
 
+// Get IPFS statistics
+router.get('/stats', async (req, res) => {
+  try {
+    const stats = await ipfsService.getStats();
+    const isConnected = ipfsService.isConnectedToIPFS();
+    
+    res.json({
+      repoSize: stats.repoSize || 0,
+      numObjects: stats.numObjects || 0,
+      peers: stats.peers || 0,
+      connected: isConnected
+    });
+  } catch (error) {
+    console.error('Error fetching IPFS stats:', error);
+    res.status(500).json({ error: 'Failed to fetch IPFS stats' });
+  }
+});
+
+// Get all files (documents)
+router.get('/files', authenticateToken, async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+    
+    const documents = await Document.findAndCountAll({
+      where: { uploaderId: req.user.userId },
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['createdAt', 'DESC']]
+    });
+
+    const files = documents.rows.map(doc => ({
+      hash: doc.ipfsHash,
+      name: doc.filename,
+      size: doc.size,
+      uploadedAt: doc.createdAt,
+      pinned: doc.metadata?.pinned || false
+    }));
+
+    res.json({
+      files,
+      total: documents.count,
+      hasMore: documents.count > parseInt(offset) + parseInt(limit)
+    });
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    res.status(500).json({ error: 'Failed to fetch files' });
+  }
+});
+
+// Get pinned files
+router.get('/pinned', authenticateToken, async (req, res) => {
+  try {
+    const documents = await Document.findAll({
+      where: { 
+        uploaderId: req.user.userId
+      },
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Filter documents that are pinned
+    const pinnedFiles = documents
+      .filter(doc => doc.metadata && doc.metadata.pinned === true)
+      .map(doc => ({
+        hash: doc.ipfsHash,
+        name: doc.filename,
+        size: doc.size,
+        pinnedAt: doc.metadata.pinnedAt || doc.updatedAt,
+        uploadedAt: doc.createdAt
+      }));
+
+    res.json({
+      pinned: pinnedFiles
+    });
+  } catch (error) {
+    console.error('Error fetching pinned files:', error);
+    res.status(500).json({ error: 'Failed to fetch pinned files' });
+  }
+});
+
 // Add data to IPFS
 router.post('/add', authenticateToken, [
   body('data').exists(),
@@ -84,6 +163,38 @@ router.get('/get/:hash', async (req, res) => {
   } catch (error) {
     console.error('Error getting data from IPFS:', error);
     res.status(500).json({ error: 'Failed to get data from IPFS' });
+  }
+});
+
+// Download file from IPFS
+router.get('/download/:hash', authenticateToken, async (req, res) => {
+  try {
+    const { hash } = req.params;
+    
+    // Find the document in database
+    const document = await Document.findOne({
+      where: { 
+        ipfsHash: hash,
+        uploaderId: req.user.userId
+      }
+    });
+
+    if (!document) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Get file data from IPFS
+    const fileData = await ipfsService.getData(hash);
+    
+    // Set headers for file download
+    res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${document.filename}"`);
+    res.setHeader('Content-Length', fileData.length);
+    
+    res.send(fileData);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    res.status(500).json({ error: 'Failed to download file' });
   }
 });
 
@@ -142,7 +253,29 @@ router.post('/pin/:hash', authenticateToken, async (req, res) => {
   try {
     const { hash } = req.params;
     
+    // Find the document in database
+    const document = await Document.findOne({
+      where: { 
+        ipfsHash: hash,
+        uploaderId: req.user.userId
+      }
+    });
+
+    if (!document) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Pin in IPFS
     await ipfsService.pinContent(hash);
+    
+    // Update database metadata
+    await document.update({
+      metadata: {
+        ...document.metadata,
+        pinned: true,
+        pinnedAt: new Date().toISOString()
+      }
+    });
     
     res.json({
       message: 'Content pinned successfully',
@@ -159,7 +292,29 @@ router.delete('/pin/:hash', authenticateToken, async (req, res) => {
   try {
     const { hash } = req.params;
     
+    // Find the document in database
+    const document = await Document.findOne({
+      where: { 
+        ipfsHash: hash,
+        uploaderId: req.user.userId
+      }
+    });
+
+    if (!document) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Unpin from IPFS
     await ipfsService.unpinContent(hash);
+    
+    // Update database metadata
+    await document.update({
+      metadata: {
+        ...document.metadata,
+        pinned: false,
+        unpinnedAt: new Date().toISOString()
+      }
+    });
     
     res.json({
       message: 'Content unpinned successfully',
@@ -263,6 +418,38 @@ router.delete('/documents/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error deleting document:', error);
     res.status(500).json({ error: 'Failed to delete document' });
+  }
+});
+
+// Delete file by hash
+router.delete('/files/:hash', authenticateToken, async (req, res) => {
+  try {
+    const { hash } = req.params;
+    
+    const document = await Document.findOne({
+      where: { 
+        ipfsHash: hash,
+        uploaderId: req.user.userId
+      }
+    });
+    
+    if (!document) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Unpin from IPFS
+    try {
+      await ipfsService.unpinContent(hash);
+    } catch (ipfsError) {
+      console.error('Error unpinning file from IPFS:', ipfsError);
+    }
+
+    await document.destroy();
+    
+    res.json({ message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    res.status(500).json({ error: 'Failed to delete file' });
   }
 });
 

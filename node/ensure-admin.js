@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
 const bcrypt = require('bcryptjs');
-const { User } = require('./src/services/database');
+const { User, initializeDatabase } = require('./src/services/database');
 
 async function ensureAdminUser() {
   try {
+    console.log('📊 Initializing database...');
+    await initializeDatabase();
+    
     console.log('🔍 Checking for admin user...');
     
     // Check if admin user already exists

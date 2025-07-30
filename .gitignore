@@ -67,3 +67,7 @@ Dockerfile.custom
 
 # Logs
 *.log 
+# Runtime data directories
+data/
+*.sqlite
+*.db

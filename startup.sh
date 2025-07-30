@@ -24,24 +24,74 @@ sleep 3
 echo "Checking IPFS status..."
 su - deScier -c 'ipfs id' || echo "IPFS still starting up..."
 
-# Start supervisord
-/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
+# Clean up any stale VNC/X server files
+echo "Cleaning up stale VNC/X server files..."
+rm -f /tmp/.X*-lock /tmp/.X11-unix/X* /tmp/.X*-lock
+su - deScier -c 'rm -f ~/.vnc/*.pid ~/.vnc/*.log'
+
+# Initialize VNC environment for deScier user
+echo "Initializing VNC environment..."
+su - deScier -c 'mkdir -p ~/.vnc'
+su - deScier -c 'touch ~/.Xauthority'
+su - deScier -c 'xauth generate :1 . trusted'
+
+# Start VNC server manually first to ensure it's working
+echo "Starting VNC server..."
+su - deScier -c 'vncserver :1 -geometry 1920x1080' &
+VNC_PID=$!
 
 # Wait for VNC server to start
 sleep 5
 
-# Create a script to run as deScier
+# Check if VNC server is running
+if ! ps -p $VNC_PID > /dev/null 2>&1; then
+    echo "VNC server failed to start, retrying..."
+    # Kill any existing VNC processes
+    pkill -f vncserver || true
+    sleep 2
+    # Remove any remaining lock files
+    rm -f /tmp/.X*-lock /tmp/.X11-unix/X*
+    # Start VNC server again
+    su - deScier -c 'vncserver :1 -geometry 1920x1080' &
+    VNC_PID=$!
+    sleep 5
+fi
+
+# Verify VNC server is running
+if ps -p $VNC_PID > /dev/null 2>&1; then
+    echo "VNC server started successfully (PID: $VNC_PID)"
+else
+    echo "Warning: VNC server may not be running properly"
+fi
+
+# Start websockify for noVNC
+echo "Starting noVNC websockify..."
+websockify --web=/usr/share/novnc/ 6080 localhost:5901 &
+WEBSOCKIFY_PID=$!
+
+# Wait for websockify to start
+sleep 3
+
+# Verify websockify is running
+if ps -p $WEBSOCKIFY_PID > /dev/null 2>&1; then
+    echo "noVNC websockify started successfully (PID: $WEBSOCKIFY_PID)"
+else
+    echo "Warning: websockify may not be running properly"
+fi
+
+# Start supervisord for other services (but not VNC since we started it manually)
+echo "Starting supervisord for other services..."
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
+
+# Wait for services to stabilize
+sleep 10
+
+# Create a script to run as deScier for X server setup
 cat > /tmp/setup_x.sh << 'EOF'
 #!/bin/bash
 
 # Set DISPLAY variable
 export DISPLAY=:1
-
-# Create .Xauthority if it doesn't exist
-touch ~/.Xauthority
-
-# Add local authorization
-xauth generate :1 . trusted
 
 # Wait for X server to be fully ready
 for i in {1..30}; do
@@ -96,6 +146,13 @@ chmod +x /tmp/setup_x.sh
 
 # Switch to deScier user and run the script
 su - deScier -c '/tmp/setup_x.sh'
+
+# Display final status
+echo "=== DeSciOS Startup Complete ==="
+echo "VNC Server: $(ps -p $VNC_PID >/dev/null && echo 'Running' || echo 'Not running')"
+echo "noVNC: $(ps -p $WEBSOCKIFY_PID >/dev/null && echo 'Running' || echo 'Not running')"
+echo "IPFS: $(su - deScier -c 'ipfs id' >/dev/null 2>&1 && echo 'Running' || echo 'Not running')"
+echo "Access DeSciOS at: http://localhost:6080/vnc.html"
 
 # Keep the container running
 tail -f /dev/null

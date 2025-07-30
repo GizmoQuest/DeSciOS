@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  descios:
+    build: .
+    image: descios:academic
+    container_name: descios-academic
+    ports:
+      - "6080:6080"   # noVNC
+      - "8000:8000"   # Academic Platform
+      - "8080:8080"   # IPFS Gateway
+      - "5001:5001"   # IPFS API
+    volumes:
+      # Persist Academic Platform database
+      - ./data/academic:/home/deScier/.academic
+      # Persist IPFS data
+      - ./data/ipfs:/home/deScier/.ipfs
+      # Persist user data
+      - ./data/user:/home/deScier/data
+    environment:
+      - DISPLAY=:1
+      - VNC_RESOLUTION=1920x1080
+    restart: unless-stopped
+    shm_size: 2gb
+    stdin_open: true
+    tty: true

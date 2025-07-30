@@ -390,8 +390,8 @@ async function initializeDatabase() {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully');
 
-    // Sync models
-    await sequelize.sync({ alter: true });
+    // Sync models - use force: false to preserve existing data
+    await sequelize.sync({ force: false });
     console.log('✅ Database models synchronized');
 
     return true;

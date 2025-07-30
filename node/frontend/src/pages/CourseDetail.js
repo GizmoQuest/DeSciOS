@@ -56,6 +56,18 @@ const CourseDetail = () => {
 
   const fetchCourse = async () => {
     try {
+      // Check if we have the course data in sessionStorage (for newly created courses)
+      const cachedCourse = sessionStorage.getItem(`course_${id}`);
+      if (cachedCourse) {
+        const courseData = JSON.parse(cachedCourse);
+        setCourse(courseData);
+        // Clear the cached data after use
+        sessionStorage.removeItem(`course_${id}`);
+        setLoading(false);
+        return;
+      }
+      
+      // Fallback to API call
       const response = await api.get(`/courses/${id}`);
       setCourse(response.data.course || response.data);
       

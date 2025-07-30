@@ -79,6 +79,15 @@ app.use('/api/collaboration', collaborationRoutes);
 app.use('/api/ipfs', ipfsRoutes);
 app.use('/api/users', userRoutes);
 
+// Debug logging for route registration
+console.log('API routes registered:');
+console.log('- /api/auth');
+console.log('- /api/courses');
+console.log('- /api/research');
+console.log('- /api/collaboration');
+console.log('- /api/ipfs');
+console.log('- /api/users');
+
 // Serve static files for the web interface
 app.use(express.static(path.join(__dirname, '../frontend/build')));
 

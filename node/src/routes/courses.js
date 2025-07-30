@@ -1,4 +1,5 @@
 const express = require('express');
+const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const { Course, User, CourseEnrollment } = require('../services/database');
 const { authenticateToken, requireInstructor, requireOwnership } = require('../middleware/auth');
@@ -16,9 +17,9 @@ router.get('/', async (req, res) => {
     if (category) where.category = category;
     if (difficulty) where.difficulty = difficulty;
     if (search) {
-      where.$or = [
-        { title: { $like: `%${search}%` } },
-        { description: { $like: `%${search}%` } }
+      where[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } }
       ];
     }
 
@@ -68,12 +69,17 @@ router.get('/:id', async (req, res) => {
     // Get enrollment info if user is authenticated
     let enrollment = null;
     if (req.user) {
-      enrollment = await CourseEnrollment.findOne({
-        where: {
-          UserId: req.user.userId,
-          CourseId: course.id
-        }
-      });
+      try {
+        enrollment = await CourseEnrollment.findOne({
+          where: {
+            UserId: req.user.userId,
+            CourseId: course.id
+          }
+        });
+      } catch (enrollmentError) {
+        console.error('Error checking enrollment:', enrollmentError);
+        // Continue without enrollment info rather than failing the whole request
+      }
       
       // If enrollment exists, return it as an object
       if (enrollment) {
