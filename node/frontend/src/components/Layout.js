@@ -31,7 +31,8 @@ import {
   Logout,
   People,
   Notifications,
-  AccountCircle
+  AccountCircle,
+  DesktopMac
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useSocket } from '../context/SocketContext';
@@ -40,6 +41,7 @@ const drawerWidth = 240;
 
 const menuItems = [
   { text: 'Dashboard', icon: Dashboard, path: '/dashboard' },
+  { text: 'DeSciOS', icon: DesktopMac, path: '/descios' },
   { text: 'Courses', icon: School, path: '/courses' },
   { text: 'Research', icon: Science, path: '/research' },
   { text: 'Collaboration', icon: Group, path: '/collaboration' },

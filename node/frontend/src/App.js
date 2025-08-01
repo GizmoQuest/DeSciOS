@@ -31,6 +31,7 @@ import Profile from './pages/Profile';
 import IPFSManager from './pages/IPFSManager';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
+import DeSciOS from './pages/DeSciOS';
 import NotFound from './pages/NotFound';
 
 // Hooks and Context
@@ -110,6 +111,7 @@ function AppContent() {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/descios" element={<DeSciOS />} />
             
             {/* Courses */}
             <Route path="/courses" element={<Courses />} />

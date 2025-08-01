@@ -39,7 +39,9 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https://localhost:8080"], // Allow IPFS gateway
-      connectSrc: ["'self'", "ws:", "wss:", "http://localhost:5001"] // Allow IPFS API
+      connectSrc: ["'self'", "ws:", "wss:", "http://localhost:5001"], // Allow IPFS API
+      frameSrc: ["'self'", "http://localhost:6080"], // Allow DeSciOS VNC iframe
+      childSrc: ["'self'", "http://localhost:6080"] // Allow DeSciOS VNC iframe
     }
   }
 }));
