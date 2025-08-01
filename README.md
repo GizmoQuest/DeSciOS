@@ -1,6 +1,6 @@
-# 🧬 DeSciOS
+# 🧬 DeSciOS Academic Edition
 
-> *An open, browser-accessible scientific operating system — the foundation for decentralized, AI-powered research and collaboration.*
+> *An open, browser-accessible scientific operating system with integrated academic platform — the foundation for decentralized, AI-powered learning, teaching, and research collaboration.*
 
 ![DeSciOS](./os.svg)
 
@@ -8,36 +8,67 @@
 
 ## 🚀 Overview
 
-**DeSciOS** is a containerized, headless Linux desktop environment purpose-built for decentralized science. Accessible entirely through a browser, it combines lightweight desktop streaming with research productivity tools and AI-readiness.
+**DeSciOS Academic Edition** is a containerized, headless Linux desktop environment purpose-built for decentralized science education and research. Accessible entirely through a browser, it combines lightweight desktop streaming with comprehensive academic tools, AI-readiness, and an integrated learning management platform.
 
-***Key goal**: Decentralize open source scientific software that remains trapped in centralized silos.*
+***Key goal**: Decentralize open source scientific software and academic infrastructure that remains trapped in centralized silos.*
 
-Originally inspired by the idea of a Stadia-like environment, **DeSciOS** evolves that vision toward enabling:
+Originally inspired by the idea of a Stadia-like environment, **DeSciOS Academic Edition** evolves that vision toward enabling:
 
-- Local-first scientific computing
-- AI-assistance (with Ollama and command-r7b model)
-- Peer-to-peer workflows (IPFS support included)
-- Modular scientific desktop environments for students, researchers, and citizen scientists
+- **Academic Collaboration**: Integrated learning management system with real-time collaboration
+- **Research Workflows**: Complete scientific computing environment with workflow management
+- **AI-assistance**: Native AI assistant with dual-model Ollama integration
+- **Decentralized Infrastructure**: IPFS-powered content storage and peer-to-peer workflows
+- **Modular Learning**: Customizable scientific desktop environments for students, researchers, and educators
+
+---
+
+## 🎓 Academic Platform Features
+
+### **Integrated Learning Management System**
+- **Course Management**: Create, enroll, teach, and collaborate on courses
+- **Research Projects**: Project creation, collaboration, and peer review workflows
+- **Real-time Collaboration**: Live messaging, document editing, and user presence
+- **Role-based Access**: Admin, Instructor, Researcher, and Student roles
+- **IPFS Integration**: Decentralized content storage and sharing
+- **Modern Web Interface**: React-based SPA with Material-UI design
+
+### **Academic Workflows**
+- **Course Creation**: Build comprehensive courses with multimedia content
+- **Student Enrollment**: Streamlined enrollment and progress tracking
+- **Research Collaboration**: Multi-user project workspaces with version control
+- **Peer Review**: Integrated review and feedback systems
+- **Content Management**: IPFS-powered decentralized storage
+- **Analytics Dashboard**: Track engagement and progress metrics
 
 ---
 
 ## ⚠️ Disclaimer
 
-> ⚠️ **Experimental Project — Expect Rough Edges**
+> ⚠️ **Academic Edition — Production Ready for Educational Use**
 
-DeSciOS is currently under active development and remains **experimental**. It provides a proof-of-concept platform for future decentralized science infrastructure. While usable today, it is **not yet production-ready**.
+DeSciOS Academic Edition is designed for educational and research environments. While it provides a comprehensive academic platform, it remains under active development with ongoing feature enhancements.
 
-You **might encounter**:
-- Unpolished workflows
-- GPU acceleration limitations (browser-dependent)
-- Manual setup requirements
-
-That said, it's ready for contributors, educators, and DeSci enthusiasts eager to shape open research infrastructure.
+**Current Status**:
+- ✅ **Production Ready**: Core academic platform fully functional
+- ✅ **Stable**: Database persistence and user management working
+- ✅ **Documented**: Comprehensive guides and testing procedures
+- 🔄 **Active Development**: New features and improvements ongoing
 
 ---
 
 ## 📦 What's Inside
 
+### **Academic Platform Components**
+| Component        | Description                                                      |
+|------------------|------------------------------------------------------------------|
+| **Academic Platform** | Integrated Node.js/Express backend with React frontend |
+| **Learning Management** | Course creation, enrollment, and collaboration tools |
+| **Research Workspaces** | Project management and peer review systems |
+| **Real-time Features** | Socket.io powered live collaboration |
+| **IPFS Integration** | Decentralized content storage and sharing |
+| **User Management** | Role-based authentication and permissions |
+
+### **Scientific Computing Environment**
 | Component        | Description                                                      |
 |------------------|------------------------------------------------------------------|
 | **XFCE4**         | Lightweight desktop environment with customized layout           |
@@ -68,6 +99,16 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 
 ## 🛠️ Features
 
+### **Academic Platform**
+- 🎓 **Integrated Learning Management System** with course creation and enrollment
+- 👥 **Real-time Collaboration** with live messaging and document editing
+- 🔬 **Research Project Management** with peer review workflows
+- 📊 **Role-based Access Control** for different user types
+- 🌐 **Modern Web Interface** accessible from any browser
+- 📁 **IPFS-powered Content Storage** for decentralized sharing
+- 📈 **Analytics Dashboard** for tracking engagement and progress
+
+### **Scientific Computing**
 - 🌐 **Full Linux desktop streaming from any modern browser**
 - 🤖 **Native AI assistant with dual-model Ollama integration (command-r7b for text, granite3.2-vision for vision) with automatic screenshot analysis capabilities**
 - 📁 **Persistent scientific workspace (home folder mountable)**
@@ -89,11 +130,18 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 
 | File | Description |
 |------|-------------|
-| `Dockerfile` | Builds the full container with XFCE, noVNC, scientific tools, etc. |
+| `Dockerfile` | Builds the full container with XFCE, noVNC, scientific tools, and academic platform |
 | `startup.sh` | Entrypoint script for initializing the desktop environment |
-| `supervisord.conf` | Orchestrates services like `vncserver`, `noVNC`, and `jupyterlab` |
+| `supervisord.conf` | Orchestrates services including academic platform, vncserver, noVNC, and jupyterlab |
 | `xfce4-panel.xml` | Pre-configured XFCE panel layout |
 | `os.svg` | DeSciOS branding/logo image |
+| `node/` | Academic Platform backend and frontend |
+| `node/src/` | Express.js backend with REST APIs and Socket.io |
+| `node/frontend/` | React application with Material-UI components |
+| `node/start-academic.sh` | Academic platform startup script |
+| `node/ensure-admin.js` | Database initialization and admin user creation |
+| `ACADEMIC_PLATFORM_README.md` | Detailed academic platform documentation |
+| `ACADEMIC_PLATFORM_PERMANENT_FIXES.md` | Technical fixes and improvements |
 | `descios_assistant/` | DeSciOS Assistant application directory |
 | `descios_assistant/main.py` | GTK-based chat interface with Ollama integration |
 | `descios_assistant/requirements.txt` | Python dependencies for the assistant |
@@ -102,6 +150,26 @@ That said, it's ready for contributors, educators, and DeSci enthusiasts eager t
 | `descios_launcher/main.py` | GUI for customizing DeSciOS Docker builds |
 | `descios_launcher/README.md` | Detailed launcher documentation |
 | `descios_launcher/requirements.txt` | Launcher dependencies (uses Python standard library) |
+
+---
+
+## 🎓 Academic Platform Quick Start
+
+### **Default Users**
+The academic platform comes with pre-configured users for testing:
+
+| Role | Email | Password | Description |
+|------|-------|----------|-------------|
+| Admin | admin@descios.org | admin123 | System administrator |
+| Instructor | instructor@descios.org | instructor123 | Course instructor |
+| Researcher | researcher@descios.org | researcher123 | Research project leader |
+| Student | student@descios.org | student123 | Student user |
+
+### **Access Points**
+- **VNC Desktop**: http://localhost:6080 (Full Linux desktop)
+- **Academic Platform**: http://localhost:8000 (Learning management system)
+- **IPFS Gateway**: http://localhost:8080 (Decentralized content)
+- **IPFS API**: http://localhost:5001 (IPFS management)
 
 ---
 
@@ -298,6 +366,9 @@ DeSciOS is accessed through a web browser using noVNC. Supported browsers:
 ### Network Configuration
 
 - **Port 6080**: HTTP access to noVNC interface
+- **Port 8000**: Academic Platform web interface
+- **Port 5001**: IPFS API
+- **Port 8080**: IPFS Gateway
 - **Port 5901**: Direct VNC access (optional)
 - **Firewall**: Ensure ports are accessible if accessing from remote machines
 
@@ -330,36 +401,77 @@ git clone https://github.com/GizmoQuest/DeSciOS.git
 cd DeSciOS
 
 # Build the Docker image (with custom password)
-docker buildx build --build-arg PASSWORD=your_secure_password -t descios .
+docker buildx build --build-arg PASSWORD=your_secure_password -t descios:academic .
 
 # Or build with default password (not recommended for production)
-docker build -t descios .
+docker build -t descios:academic .
 
-# Run the container
-docker run -d -p 6080:6080 --name desci-lab descios
+# Run the container with academic platform
+docker run -d \
+  --name descios-academic \
+  -p 6080:6080 \
+  -p 8000:8000 \
+  -p 5001:5001 \
+  -p 8080:8080 \
+  descios:academic
 
 # If you have NVIDIA GPU(s) (Optional)
-docker run -d --gpus all -p 6080:6080 --name desci-lab descios
+docker run -d \
+  --gpus all \
+  --name descios-academic \
+  -p 6080:6080 \
+  -p 8000:8000 \
+  -p 5001:5001 \
+  -p 8080:8080 \
+  descios:academic
 ```
 
-### Access DeSciOS
+### Option 3: Docker Compose (Recommended for Production)
+
+```bash
+# Clone the repo
+git clone https://github.com/GizmoQuest/DeSciOS.git
+cd DeSciOS
+
+# Run with docker-compose
+docker-compose up -d
+```
+
+### Access DeSciOS Academic Edition
 
 * 🌐 `http://localhost:6080/vnc.html` → Full Linux desktop in browser (use the password you set during build)
+* 🎓 `http://localhost:8000` → Academic Platform (Learning Management System)
+* 📡 `http://localhost:8080` → IPFS Gateway (Decentralized content)
+* 🔧 `http://localhost:5001` → IPFS API (Management interface)
 
-> **Security Note**: For production use, always set a custom password during build using `--build-arg PASSWORD=your_secure_password`. The default password `vncpassword` is for development purposes only.
+> **Security Note**: For production use, always set a custom password during build using `--build-arg PASSWORD=your_secure_password`. The default DeSciOS password `vncpassword` is for development purposes only.
 
 ---
 
-## 💡 Vision: A Decentralized Research Desktop
+## 📚 Academic Platform Documentation
 
-DeSciOS is designed for:
+For detailed information about the Academic Platform features and usage:
 
-* Students needing a portable research environment
-* Scientists working offline or from remote labs
-* Contributors to the DeSci India and global DeSci movement
-* Educators seeking open, reproducible science infrastructure
+- **[Academic Platform README](ACADEMIC_PLATFORM_README.md)** - Comprehensive platform documentation
+- **[Testing Guide](TESTING_GUIDE.md)** - Complete testing procedures and verification
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Production deployment instructions
+- **[Volume Management](VOLUME_MANAGEMENT.md)** - Data persistence and backup strategies
+- **[Extensibility Guide](EXTENSIBILITY_GUIDE.md)** - Customization and plugin development
 
-> **Build open science tools the decentralized way. Host your own lab. Publish without gatekeepers.**
+---
+
+## 💡 Vision: A Decentralized Academic Infrastructure
+
+DeSciOS Academic Edition is designed for:
+
+* **Educational Institutions** seeking open, reproducible science infrastructure
+* **Students** needing a portable research environment with integrated learning tools
+* **Researchers** working offline or from remote labs with collaboration capabilities
+* **Educators** creating and managing courses in a decentralized environment
+* **Contributors** to the DeSci India and global DeSci movement
+* **Academic Administrators** looking for modern, scalable learning management systems
+
+> **Build open science tools the decentralized way. Host your own academic infrastructure. Publish without gatekeepers.**
 
 ---
 
@@ -367,4 +479,4 @@ DeSciOS is designed for:
 
 This project is licensed under the **MIT License**.
 
-> DeSciOS is free and open — built for the community, by the community.
+> DeSciOS Academic Edition is free and open — built for the academic community, by the academic community.
