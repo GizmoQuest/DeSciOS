@@ -20,7 +20,15 @@ services:
     environment:
       - DISPLAY=:1
       - VNC_RESOLUTION=1920x1080
+      - PUID=1000
+      - PGID=1000
     restart: unless-stopped
     shm_size: 2gb
     stdin_open: true
     tty: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6080/vnc.html"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

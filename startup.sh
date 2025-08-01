@@ -6,14 +6,39 @@ if ! grep -q "DeSciOS" /etc/hosts; then
     echo "127.0.0.1 DeSciOS" >> /etc/hosts
 fi
 
-# Initialize IPFS for deScier user
+# Ensure all necessary directories exist with proper permissions
+echo "Creating necessary directories..."
+mkdir -p /home/deScier/.academic/uploads
+mkdir -p /home/deScier/.academic/logs
+mkdir -p /home/deScier/.ipfs
+mkdir -p /home/deScier/data
+mkdir -p /home/deScier/.vnc
+mkdir -p /var/log/supervisor
+
+# Set proper ownership for all directories
+chown -R deScier:deScier /home/deScier/.academic
+chown -R deScier:deScier /home/deScier/.ipfs
+chown -R deScier:deScier /home/deScier/data
+chown -R deScier:deScier /home/deScier/.vnc
+
+# Set proper permissions
+chmod 755 /home/deScier/.academic
+chmod 755 /home/deScier/.ipfs
+chmod 755 /home/deScier/data
+chmod 755 /home/deScier/.vnc
+
+# Initialize IPFS for deScier user (only if not already initialized)
 echo "Initializing IPFS..."
-su - deScier -c 'ipfs init --profile=server' || echo "IPFS already initialized or failed to initialize"
+if [ ! -f /home/deScier/.ipfs/config ]; then
+    su - deScier -c 'ipfs init --profile=server' || echo "IPFS initialization failed, continuing..."
+else
+    echo "IPFS already initialized"
+fi
 
 # Configure IPFS to bind to all interfaces for external access
 echo "Configuring IPFS for external access..."
-su - deScier -c 'ipfs config Addresses.API "/ip4/0.0.0.0/tcp/5001"'
-su - deScier -c 'ipfs config Addresses.Gateway "/ip4/0.0.0.0/tcp/8080"'
+su - deScier -c 'ipfs config Addresses.API "/ip4/0.0.0.0/tcp/5001"' || echo "IPFS API config failed"
+su - deScier -c 'ipfs config Addresses.Gateway "/ip4/0.0.0.0/tcp/8080"' || echo "IPFS Gateway config failed"
 
 # Start IPFS daemon in background
 echo "Starting IPFS daemon..."
@@ -31,7 +56,6 @@ su - deScier -c 'rm -f ~/.vnc/*.pid ~/.vnc/*.log'
 
 # Initialize VNC environment for deScier user
 echo "Initializing VNC environment..."
-su - deScier -c 'mkdir -p ~/.vnc'
 su - deScier -c 'touch ~/.Xauthority'
 su - deScier -c 'xauth generate :1 . trusted'
 
@@ -78,6 +102,19 @@ if ps -p $WEBSOCKIFY_PID > /dev/null 2>&1; then
 else
     echo "Warning: websockify may not be running properly"
 fi
+
+# Initialize academic platform database before starting supervisord
+echo "Initializing academic platform database..."
+cd /home/deScier/DeSciOS/node
+
+# Ensure the database directory exists and has proper permissions
+mkdir -p /home/deScier/.academic/uploads
+mkdir -p /home/deScier/.academic/logs
+chown -R deScier:deScier /home/deScier/.academic
+chmod -R 755 /home/deScier/.academic
+
+# Initialize the database
+su - deScier -c 'cd /home/deScier/DeSciOS/node && node ensure-admin.js' || echo "Database initialization failed, continuing..."
 
 # Start supervisord for other services (but not VNC since we started it manually)
 echo "Starting supervisord for other services..."
