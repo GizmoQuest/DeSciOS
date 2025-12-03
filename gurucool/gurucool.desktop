@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=GuruCool
+Comment=Decentralized academic collaboration platform with IPFS
+Exec=/usr/bin/python3 /opt/gurucool/main.py
+Icon=applications-education
+Terminal=false
+Type=Application
+Categories=Education;Network;
+StartupNotify=true
+X-GNOME-UsesNotifications=true 
