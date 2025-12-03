@@ -1,0 +1,12 @@
+gurucool:
+  name: "GuruCool"
+  description: "Decentralized academic collaboration platform with IPFS integration"
+  dockerfile_section: |
+    # Install GuruCool (Decentralized Academic Collaboration Platform)
+    COPY gurucool /opt/gurucool
+    RUN cd /opt/gurucool && \
+        /usr/bin/python3 -m pip install --break-system-packages -r requirements.txt && \
+        chmod +x main.py && \
+        cp gurucool.desktop /usr/share/applications/ && \
+        chown -R $USER:$USER /opt/gurucool
+  enabled: true 
