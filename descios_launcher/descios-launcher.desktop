@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=DeSciOS Launcher
+Comment=GUI for customizing DeSciOS Docker builds
+Exec=python3 /opt/descios_launcher/main.py
+Icon=applications-development
+Type=Application
+Categories=Development;System;
+Terminal=false
+StartupNotify=true 
