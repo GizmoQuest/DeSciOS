@@ -278,6 +278,9 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
                     if isinstance(plugin_data, dict):
                         for app_id, app_info in plugin_data.items():
                             if self.validate_app_definition(app_info):
+                                # Normalize backslashes in dockerfile_section (fix double backslashes)
+                                if "dockerfile_section" in app_info:
+                                    app_info["dockerfile_section"] = app_info["dockerfile_section"].replace("\\\\", "\\")
                                 self.custom_applications[f"custom_{app_id}"] = {
                                     **app_info,
                                     "enabled": app_info.get("enabled", False),
@@ -296,6 +299,9 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
                     if isinstance(plugin_data, dict):
                         for app_id, app_info in plugin_data.items():
                             if self.validate_app_definition(app_info):
+                                # Normalize backslashes in dockerfile_section (fix double backslashes)
+                                if "dockerfile_section" in app_info:
+                                    app_info["dockerfile_section"] = app_info["dockerfile_section"].replace("\\\\", "\\")
                                 self.custom_applications[f"custom_{app_id}"] = {
                                     **app_info,
                                     "enabled": app_info.get("enabled", False),
