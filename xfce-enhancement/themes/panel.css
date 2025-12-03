@@ -1,0 +1,189 @@
+/* Modern XFCE Panel Theme - Glassmorphism Style */
+
+/* Panel Background */
+.xfce4-panel {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin: 8px;
+}
+
+/* Panel Buttons */
+.xfce4-panel button {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.xfce4-panel button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.xfce4-panel button:active {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(0);
+}
+
+/* Task List Buttons */
+.tasklist button {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin: 2px 4px;
+    padding: 6px 10px;
+    transition: all 0.3s ease;
+}
+
+.tasklist button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.tasklist button:checked {
+    background: linear-gradient(135deg, rgba(74, 144, 217, 0.8), rgba(74, 144, 217, 0.6));
+    box-shadow: 0 2px 8px rgba(74, 144, 217, 0.3);
+}
+
+/* Clock */
+#clock-button {
+    background: linear-gradient(135deg, rgba(74, 144, 217, 0.2), rgba(74, 144, 217, 0.1));
+    border: 1px solid rgba(74, 144, 217, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+#clock-button:hover {
+    background: linear-gradient(135deg, rgba(74, 144, 217, 0.3), rgba(74, 144, 217, 0.2));
+    transform: translateY(-1px);
+}
+
+/* Applications Menu */
+#xfce-panel-applicationsmenu-button {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+#xfce-panel-applicationsmenu-button:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Separators */
+.separator {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin: 4px 2px;
+}
+
+/* Notification Area */
+#notification-area {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 4px;
+    margin: 2px;
+}
+
+/* Workspace Switcher */
+.pager button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    margin: 2px;
+    transition: all 0.3s ease;
+}
+
+.pager button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.pager button:checked {
+    background: linear-gradient(135deg, rgba(74, 144, 217, 0.8), rgba(74, 144, 217, 0.6));
+    border-color: rgba(74, 144, 217, 0.5);
+}
+
+/* Launcher Buttons */
+.launcher button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 8px 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.launcher button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Panel Menu */
+.xfce4-panel menu {
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 8px 0;
+}
+
+.xfce4-panel menuitem {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    margin: 2px 8px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.xfce4-panel menuitem:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
+}
+
+/* Scrollbars */
+scrollbar {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+}
+
+scrollbar slider {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    min-width: 8px;
+    min-height: 8px;
+}
+
+scrollbar slider:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Tooltips */
+tooltip {
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+} 

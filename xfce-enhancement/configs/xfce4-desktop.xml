@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<channel name="xfce4-desktop" version="1.0">
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitor0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color1" type="empty">
+            <property name="red" type="uint" value="0"/>
+            <property name="green" type="uint" value="0"/>
+            <property name="blue" type="uint" value="0"/>
+            <property name="alpha" type="uint" value="65535"/>
+          </property>
+          <property name="color2" type="empty">
+            <property name="red" type="uint" value="0"/>
+            <property name="green" type="uint" value="0"/>
+            <property name="blue" type="uint" value="0"/>
+            <property name="alpha" type="uint" value="65535"/>
+          </property>
+          <property name="color-style" type="uint" value="0"/>
+          <property name="image-style" type="uint" value="3"/>
+          <property name="last-image" type="string" value="/usr/share/backgrounds/xfce/xfce-stripes.png"/>
+          <property name="last-single-image" type="string" value="/usr/share/backgrounds/xfce/xfce-stripes.png"/>
+        </property>
+      </property>
+    </property>
+  </property>
+  <property name="desktop-icons" type="empty">
+    <property name="desktop-menu" type="bool" value="false"/>
+    <property name="file-icons" type="bool" value="true"/>
+    <property name="font-size" type="uint" value="12"/>
+    <property name="home-icon" type="bool" value="false"/>
+    <property name="show-thumbs" type="bool" value="true"/>
+    <property name="show-trash" type="bool" value="false"/>
+    <property name="show-volumes" type="bool" value="false"/>
+    <property name="single-click" type="bool" value="true"/>
+    <property name="tooltip-size" type="uint" value="128"/>
+    <property name="use-custom-font-size" type="bool" value="true"/>
+  </property>
+</channel> 

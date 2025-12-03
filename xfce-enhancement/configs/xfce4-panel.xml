@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<channel name="xfce4-panel" version="1.0">
+  <property name="panels" type="array">
+    <value type="int" value="1"/>
+  </property>
+  <property name="panels/panel-1" type="empty">
+    <property name="position" type="string" value="p=10;x=640;y=1060"/>
+    <property name="size" type="uint" value="48"/>
+    <property name="length" type="uint" value="100"/>
+    <property name="length-adjust" type="bool" value="true"/>
+    <property name="background-style" type="uint" value="1"/>
+    <property name="background-alpha" type="uint" value="90"/>
+    <property name="background-rgba" type="empty">
+      <property name="red" type="uint" value="65535"/>
+      <property name="green" type="uint" value="65535"/>
+      <property name="blue" type="uint" value="65535"/>
+      <property name="alpha" type="uint" value="65535"/>
+    </property>
+    <property name="plugin-ids" type="array">
+      <value type="int" value="1"/> <!-- Applications Menu -->
+      <value type="int" value="2"/> <!-- Task List -->
+      <value type="int" value="3"/> <!-- Separator (stretch) -->
+      <value type="int" value="4"/> <!-- Workspace Switcher -->
+      <value type="int" value="5"/> <!-- Separator (stretch) -->
+      <value type="int" value="6"/> <!-- Notification Area -->
+      <value type="int" value="7"/> <!-- Separator (non-expand) -->
+      <value type="int" value="8"/> <!-- DeSciOS Assistant Launcher -->
+      <value type="int" value="9"/> <!-- Separator (non-expand) -->
+      <value type="int" value="10"/> <!-- Talk to K Launcher -->
+      <value type="int" value="11"/> <!-- Separator (non-expand) -->
+      <value type="int" value="12"/> <!-- Clock -->
+    </property>
+  </property>
+  <property name="plugins" type="empty">
+    <property name="plugin-1" type="string" value="applicationsmenu">
+      <property name="custom-menu-file" type="empty"/>
+      <property name="button-icon" type="string" value="applications-science"/>
+      <property name="button-title" type="string" value="DeSciOS"/>
+      <property name="show-button-title" type="bool" value="true"/>
+      <property name="show-generic-names" type="bool" value="true"/>
+      <property name="show-tooltips" type="bool" value="true"/>
+    </property>
+    <property name="plugin-2" type="string" value="tasklist">
+      <property name="flat-buttons" type="bool" value="true"/>
+      <property name="show-handle" type="bool" value="false"/>
+      <property name="show-labels" type="bool" value="true"/>
+      <property name="show-tooltips" type="bool" value="true"/>
+      <property name="tooltips-floating" type="bool" value="true"/>
+      <property name="grouping" type="bool" value="true"/>
+      <property name="sort-order" type="uint" value="0"/>
+      <property name="middle-click" type="uint" value="0"/>
+      <property name="mouse-wheel" type="uint" value="0"/>
+      <property name="include-all-monitors" type="bool" value="false"/>
+      <property name="include-all-workspaces" type="bool" value="false"/>
+      <property name="window-scrolling" type="bool" value="true"/>
+      <property name="cycle-minimized" type="bool" value="true"/>
+      <property name="flash-tasks" type="bool" value="true"/>
+      <property name="restore-minimized" type="bool" value="true"/>
+    </property>
+    <property name="plugin-3" type="string" value="separator">
+      <property name="expand" type="bool" value="true"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-4" type="string" value="pager">
+      <property name="rows" type="uint" value="1"/>
+      <property name="miniature-view" type="bool" value="true"/>
+      <property name="show-names" type="bool" value="false"/>
+      <property name="wrap-scroll" type="bool" value="true"/>
+      <property name="workspace-scrolling" type="bool" value="true"/>
+      <property name="display-mode" type="uint" value="0"/>
+      <property name="display-name" type="uint" value="0"/>
+    </property>
+    <property name="plugin-5" type="string" value="separator">
+      <property name="expand" type="bool" value="true"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-6" type="string" value="notificationarea">
+      <property name="names-visible" type="bool" value="true"/>
+      <property name="show-frame" type="bool" value="false"/>
+      <property name="square-icons" type="bool" value="false"/>
+    </property>
+    <property name="plugin-7" type="string" value="separator">
+      <property name="expand" type="bool" value="false"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-8" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="descios-assistant.desktop"/>
+      </property>
+      <property name="show-label" type="bool" value="true"/>
+      <property name="names-visible" type="bool" value="true"/>
+      <property name="button-title" type="string" value="Assistant"/>
+    </property>
+    <property name="plugin-9" type="string" value="separator">
+      <property name="expand" type="bool" value="false"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-10" type="string" value="launcher">
+      <property name="items" type="array">
+        <value type="string" value="talk-to-k.desktop"/>
+      </property>
+      <property name="show-label" type="bool" value="true"/>
+      <property name="names-visible" type="bool" value="true"/>
+      <property name="button-title" type="string" value="Talk to K"/>
+    </property>
+    <property name="plugin-11" type="string" value="separator">
+      <property name="expand" type="bool" value="false"/>
+      <property name="style" type="uint" value="0"/>
+    </property>
+    <property name="plugin-12" type="string" value="clock">
+      <property name="digital-format" type="string" value="%H:%M"/>
+      <property name="tooltip-format" type="string" value="%A, %B %d, %Y"/>
+      <property name="show-seconds" type="bool" value="false"/>
+      <property name="show-military" type="bool" value="false"/>
+      <property name="show-date" type="bool" value="false"/>
+      <property name="show-day" type="bool" value="false"/>
+      <property name="show-tooltip" type="bool" value="true"/>
+      <property name="show-frame" type="bool" value="false"/>
+    </property>
+  </property>
+</channel> 
