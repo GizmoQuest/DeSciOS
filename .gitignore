@@ -71,3 +71,8 @@ Dockerfile.custom
 data/
 *.sqlite
 *.db
+
+# Distribution binaries (should be released separately, not committed)
+DeSciOS-Launcher-*.0-Windows/
+DeSciOS-Launcher-*.0-macOS/
+*.exe
