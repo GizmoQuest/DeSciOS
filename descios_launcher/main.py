@@ -60,7 +60,24 @@ class DeSciOSLauncher:
     def __init__(self, root):
         self.root = root
         self.root.title("DeSciOS Launcher")
-        self.root.geometry("1410x1250")  # Increased window size for better layout
+        
+        # Get screen dimensions and calculate adaptive window size
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        
+        # Calculate window size: use 90% of screen width and height, but cap at reasonable max
+        # For ultrawide: use more width, for standard: fit within screen
+        # Use smaller height percentage and cap to ensure it fits on 1920x1080 screens
+        max_width = min(1410, int(screen_width * 0.9))
+        max_height = min(900, int(screen_height * 0.80))  # 80% of screen, max 900px for 1080p screens
+        
+        # Ensure minimum usable size
+        window_width = max(1000, max_width)
+        window_height = max(700, max_height)
+        
+        self.root.geometry(f"{window_width}x{window_height}")
+        self.root.minsize(1000, 700)  # Set minimum size
+        self.root.maxsize(screen_width, screen_height)  # Don't exceed screen
         
         # Beautiful color scheme
         self.colors = {
@@ -434,6 +451,21 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
         style.map('TEntry',
                  bordercolor=[('focus', self.colors['primary'])])
         
+        # Configure Scrollbar - elegant and sober styling
+        style.configure('TScrollbar',
+                       background=self.colors['border'],
+                       troughcolor=self.colors['surface'],
+                       borderwidth=0,
+                       width=10,  # Narrower, more elegant
+                       arrowcolor=self.colors['text_light'])
+        style.map('TScrollbar',
+                 background=[('active', self.colors['text_light']),
+                           ('pressed', self.colors['primary'])],
+                 arrowcolor=[('active', self.colors['text']),
+                           ('pressed', self.colors['primary'])],
+                 darkcolor=[('', self.colors['border'])],
+                 lightcolor=[('', self.colors['border'])])
+        
     def setup_ui(self):
         # Create main container with padding
         main_container = ttk.Frame(self.root)
@@ -778,10 +810,86 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
         # Title with beautiful styling
         title_label = ttk.Label(parent, text="Select Applications to Install", 
                                style='Title.TLabel')
-        title_label.pack(pady=(20, 30))
+        title_label.pack(pady=(20, 10))
         
-        # Main content frame
-        content_frame = ttk.Frame(parent)
+        # Create scrollable frame
+        canvas = tk.Canvas(parent, bg=self.colors['background'], highlightthickness=0)
+        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=canvas.yview, style='TScrollbar')
+        scrollable_frame = ttk.Frame(canvas)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Update canvas window width when canvas is resized
+        def on_canvas_configure(event):
+            canvas_width = event.width
+            canvas.itemconfig(canvas_window, width=canvas_width)
+        
+        canvas.bind("<Configure>", on_canvas_configure)
+        
+        # Mouse wheel scrolling - handle both Windows and Linux
+        def on_mousewheel(event):
+            # Windows and Mac: event.delta (positive = scroll down, negative = scroll up)
+            # Linux: Button-4 (scroll up) and Button-5 (scroll down)
+            try:
+                if event.num == 4:
+                    canvas.yview_scroll(-3, "units")
+                elif event.num == 5:
+                    canvas.yview_scroll(3, "units")
+                elif hasattr(event, 'delta') and event.delta:
+                    # Windows/Mac: delta is typically 120 or -120
+                    units = int(-event.delta / 120)
+                    canvas.yview_scroll(units, "units")
+            except:
+                pass
+            return "break"
+        
+        # Make canvas focusable for mouse wheel events
+        canvas.configure(takefocus=True)
+        
+        # Bind mouse wheel to canvas (primary binding)
+        canvas.bind("<MouseWheel>", on_mousewheel)
+        canvas.bind("<Button-4>", on_mousewheel)
+        canvas.bind("<Button-5>", on_mousewheel)
+        
+        # Bind to scrollable_frame and all its children recursively
+        def bind_scroll_to_widget(widget):
+            widget.bind("<MouseWheel>", on_mousewheel)
+            widget.bind("<Button-4>", on_mousewheel)
+            widget.bind("<Button-5>", on_mousewheel)
+            for child in widget.winfo_children():
+                bind_scroll_to_widget(child)
+        
+        bind_scroll_to_widget(scrollable_frame)
+        
+        # Use bind_all as fallback for Linux systems
+        def on_mousewheel_all(event):
+            # Only process if mouse is over canvas area
+            try:
+                x, y = event.x_root, event.y_root
+                widget = self.root.winfo_containing(x, y)
+                if widget and (str(widget).startswith(str(canvas)) or 
+                              str(widget).startswith(str(scrollable_frame))):
+                    return on_mousewheel(event)
+            except:
+                pass
+        
+        # Store bind_all handlers for potential cleanup
+        self.root.bind_all("<MouseWheel>", on_mousewheel_all)
+        self.root.bind_all("<Button-4>", on_mousewheel_all)
+        self.root.bind_all("<Button-5>", on_mousewheel_all)
+        
+        # Pack canvas and scrollbar
+        canvas.pack(side="left", fill="both", expand=True, padx=(20, 0), pady=(0, 20))
+        scrollbar.pack(side="right", fill="y", pady=(0, 20))
+        
+        # Main content frame (now inside scrollable area)
+        content_frame = ttk.Frame(scrollable_frame)
         content_frame.pack(fill='both', expand=True, padx=20)
         
         # Mandatory section with beautiful styling
@@ -852,8 +960,8 @@ RUN git clone https://github.com/cellmodeller/CellModeller.git && \\
                                  style='Description.TLabel')
             desc_label.pack(anchor='w', padx=(20, 0))
         
-        # Buttons frame with beautiful styling
-        buttons_frame = ttk.Frame(parent)
+        # Buttons frame with beautiful styling (inside scrollable area)
+        buttons_frame = ttk.Frame(scrollable_frame)
         buttons_frame.pack(fill='x', pady=20, padx=20)
         
         ttk.Button(buttons_frame, text="✅ Select All", 
