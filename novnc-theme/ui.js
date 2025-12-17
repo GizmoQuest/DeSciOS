@@ -1,9 +1,12 @@
 /*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
  * noVNC: HTML5 VNC client
  * Copyright (C) 2019 The noVNC Authors
- * Licensed under MPL 2.0 (see LICENSE.txt)
- *
- * See README.md for usage and integration instructions.
+ * Licensed under MPL 2.0 (see LICENSE.txt at noVNC repository).
+
  */
 
 import * as Log from '../core/util/logging.js';
