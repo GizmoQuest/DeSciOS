@@ -16,9 +16,10 @@ Licensing is determined **per file** by the header at the top of that file.
 
 Repository-level license texts:
 
-- `LICENSE` (MIT) + mixed-license notice
-- `LICENSE-MIT` (full MIT text)
-- `LICENSE-MPL` (full MPL 2.0 text)
+- `LICENSE` (MIT License) - **main license file** for MIT-licensed files
+- `LICENSE-MPL` (Mozilla Public License 2.0) - **required for MPL compliance** for MPL-licensed files
+
+**Note**: Individual file headers determine the license for each file. See `LEGAL.md` for details.
 
 ## Commercial / proprietary forks: allowed, with conditions
 
