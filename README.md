@@ -64,6 +64,7 @@ DeSciOS provides a comprehensive scientific computing environment with extensive
 | **EtherCalc**     | Collaborative spreadsheet                                        |
 | **Remix IDE**     | Ethereum development environment                                 |
 | **Nault**         | Nano cryptocurrency wallet                                       |
+| **FunDeSci**      | Decentralized fundraising platform for science (Web-based)       |
 | **Supervisor**    | Process manager for keeping all services alive                  |
 | **Dockerized**    | Fully containerized for reproducibility and portability         |
 
@@ -81,6 +82,7 @@ DeSciOS provides a comprehensive scientific computing environment with extensive
 - 🖼️ **Image processing with Fiji/ImageJ**
 - 📡 **Decentralized tools (IPFS, Syncthing)**
 - 💰 **Cryptocurrency integration (Nano wallet)**
+- 💰 **Decentralized fundraising with FunDeSci**
 - 🔍 **Web search and tool discovery capabilities**
 - 🔌 **Modular architecture for additional tools**
 - 🧪 **Workflow management with Nextflow**
@@ -183,7 +185,7 @@ The launcher allows you to customize which applications are included:
 - **Geospatial**: QGIS, GRASS GIS
 - **Workflows**: Nextflow pipeline manager
 - **Decentralized Tools**: IPFS Desktop, Syncthing
-- **Web-based Tools**: EtherCalc, NGL Viewer, Remix IDE, Nault wallet
+- **Web-based Tools**: EtherCalc, NGL Viewer, Remix IDE, Nault wallet, FunDeSci
 
 ### 🧩 Custom Applications & Extensibility
 
