@@ -270,6 +270,14 @@ RUN echo '[Desktop Entry]\\nName=Nault\\nExec=firefox https://nault.cc\\nIcon=ap
     > /usr/share/applications/nault.desktop''',
                 "enabled": True
             },
+            "fundesci": {
+                "name": "FunDeSci",
+                "description": "Decentralized Fundraising Platform for Science (fundesci.com)",
+                "dockerfile_section": '''# FunDeSci (via Browser)
+RUN echo '[Desktop Entry]\\nName=FunDeSci\\nExec=firefox https://fundesci.com\\nIcon=applications-science\\nType=Application\\nCategories=Science;Network;Finance;' \\
+    > /usr/share/applications/fundesci.desktop''',
+                "enabled": True
+            },
             "cellmodeller": {
                 "name": "CellModeller",
                 "description": "Bacterial cell growth simulation",
